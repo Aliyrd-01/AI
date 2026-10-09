@@ -1,0 +1,7 @@
+# Reverse proxy + automatic HTTPS for the VPS deploy (phase 6).
+# Replace the domain below, then run Caddy in front of the hub container.
+
+your-domain.example {
+    encode gzip
+    reverse_proxy hub:7860
+}
