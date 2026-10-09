@@ -1,0 +1,22 @@
+# secrets & local tooling
+.env
+.env.local
+tools/
+
+# runtime artifacts
+hub/eval/feedback.jsonl
+hub/eval/_ab_cache/
+__pycache__/
+*.pyc
+
+# envs
+.venv/
+venv/
+_venv*/
+
+# media: compressed mp4s are small and committed; ignore raw captures
+hub/assets/n8n/*.webm
+
+hub/rag/smoke*.txt
+hub/rag/*_out.txt
+hub/rag/*_err.txt
