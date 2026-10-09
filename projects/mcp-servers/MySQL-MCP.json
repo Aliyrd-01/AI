@@ -1,0 +1,155 @@
+{
+  "name": "MySQL-MCP",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        192
+      ],
+      "id": "97b11c7e-a6c7-48a2-bc10-b021ecfc4a5d",
+      "name": "When chat message received",
+      "webhookId": "980c5648-6afe-48f6-b662-37dc8af8de37"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        384,
+        64
+      ],
+      "id": "689b2849-0a04-4538-a6e6-84d6eee5f9b1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "=ge",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        432
+      ],
+      "id": "02ccade5-b1c5-48f9-8ce7-bdbd1d1fb050",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L3n7FYD16dFzcPFb",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "http://localhost:9001/mcp",
+        "authentication": "bearerAuth",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        464
+      ],
+      "id": "62856a7e-9a27-4dd9-afe1-b15edbf4b7c5",
+      "name": "MCP Client",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "d8834cce3b0448f7",
+          "name": "MySQL MCP (HTTP Bearer)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        256,
+        272
+      ],
+      "id": "157465cf-ab5a-4a50-8191-3e011e605b43",
+      "name": "Cohere Chat Model",
+      "credentials": {
+        "cohereApi": {
+          "id": "tKFaPgO1VLiNkjlx",
+          "name": "Cohere account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "a28b7a56-1c84-4c41-b216-a4a984c7a890",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fd9a85cb5fad5f7e754e8f04be7f2ed4c198062572fab2e912fefc2d50bd00a3"
+  },
+  "id": "QUBwEgfdYKHQKRJ9",
+  "tags": []
+}

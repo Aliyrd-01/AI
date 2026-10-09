@@ -20,3 +20,14 @@ hub/assets/n8n/*.webm
 hub/rag/smoke*.txt
 hub/rag/*_out.txt
 hub/rag/*_err.txt
+
+# project sources: exclude junk/secrets
+projects/**/node_modules/
+projects/**/.env
+projects/**/__pycache__/
+projects/**/*_cache/
+projects/**/ws/
+projects/**/Output/
+projects/**/Report/
+projects/**/rag_storage/
+projects/**/tiktoken/

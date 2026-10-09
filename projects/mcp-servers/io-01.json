@@ -1,0 +1,155 @@
+{
+  "name": "io-01",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -864,
+        -128
+      ],
+      "id": "eeb3758e-a07a-46a7-b6ec-6316b6e22599",
+      "name": "When chat message received",
+      "webhookId": "980c5648-6afe-48f6-b662-37dc8af8de37"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -480,
+        -256
+      ],
+      "id": "98bc9942-b1c5-4994-af73-1a83015efa50",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "executeTool",
+        "toolName": "list_tables"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -112
+      ],
+      "id": "67af4576-831b-4703-ba88-53109943793f",
+      "name": "MCP Client1",
+      "credentials": {
+        "mcpClientApi": {
+          "id": "10cwzbLduWWD8AXj",
+          "name": "Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -624,
+        96
+      ],
+      "id": "356a7968-c801-4b79-95ea-8684fc5c679a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "L3n7FYD16dFzcPFb",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://remarry-flammable-enunciate.ngrok-free.dev/mcp-server/http",
+        "authentication": "bearerAuth",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        144
+      ],
+      "id": "c8e5f197-8bb6-41d4-93e8-eef1ddc7e55d",
+      "name": "MCP Client",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "2kcZ5rkCsf63Ta5Y",
+          "name": "Bearer Auth account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "MCP Client1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "1ce13f49-7a17-4307-b533-de7fa4ffb3fd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fd9a85cb5fad5f7e754e8f04be7f2ed4c198062572fab2e912fefc2d50bd00a3"
+  },
+  "id": "QUBwEgfdYKHQKRJ9",
+  "tags": []
+}
