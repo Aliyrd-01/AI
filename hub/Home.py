@@ -50,6 +50,9 @@ with row2[1]:
     st.page_link("pages/3_Projects.py", label="Все проекты →")
 
 with row2[2]:
-    st.subheader("ℹ️ Стек")
-    st.write("Python · Streamlit · Qdrant · FastEmbed · LangChain · n8n · PostgreSQL · "
-             "MCP · Docker")
+    st.subheader("🧭 Unified Agent")
+    st.write("Один агент с инструментами: сам выбирает RAG-поиск или запрос к CRM "
+             "(PostgreSQL через MCP).")
+    st.page_link("pages/6_Unified_Agent.py", label="Открыть агента →")
+
+st.caption("Стек: Python · Streamlit · Qdrant · FastEmbed · LangChain · n8n · PostgreSQL · MCP · Docker")

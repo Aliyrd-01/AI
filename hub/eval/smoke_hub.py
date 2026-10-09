@@ -16,6 +16,7 @@ PAGES = [
     "pages/3_Projects.py",
     "pages/4_Agents.py",
     "pages/5_Benchmarks.py",
+    "pages/6_Unified_Agent.py",
 ]
 
 fails = []
