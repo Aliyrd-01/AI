@@ -1,0 +1,20 @@
+services:
+  hub:
+    build: .
+    image: portfolio-hub
+    container_name: portfolio-hub
+    ports:
+      - "7860:7860"
+    env_file:
+      - .env
+    environment:
+      FASTEMBED_CACHE_PATH: /data/fastembed
+    volumes:
+      # Live-edit the hub without rebuilding the image.
+      - ./hub:/app/hub
+      # Persist FastEmbed model weights between restarts.
+      - fastembed:/data/fastembed
+    restart: unless-stopped
+
+volumes:
+  fastembed:

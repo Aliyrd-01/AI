@@ -1,0 +1,743 @@
+{
+  "id": "R6TUfWY5jcGwZupm",
+  "name": "Lead Qualification Flow",
+  "active": true,
+  "nodes": [
+    {
+      "id": "node-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "node-testdata",
+      "name": "Test Data (Google CEO)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        250,
+        0
+      ],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "email",
+              "value": "sundar@google.com"
+            },
+            {
+              "name": "phone",
+              "value": "+1234567890"
+            },
+            {
+              "name": "name",
+              "value": "Sundar Pichai"
+            },
+            {
+              "name": "company",
+              "value": "Google"
+            },
+            {
+              "name": "position",
+              "value": "CEO"
+            },
+            {
+              "name": "message",
+              "value": "We need enterprise AI integration for Google Cloud platform"
+            },
+            {
+              "name": "source",
+              "value": "web"
+            },
+            {
+              "name": "isValid",
+              "value": "true"
+            },
+            {
+              "name": "receivedAt",
+              "value": "2026-06-26T13:10:12.155Z"
+            },
+            {
+              "name": "_body",
+              "value": "{\"leadId\":\"test_manual_001\",\"email\":\"sundar@google.com\",\"company\":\"Google\"}"
+            }
+          ],
+          "number": [
+            {
+              "name": "budget",
+              "value": 100000
+            },
+            {
+              "name": "headcount",
+              "value": 180000
+            },
+            {
+              "name": "timeline",
+              "value": 3
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst item = raw.body || raw;\nconst email = (item.email || '').trim().toLowerCase();\nconst phone = (item.phone || '').replace(/\\D/g, '');\nconst name = (item.name || '').trim();\nconst emailValid = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);\nconst phoneValid = phone.length >= 7;\nconst leadId = item.leadId || ('wf_' + Date.now() + '_' + Math.floor(Math.random()*10000));\n\nreturn [{\n  leadId,\n  name,\n  email,\n  phone,\n  company: (item.company || '').trim(),\n  position: (item.position || '').trim(),\n  message: (item.message || '').trim(),\n  source: item.source || 'web',\n  isValid: emailValid || phoneValid,\n  receivedAt: new Date().toISOString()\n}];"
+      },
+      "id": "node-validate",
+      "name": "Validate Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "check-valid",
+              "leftValue": "={{ $json.isValid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "node-if-valid",
+      "name": "Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "id": "node-tg-inv-http",
+      "name": "Telegram Invalid",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        250
+      ],
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "@aliyrd_my_news",
+        "text": "=INVALID LEAD\nName: {{ $json.name }}\nEmail: {{ $json.email }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "check-even",
+              "leftValue": "={{ ($json.leadId ? ($json.leadId.charCodeAt(0) + $json.leadId.charCodeAt($json.leadId.length-1)) % 2 : 0) }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-ab-if",
+      "name": "A/B IF (even/odd)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\n\nconst systemPrompt = 'You are a B2B Lead Scoring AI. Analyze the lead data and return ONLY a JSON object with fields: leadScore (0-100), leadTier (\"hot\"|\"warm\"|\"cold\"), priority (\"high\"|\"medium\"|\"low\"), nextAction (string), notes (string).\\n\\nSCORING WEIGHTS (Conservative):\\n- Role is CEO/CTO/VP/Director: +25\\n- Role is Manager/Team Lead: +10\\n- Role is Intern/Junior/Trainee: -10\\n- Company name is known: +15\\n- Industry is known: +10\\n- Company size > 100 employees: +15\\n- Company size > 10: +10\\n- Message > 50 characters: +10\\n- Message < 10 characters: -5\\n- Email is provided and valid: +10\\n- Position/role is filled in: +10\\n\\nRULES:\\n- Score > 70: hot tier, high priority\\n- Score 40-70: warm tier, medium priority\\n- Score < 40: cold tier, low priority\\n- BE STRICT. Not every lead is hot.';\n\nconst leadData = {\n  name: d.name,\n  email: d.email,\n  company: d.enrichedCompany || d.company,\n  role: d.position || d.enrichedRole || '',\n  industry: d.enrichedIndustry || '',\n  companySize: d.enrichedSize || '',\n  message: d.message || '',\n  source: d.source\n};\n\nd._body = JSON.stringify({\n  model: 'openrouter/free',\n  messages: [\n    { role: 'system', content: systemPrompt },\n    { role: 'user', content: 'Score this lead:\\n' + JSON.stringify(leadData, null, 2) }\n  ],\n  temperature: 0.1\n});\nreturn [d];"
+      },
+      "id": "node-prep-a",
+      "name": "Prep Scorer A",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json._body }}",
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "HTTP-Referer",
+              "value": "http://localhost:5678"
+            },
+            {
+              "name": "X-Title",
+              "value": "LeadScorerA"
+            }
+          ]
+        },
+        "nodeCredentialType": "openRouterApi",
+        "continueOnFail": true,
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-http-a",
+      "name": "OpenRouter API A",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2200,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nconst input = $('Prep Scorer A').first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.output || resp.text || '{}';\nconst clean = String(content).replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet parsed = {};\ntry { parsed = JSON.parse(clean); } catch(e) {\n  const m = clean.match(/\\{[\\s\\S]*\\}/);\n  if (m) try { parsed = JSON.parse(m[0]); } catch(e2) {}\n}\ninput.leadScore = parsed.leadScore || 0;\ninput.leadTier = parsed.leadTier || 'cold';\ninput.priority = parsed.priority || 'low';\ninput.nextAction = parsed.nextAction || 'Nurture';\ninput.scorerNotes = parsed.notes || '';\ninput.promptVersion = 'A';\ndelete input._body;\nreturn [input];"
+      },
+      "id": "node-parse-a",
+      "name": "Parse Scorer A",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\n\nconst systemPrompt = 'You are an aggressive B2B Lead Scoring AI. Return ONLY a JSON object with fields: leadScore (0-100), leadTier (\"hot\"|\"warm\"|\"cold\"), priority (\"high\"|\"medium\"|\"low\"), nextAction (string), notes (string).\\n\\nSCORING WEIGHTS (Aggressive / Generous):\\n- Role is CEO/CTO/VP/Director: +30\\n- Role is any managerial position: +15\\n- Company name is known: +10\\n- Message has > 30 characters of detail: +20\\n- Email is provided: +5\\n- Position is filled in: +10\\n\\nRULES:\\n- Score > 60: hot tier, high priority\\n- Score 30-60: warm tier, medium priority\\n- Score < 30: cold tier, low priority\\n- BE GENEROUS. Give leads the benefit of the doubt.\\n- If message seems genuine, score higher.';\n\nconst leadData = {\n  name: d.name,\n  email: d.email,\n  company: d.enrichedCompany || d.company,\n  role: d.position || d.enrichedRole || '',\n  industry: d.enrichedIndustry || '',\n  companySize: d.enrichedSize || '',\n  message: d.message || '',\n  source: d.source\n};\n\nd._body = JSON.stringify({\n  model: 'openrouter/free',\n  messages: [\n    { role: 'system', content: systemPrompt },\n    { role: 'user', content: 'Score this lead:\\n' + JSON.stringify(leadData, null, 2) }\n  ],\n  temperature: 0.1\n});\nreturn [d];"
+      },
+      "id": "node-prep-b",
+      "name": "Prep Scorer B",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json._body }}",
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "HTTP-Referer",
+              "value": "http://localhost:5678"
+            },
+            {
+              "name": "X-Title",
+              "value": "LeadScorerB"
+            }
+          ]
+        },
+        "nodeCredentialType": "openRouterApi",
+        "continueOnFail": true,
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "node-http-b",
+      "name": "OpenRouter API B",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2200,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nconst input = $('Prep Scorer B').first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.output || resp.text || '{}';\nconst clean = String(content).replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet parsed = {};\ntry { parsed = JSON.parse(clean); } catch(e) {\n  const m = clean.match(/\\{[\\s\\S]*\\}/);\n  if (m) try { parsed = JSON.parse(m[0]); } catch(e2) {}\n}\ninput.leadScore = parsed.leadScore || 0;\ninput.leadTier = parsed.leadTier || 'cold';\ninput.priority = parsed.priority || 'low';\ninput.nextAction = parsed.nextAction || 'Nurture';\ninput.scorerNotes = parsed.notes || '';\ninput.promptVersion = 'B';\ndelete input._body;\nreturn [input];"
+      },
+      "id": "node-parse-b",
+      "name": "Parse Scorer B",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [$input.first().json];"
+      },
+      "id": "node-merge",
+      "name": "Merge Scorers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "check-hot",
+              "leftValue": "={{ $json.leadScore > 70 || /ceo|cto|founder|director|vp|owner/i.test($json.position || '') || /ceo|cto|founder|director|vp|owner/i.test($json.enrichedRole || '') }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "node-if-hot",
+      "name": "Score > 70?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3200,
+        0
+      ]
+    },
+    {
+      "id": "node-tg-hot-http",
+      "name": "Telegram Hot Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4400,
+        -200
+      ],
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "@aliyrd_my_news",
+        "text": "=HOT LEAD\nName: {{ $json.name }}\nCompany: {{ $json.enrichedCompany || $json.company }}\nRole: {{ $json.position || $json.enrichedRole || ($json.companyFound ? 'Executive' : 'UNKNOWN EXECUTIVE') }}\nScore: {{ $json.leadScore }}/100",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nd.status = d.leadScore > 70 ? 'hot_emailed' : (d.leadScore > 0 ? 'nurture' : 'invalid');\nconst lead = {\n  lead_id: d.leadId, name: d.name, email: d.email, phone: d.phone,\n  company: d.enrichedCompany || d.company || '',\n  company_industry: d.enrichedIndustry || '',\n  company_size: d.enrichedSize || '',\n  role: d.position || d.enrichedRole || (d.companyFound ? 'Executive' : 'UNKNOWN EXECUTIVE'),\n  source: d.source, message: d.message,\n  lead_score: d.leadScore, lead_tier: d.leadTier, priority: d.priority,\n  prompt_version: d.promptVersion, status: d.status, next_action: d.nextAction\n};\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\nconst cols = Object.keys(lead);\nconst vals = cols.map(c => esc(lead[c]));\nconst updates = cols.filter(c => c !== 'lead_id').map(c => c + ' = EXCLUDED.' + c);\nconst crm_sql = 'INSERT INTO leads_leads (' + cols.join(', ') + ') VALUES (' + vals.join(', ') + ') ON CONFLICT (lead_id) DO UPDATE SET ' + updates.join(', ') + ', updated_at = NOW();';\nreturn [{ ...lead, crm_sql }];"
+      },
+      "id": "node-crm-prep",
+      "name": "CRM Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        200
+      ]
+    },
+    {
+      "id": "node-pg-mcp",
+      "name": "PostgreSQL (CRM)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3800,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:9002/mcp",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.crm_sql } } } }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer my-secret-key-123"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('CRM Prep').first().json;\nreturn [{ summary: 'Lead processed', leadId: d.lead_id, status: d.status, score: d.lead_score, prompt: d.prompt_version }];"
+      },
+      "id": "node-done",
+      "name": "Done",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4000,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst email = (item.email || '').trim().toLowerCase();\nconst emailDomain = email.split('@')[1] || '';\nconst company = (item.company || '').trim();\n\n// Escaping helper for SQL\nconst esc = (str) => (str || '').replace(/'/g, \"''\");\n\nconst sql = `\n  WITH contact_lookup AS (\n    SELECT \n      c.name as contact_name, \n      c.role as contact_role, \n      c.phone as contact_phone, \n      co.name as company_name, \n      co.industry as company_industry, \n      co.size as company_size, \n      co.domain as company_domain,\n      TRUE as contact_found,\n      TRUE as company_found\n    FROM leads_contacts c \n    LEFT JOIN leads_companies co ON c.company_id = co.id \n    WHERE c.email = '${esc(email)}'\n    LIMIT 1\n  ),\n  company_lookup AS (\n    SELECT \n      NULL as contact_name, \n      NULL as contact_role, \n      NULL as contact_phone, \n      name as company_name, \n      industry as company_industry, \n      size as company_size, \n      domain as company_domain,\n      FALSE as contact_found,\n      TRUE as company_found\n    FROM leads_companies \n    WHERE (domain = '${esc(emailDomain)}' OR LOWER(name) = LOWER('${esc(company)}'))\n      AND NOT EXISTS (\n        SELECT 1 FROM leads_contacts WHERE email = '${esc(email)}'\n      )\n    LIMIT 1\n  )\n  SELECT * FROM contact_lookup\n  UNION ALL\n  SELECT * FROM company_lookup\n  LIMIT 1;\n`;\n\nreturn [{\n  ...item,\n  mcp_sql: sql\n}];"
+      },
+      "id": "node-enrich-prep",
+      "name": "Prep MCP Enrich",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:9002/mcp",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.mcp_sql } } } }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer my-secret-key-123"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-enrich-http",
+      "name": "MCP Enrich HTTP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1300,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst lead = $('Prep MCP Enrich').first().json;\n\nlet text = '';\nif (typeof response === 'string') {\n  text = response;\n} else if (response.body && typeof response.body === 'string') {\n  text = response.body;\n} else if (response.data && typeof response.data === 'string') {\n  text = response.data;\n} else {\n  text = JSON.stringify(response);\n}\n\nlet mcpResult = null;\nconst dataMatch = text.match(/data:\\s*({.*})/);\nif (dataMatch) {\n  try {\n    mcpResult = JSON.parse(dataMatch[1]);\n  } catch (e) {}\n} else {\n  mcpResult = response;\n}\n\nconst contentText = mcpResult?.result?.content?.[0]?.text;\nlet rows = [];\nif (contentText) {\n  try {\n    rows = JSON.parse(contentText);\n  } catch (e) {}\n}\n\nconst d = { ...lead };\nif (rows && rows.length > 0) {\n  const row = rows[0];\n  d.enrichedName = row.contact_name || undefined;\n  d.enrichedRole = row.contact_role || undefined;\n  d.enrichedCompany = row.company_name || undefined;\n  d.enrichedIndustry = row.company_industry || undefined;\n  d.enrichedSize = row.company_size || undefined;\n  d.enrichedDomain = row.company_domain || undefined;\n  d.contactFound = !!row.contact_found;\n  d.companyFound = !!row.company_found;\n} else {\n  d.contactFound = false;\n  d.companyFound = false;\n}\n\nif (!d.enrichedCompany) {\n  d.enrichedCompany = d.company;\n}\n\ndelete d.mcp_sql;\nreturn [d];"
+      },
+      "id": "node-enrich-parse",
+      "name": "Parse MCP Enrich",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        -100
+      ]
+    },
+    {
+      "id": "node-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {
+        "path": "lead-received",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "lead-received"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Test Data (Google CEO)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Data (Google CEO)": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Lead": {
+      "main": [
+        [
+          {
+            "node": "Is Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid?": {
+      "main": [
+        [
+          {
+            "node": "Prep MCP Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A/B IF (even/odd)": {
+      "main": [
+        [
+          {
+            "node": "Prep Scorer A",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Scorer B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Scorer A": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter API A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter API A": {
+      "main": [
+        [
+          {
+            "node": "Parse Scorer A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Scorer A": {
+      "main": [
+        [
+          {
+            "node": "Merge Scorers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Scorer B": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter API B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter API B": {
+      "main": [
+        [
+          {
+            "node": "Parse Scorer B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Scorer B": {
+      "main": [
+        [
+          {
+            "node": "Merge Scorers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Scorers": {
+      "main": [
+        [
+          {
+            "node": "Score > 70?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score > 70?": {
+      "main": [
+        [
+          {
+            "node": "Telegram Hot Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CRM Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CRM Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM Prep": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL (CRM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL (CRM)": {
+      "main": [
+        [
+          {
+            "node": "Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep MCP Enrich": {
+      "main": [
+        [
+          {
+            "node": "MCP Enrich HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Enrich HTTP": {
+      "main": [
+        [
+          {
+            "node": "Parse MCP Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse MCP Enrich": {
+      "main": [
+        [
+          {
+            "node": "A/B IF (even/odd)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,629 @@
+{
+  "name": "Support Flow V2",
+  "nodes": [
+    {
+      "id": "47977b34-c912-47c5-9c06-28d9ecccddbf",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "8d94e3fa-8d5a-48cf-b9d5-e62713e99ba1",
+      "name": "Is Operator",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        280,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cf759dde-1b0e-46df-b5b7-8da5bc5361ac",
+              "leftValue": "={{ String($json.message.chat.id) }}",
+              "rightValue": "7420361749",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "feef059d-a730-424c-a443-667cb3aa1596",
+      "name": "Parse Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const msg = $input.item.json.message;\nconst replyTo = msg.reply_to_message;\n\nif (!replyTo || !replyTo.text) {\n  return [{json: { user_chat_id: \"\", is_close: \"no\", reply_text: \"\" }}];\n}\n\nconst match = replyTo.text.match(/\\(ID: (\\d+)\\)/);\n\nreturn [{json: {\n  user_chat_id: match ? match[1] : \"\",\n  is_close: msg.text.trim() === \"/close\" ? \"yes\" : \"no\",\n  reply_text: msg.text\n}}];"
+      }
+    },
+    {
+      "id": "5fff829c-a8d2-4fbb-a1c4-f9eba97462c5",
+      "name": "Has Valid ID",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        840,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4700e0b2-ac8f-4b85-9e3a-eb822979c455",
+              "leftValue": "={{ $json.user_chat_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals",
+                "name": "filter.operator.notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0f3a5f65-2ef6-45c5-b9ca-9c9e07c0ae6d",
+      "name": "Is Close",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4f967f1f-b239-4b1c-a2ad-7ef37af78bd7",
+              "leftValue": "={{ $json.is_close }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4565d745-6d99-487a-9d6a-155937cb9acf",
+      "name": "Reset to Bot",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1400,
+        100
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE user_states SET state = 'bot' WHERE chat_id = {{ $('Parse Reply').item.json.user_chat_id }}",
+        "options": {}
+      },
+      "settings": {
+        "alwaysOutputData": true
+      }
+    },
+    {
+      "id": "72f91aab-07e7-408b-abb8-36d5c9f9bae8",
+      "name": "Notify Closed",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        100
+      ],
+      "parameters": {
+        "chatId": "={{ $('Parse Reply').item.json.user_chat_id }}",
+        "text": "Диалог с оператором завершен. Пишите, если есть вопросы!",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "fd9c7c1e-31e4-45bd-8cb6-bc6c589e5c02",
+      "name": "Reply to User",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1400,
+        300
+      ],
+      "parameters": {
+        "chatId": "={{ $('Parse Reply').item.json.user_chat_id }}",
+        "text": "={{ $('Parse Reply').item.json.reply_text }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "aa358b9e-323a-43cf-b085-7ccfa6ddecea",
+      "name": "Upsert User",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        560,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO user_states (chat_id, username, state) VALUES ({{ $json.message.chat.id }}, '{{ $json.message.from.username }}', 'bot') ON CONFLICT (chat_id) DO UPDATE SET username = EXCLUDED.username RETURNING state",
+        "options": {}
+      },
+      "settings": {
+        "alwaysOutputData": true
+      }
+    },
+    {
+      "id": "b30c6ec7-4b76-4dba-97ff-1cbdf3ce70ed",
+      "name": "In Operator Mode",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        840,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6fe25b15-6769-4ea5-910f-1d314716c081",
+              "leftValue": "={{ $json.state }}",
+              "rightValue": "operator",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "66018fbd-1bda-4194-81fb-3119b75d8fde",
+      "name": "Forward to Operator",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        500
+      ],
+      "parameters": {
+        "chatId": "=7420361749",
+        "text": "Сообщение от @{{ $('Telegram Trigger').item.json.message.from.username }} (ID: {{ $('Telegram Trigger').item.json.message.chat.id }})\n\n{{ $('Telegram Trigger').item.json.message.text }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "019e9506-2927-467a-a395-57c138517370",
+      "name": "Classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        700
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.OPENROUTER_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"model\": \"openai/gpt-4o-mini\",\n\"messages\": [\n{\"role\": \"system\", \"content\": \"You are a classifier. Answer ONLY one word: simple or operator. simple = easy/common/general questions. operator = payments, complaints, account issues, angry customer, unclear request.\"},\n{\"role\": \"user\", \"content\": \"{{ $('Telegram Trigger').item.json.message.text }}\"}\n],\n\"temperature\": 0,\n\"max_tokens\": 10\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "31dc1893-8e29-46ea-9ddd-9baefbde312a",
+      "name": "Needs Operator",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1400,
+        700
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0e99d646-7959-4d90-a62c-2d6792d754a2",
+              "leftValue": "={{ $json.choices[0].message.content.trim().toLowerCase() }}",
+              "rightValue": "operator",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "568ce119-7ef7-41fe-867d-0c0ee2ef1716",
+      "name": "Set Operator State",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1680,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE user_states SET state = 'operator' WHERE chat_id = {{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "options": {}
+      },
+      "settings": {
+        "alwaysOutputData": true
+      }
+    },
+    {
+      "id": "8ed4b150-0126-4025-b86e-dfbed272033b",
+      "name": "User Transferred",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1960,
+        600
+      ],
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Ваш вопрос передан оператору. Ожидайте ответа.",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "22776194-ad0c-4b68-b692-daec18d11547",
+      "name": "Alert Operator",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2240,
+        600
+      ],
+      "parameters": {
+        "chatId": "=7420361749",
+        "text": "Новый запрос!\nОт: @{{ $('Telegram Trigger').item.json.message.from.username }} (ID: {{ $('Telegram Trigger').item.json.message.chat.id }})\n\n{{ $('Telegram Trigger').item.json.message.text }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "24d7c238-5465-48d0-900c-e52484e2e136",
+      "name": "AI Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1680,
+        800
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.OPENROUTER_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"model\": \"openai/gpt-4o-mini\",\n\"messages\": [\n{\"role\": \"system\", \"content\": \"Ты помощник поддержки CryptoAnalyz (https://cryptoanalyz.net/) — приложения для криптоанализа. Отвечай кратко и полезно.\"},\n{\"role\": \"user\", \"content\": \"{{ $('Telegram Trigger').item.json.message.text }}\"}\n],\n\"max_tokens\": 500\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "7ef12644-7797-4924-92e5-004777fc8964",
+      "name": "Send to User",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1960,
+        800
+      ],
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.choices[0].message.content }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is Operator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Operator": {
+      "main": [
+        [
+          {
+            "node": "Parse Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upsert User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Reply": {
+      "main": [
+        [
+          {
+            "node": "Has Valid ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Valid ID": {
+      "main": [
+        [
+          {
+            "node": "Is Close",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Close": {
+      "main": [
+        [
+          {
+            "node": "Reset to Bot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply to User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset to Bot": {
+      "main": [
+        [
+          {
+            "node": "Notify Closed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert User": {
+      "main": [
+        [
+          {
+            "node": "In Operator Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "In Operator Mode": {
+      "main": [
+        [
+          {
+            "node": "Forward to Operator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify": {
+      "main": [
+        [
+          {
+            "node": "Needs Operator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Operator": {
+      "main": [
+        [
+          {
+            "node": "Set Operator State",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Operator State": {
+      "main": [
+        [
+          {
+            "node": "User Transferred",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User Transferred": {
+      "main": [
+        [
+          {
+            "node": "Alert Operator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Response": {
+      "main": [
+        [
+          {
+            "node": "Send to User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}

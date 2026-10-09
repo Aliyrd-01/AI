@@ -1,0 +1,641 @@
+{
+  "name": "AI & Crypto News Analytics (Advanced) v2",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "*/55 * * * *"
+            }
+          ]
+        },
+        "feedUrl": "https://forklog.com/feed/"
+      },
+      "id": "036c7c85-e875-47ec-b16d-b46a198c7bda",
+      "name": "RSS Forklog",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        1760
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "*/30 * * * *"
+            }
+          ]
+        },
+        "feedUrl": "https://habr.com/ru/rss/best/daily/"
+      },
+      "id": "ba6a6737-a048-44d9-b436-383d68a50d54",
+      "name": "RSS Habr",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "var staticData = $getWorkflowStaticData('global');\nvar now = Date.now();\n\nif (!staticData.pubLinks) staticData.pubLinks = [];\nif (!staticData.lastReset) staticData.lastReset = now;\n\nif ((now - staticData.lastReset) > 86400000) {\n    staticData.pubLinks = [];\n    staticData.lastReset = now;\n}\n\nvar items = $input.all();\nvar fresh = [];\n\nfor (var i = 0; i < items.length; i++) {\n    var link = items[i].json.link;\n    if (staticData.pubLinks.indexOf(link) === -1) {\n        staticData.pubLinks.push(link);\n        fresh.push(items[i]);\n    }\n}\n\nif (staticData.pubLinks.length > 500) {\n    staticData.pubLinks = staticData.pubLinks.slice(-500);\n}\n\nreturn fresh;"
+      },
+      "id": "805f5552-211d-4126-9329-333ea18be825",
+      "name": "Deduplication",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4288,
+        2000
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item.json;\nconst cleanText = (item.contentSnippet || item.title || '').replace(/<[^>]*>/g, '').replace(/\\s+/g, ' ').trim().substring(0, 4000);\n\nlet imageUrl = '';\n\n// 1. RSS enclosure / media:content\ntry {\n  if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url;\n  else if (item['media:content'] && item['media:content'].url) imageUrl = item['media:content'].url;\n} catch (e) {}\n\n// 2. <img> from content HTML\nif (!imageUrl && item.content) {\n  try {\n    const m = item.content.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 3. og:image via fetch with timeout\nif (!imageUrl && item.link) {\n  try {\n    const ctrl = new AbortController();\n    setTimeout(() => ctrl.abort(), 3000);\n    const res = await fetch(item.link, { signal: ctrl.signal });\n    const html = await res.text();\n    const m = html.match(/<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i)\n           || html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 4. Normalize relative URLs\nif (imageUrl && imageUrl.startsWith('/') && item.link) {\n  try {\n    const u = new URL(item.link);\n    imageUrl = u.origin + imageUrl;\n  } catch (e) {}\n}\n\nreturn {\n  title: item.title,\n  link: item.link,\n  sourceText: cleanText,\n  imageUrl: imageUrl\n};"
+      },
+      "id": "f26ae429-4089-421b-97c0-6af3f68b146e",
+      "name": "Preprocessing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4480,
+        2000
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst apiKey = 'YOUR_OPENCODE_API_KEY';\n\nconst systemPrompt = 'Ти - український AI/аналітик. Переклади і стисни, тонь + аналіз. Відповідай строго в JSON.\\n\\nФормат відповіді:\\n1. content_uk: Змістовний переказ, українською (3-4 речення).\\n2. analysis_uk: Короткий, українською 1 підсумковий абзац про головне (до 200 символів).\\n3. relevance_score: Число від 0 до 100 — наскільки ця новина цікава для AI/ML та крипто аудиторії.\\n   0-15: не цікаво (мемкоїни, airdrops, реклама, загальні новини).\\n   15-35: малоцікаво (побічні теми, повтори).\\n   35-70: цікаво (важливі оновлення, продукти, ринок).\\n   70-100: дуже важливо (запуски, злами, регуляції, breakthrough).\\n\\nСтруктура:\\n{\\n  \"importance\": \"Висока/Середня/Низька/Інфо\",\\n  \"title_uk\": \"Заголовок\",\\n  \"content_uk\": \"Текст\",\\n  \"analysis_uk\": \"Підсумок\",\\n  \"tags\": [\"Категорія1\", \"Категорія2\"],\\n  \"relevance_score\": 75\\n}';\n\nconst userPrompt = 'Стаття: ' + (item.sourceText || 'Без тексту');\n\nconst response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://opencode.ai/zen/v1/chat/completions',\n    headers: {\n        'Content-Type': 'application/json',\n        'Authorization': 'Bearer ' + apiKey,\n        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'\n    },\n    body: {\n        model: 'deepseek-v4-flash-free',\n        messages: [\n            { role: 'system', content: systemPrompt },\n            { role: 'user', content: userPrompt }\n        ]\n    },\n    json: true\n});\n\nreturn response;"
+      },
+      "id": "3ce72544-c810-4989-9979-9cba96e97132",
+      "name": "OpenRouter AI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5008,
+        2000
+      ],
+      "alwaysOutputData": true,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiContent = $json.output || $json.text || ($json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content);\nlet aiResponse = {};\n\ntry {\n    if (typeof aiContent === 'string') {\n        const cleanJson = aiContent.replace(/```json/gi, '').replace(/```/gi, '').trim();\n        aiResponse = JSON.parse(cleanJson);\n    } else {\n        aiResponse = aiContent || {};\n    }\n} catch (e) {\n    const jsonMatch = String(aiContent).match(/\\{[\\s\\S]*\\}/);\n    aiResponse = jsonMatch ? JSON.parse(jsonMatch[0]) : {};\n}\n\nlet link = $json.link || $('Preprocessing').item.json.link || '#';\nconst imageUrl = $json.imageUrl || $('Preprocessing').item.json.imageUrl || '';\n\nif (!aiResponse.title_uk && !aiResponse.content_uk) {\n    return {\n        fullText: '🔴 <b>ПОМИЛКА</b>\\n\\n' + (aiContent || 'АІ не відповів') + '\\n\\nДжерело:\\n🔗 <b><a href=\"' + link + '\">Читати</a></b>',\n        imageUrl: imageUrl,\n        importance: 'Низька',\n        reaction: '',\n        link: link,\n        relevance_score: aiResponse.relevance_score || 50\n    };\n}\n\nconst title = aiResponse.title_uk || 'Новина';\nconst content = aiResponse.content_uk || '';\nconst analysis = aiResponse.analysis_uk || '';\nconst tags = Array.isArray(aiResponse.tags) ? aiResponse.tags : [];\nconst importance = aiResponse.importance || 'Низька';\n\nconst emojiMap = {\n    'Висока': '🔴',\n    'Середня': '🟡',\n    'Низька': '🟢',\n    'Інфо': '⚪'\n};\nconst emoji = emojiMap[importance] || '⚪';\n\nlet html = emoji + ' <b>' + title.toUpperCase() + '</b>\\n\\n';\n\nhtml += content + '\\n\\n';\n\nif (analysis && analysis.length > 10) {\n    html += '<b>💡 Аналіз:</b>\\n<i>' + analysis + '</i>\\n\\n';\n}\n\nif (tags.length > 0) {\n    const cleanTags = tags.map(function(t) { return t.replace(/[#\\s]/g, '').trim(); }).filter(function(t) { return t.length > 0; });\n    if (cleanTags.length > 0) {\n        html += '<b>🏷 Теги:</b>\\n' + cleanTags.map(function(t) { return '#' + t; }).join(' ') + '\\n\\n';\n    }\n}\n\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n    fullText: html,\n    imageUrl: imageUrl,\n    importance: importance,\n    reaction: '',\n    link: link,\n    relevance_score: aiResponse.relevance_score || 50\n};"
+      },
+      "id": "78ea4487-9751-460c-8f8d-76795393cd12",
+      "name": "Final Formatting",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5376,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "checkImage",
+              "leftValue": "={{ $json.imageUrl }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0883ca09-ac6a-49fb-be8d-934b5ee9363c",
+      "name": "Has Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5696,
+        2544
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "@aliyrd_my_news",
+        "text": "={{ $json.fullText }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "fef93d52-c574-426a-8edc-257308907a30",
+      "name": "Telegram (Text)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        5952,
+        2640
+      ],
+      "webhookId": "18eda5b1-5bcb-483f-9762-79cc1aa6a80c",
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "@aliyrd_my_news",
+        "file": "={{ $json.imageUrl }}",
+        "additionalFields": {
+          "caption": "={{ $json.fullText.substring(0, 1024) }}",
+          "disable_notification": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "994a3058-8413-46be-942b-f06c4ebec7d4",
+      "name": "Telegram (Photo)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        5952,
+        2448
+      ],
+      "webhookId": "081600b8-e608-4651-8f79-f69ad17c4418",
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "*/55 * * * *"
+            }
+          ]
+        },
+        "feedUrl": "https://www.technologyreview.com/feed/?utm_source=chatgpt.com"
+      },
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        3824,
+        2336
+      ],
+      "id": "12d2c89d-681f-475f-8e0c-51dae9924063",
+      "name": "RSS Feed technologyreview"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "feedUrl": "https://the-decoder.com/feed/"
+      },
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        1552
+      ],
+      "id": "cef6ee46-ad51-4743-b3c3-98fd89edb107",
+      "name": "RSS Feed Decoder"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "0 */3 * * *"
+            }
+          ]
+        },
+        "feedUrl": "https://habr.com/ru/rss/hub/artificial_intelligence"
+      },
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        3808,
+        2544
+      ],
+      "id": "da179947-f82d-45c0-8c67-19377dea664a",
+      "name": "RSS Feed habr/artificial_intelligence"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "*/15 * * * *"
+            }
+          ]
+        },
+        "feedUrl": "https://dailyai.com/feed"
+      },
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        3808,
+        2752
+      ],
+      "id": "d66df373-c667-4842-bee9-e9e0d14b1f93",
+      "name": "RSS Feed DailyAI"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "feedUrl": "https://news.google.com/rss/search?q=AI+technology&hl=en-US&gl=US&ceid=US:en"
+      },
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        2128
+      ],
+      "id": "d592dde4-c969-4937-99f0-af38ca947711",
+      "name": "RSS Feed Google"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = ($json.sourceText || '').toLowerCase();\n\nconst cryptoWords = ['bitcoin', 'ethereum', 'crypto', 'btc', 'eth', 'defi', 'nft', 'blockchain',\n  'token', 'web3', 'solana', 'altcoin', 'mining', 'wallet', 'exchange', 'binance', 'coin',\n  'tokenomics', 'metaverse', 'layer2', 'smart contract', 'dapp'];\n\nconst aiWords = ['ai', 'artificial intelligence', 'gpt', 'openai', 'llm', 'neural', 'machine learning',\n  'deep learning', 'robot', 'automation', 'chatbot', 'gpt-4', 'claude', 'bard', 'gemini',\n  'langchain', 'rag', 'transformer', 'diffusion', 'stable diffusion', 'copilot', 'llama'];\n\nlet topic = 'general';\nlet cryptoScore = cryptoWords.filter(w => text.includes(w)).length;\nlet aiScore = aiWords.filter(w => text.includes(w)).length;\n\nif (cryptoScore > aiScore) topic = 'crypto';\nelse if (aiScore > cryptoScore) topic = 'ai';\nelse if (aiScore > 0) topic = 'ai'; // ???? ??????? - AI (???? ??????? ??? AI)\nelse if (cryptoScore > 0) topic = 'crypto';\n\nreturn { ...$json, topic };"
+      },
+      "id": "90542ea0-5fe3-4323-ba1d-c1ebb507ea7d",
+      "name": "Topic Detector",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4656,
+        2000
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "if ($json.imageUrl) return $json;\n\nconst query = encodeURIComponent(($json.title || '').substring(0, 100));\nif (!query) return $json;\n\nconst apiKey = '3f53ed24bc944237e78901e0b34dc3284d28dc03357a5eb872184bd93ba846e1';\nconst url = 'https://serpapi.com/search.json?engine=google_images&q=' + query + '&api_key=' + apiKey;\n\ntry {\n  const ctrl = new AbortController();\n  const timeoutId = setTimeout(() => ctrl.abort(), 5000);\n  const res = await fetch(url, { signal: ctrl.signal });\n  clearTimeout(timeoutId);\n  const data = await res.json();\n  if (data.images_results && data.images_results.length > 0) {\n    const imgUrl = data.images_results[0].original || data.images_results[0].thumbnail;\n    if (imgUrl) return { ...$json, imageUrl: imgUrl };\n  }\n} catch (e) {}\n\nreturn $json;"
+      },
+      "id": "f9a7b941-7e93-4105-b81d-b4452f726e03",
+      "name": "SERP Image Fallback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6016,
+        1680
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "checkOpenRouter",
+              "leftValue": "={{ $json.choices }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ee05f3a1-d46b-47bd-b34e-4a6a5cefe49d",
+      "name": "OpenRouter Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5168,
+        2464
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = (($json.sourceText || '') + ' ' + ($json.title || '')).toLowerCase();\n\nconst interests = {\n  ai_models: { words: ['gpt', 'gpt-4', 'gpt-5', 'claude', 'llama', 'gemini', 'openai', 'anthropic', 'deepseek', 'mistral', 'llm', 'foundation model'], weight: 4 },\n  ai_tools: { words: ['langchain', 'rag', 'agent', 'copilot', 'cursor', 'chatbot', 'automation', 'n8n', 'api', 'sdk', 'framework', 'fine-tuning', 'prompt'], weight: 3 },\n  ai_research: { words: ['transformer', 'diffusion', 'neural', 'deep learning', 'machine learning', 'training', 'benchmark', 'artificial intelligence'], weight: 2 },\n  crypto_major: { words: ['bitcoin', 'btc', 'ethereum', 'eth', 'solana', 'sol', 'crypto', 'cryptocurrency'], weight: 4 },\n  crypto_defi: { words: ['defi', 'yield', 'staking', 'lending', 'swap', 'liquidity', 'aave', 'uniswap', 'dex'], weight: 3 },\n  crypto_infra: { words: ['blockchain', 'web3', 'layer2', 'l2', 'rollup', 'smart contract', 'dapp', 'token'], weight: 2 },\n  noise: { words: ['airdrop', 'giveaway', 'memecoin', 'shitcoin', 'presale', 'p2e', 'play-to-earn', 'celebrity'], weight: -8 },\n  spam: { words: ['sponsored', 'advertisement', 'paid partnership', 'promo code', 'discount'], weight: -10 }\n};\n\nlet score = 0;\nfor (const category in interests) {\n  const { words, weight } = interests[category];\n  const matches = words.filter(w => text.includes(w)).length;\n  score += matches * weight;\n}\n\nif ($json.topic === 'ai') score += 10;\nif ($json.topic === 'crypto') score += 10;\n\nif (score < 3) return [];\n\nreturn { ...$json, interestScore: score };"
+      },
+      "id": "9ca027c5-c899-4800-ae6b-f127e40aeb8b",
+      "name": "Interest Pre-Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4816,
+        2000
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "checkRelevance",
+              "leftValue": "={{ $json.relevance_score }}",
+              "rightValue": 35,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5b0c92c0-aa24-4bc8-b628-e4328a4972ed",
+      "name": "Relevance Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5584,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const preprocessing = $('Preprocessing').item.json;\nconst link = preprocessing.link || '#';\nconst title = preprocessing.title || 'Новина';\nconst imageUrl = preprocessing.imageUrl || '';\nconst sourceText = (preprocessing.sourceText || '').substring(0, 500);\n\nlet html = '⚠️ <b>' + title.toUpperCase() + '</b>\\n\\n';\nhtml += sourceText + '\\n\\n';\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n  fullText: html,\n  imageUrl: imageUrl,\n  importance: 'Інфо',\n  link: link,\n  relevance_score: 50\n};"
+      },
+      "id": "4048b331-47eb-4119-93e7-50d7da032559",
+      "name": "Fallback Formatting",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5376,
+        2464
+      ],
+      "alwaysOutputData": true,
+      "continueOnFail": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "RSS Forklog": {
+      "main": [
+        [
+          {
+            "node": "Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Habr": {
+      "main": [
+        [
+          {
+            "node": "Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplication": {
+      "main": [
+        [
+          {
+            "node": "Preprocessing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preprocessing": {
+      "main": [
+        [
+          {
+            "node": "Topic Detector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter AI": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Formatting": {
+      "main": [
+        [
+          {
+            "node": "Relevance Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Image?": {
+      "main": [
+        [
+          {
+            "node": "Telegram (Photo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram (Text)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed technologyreview": {
+      "main": [
+        [
+          {
+            "node": "Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed Decoder": {
+      "main": [
+        [
+          {
+            "node": "Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed habr/artificial_intelligence": {
+      "main": [
+        [
+          {
+            "node": "Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed DailyAI": {
+      "main": [
+        [
+          {
+            "node": "Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed Google": {
+      "main": [
+        [
+          {
+            "node": "Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Topic Detector": {
+      "main": [
+        [
+          {
+            "node": "Interest Pre-Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP Image Fallback": {
+      "main": [
+        [
+          {
+            "node": "Has Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Success?": {
+      "main": [
+        [
+          {
+            "node": "Final Formatting",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback Formatting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interest Pre-Filter": {
+      "main": [
+        [
+          {
+            "node": "OpenRouter AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Relevance Gate": {
+      "main": [
+        [
+          {
+            "node": "SERP Image Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback Formatting": {
+      "main": [
+        [
+          {
+            "node": "SERP Image Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ba546eb1-5d80-4b37-a3cf-c1891b3e71f8",
+  "meta": {
+    "instanceId": "fd9a85cb5fad5f7e754e8f04be7f2ed4c198062572fab2e912fefc2d50bd00a3"
+  },
+  "id": "YAyuG9GA2jUeICG2",
+  "tags": []
+}
