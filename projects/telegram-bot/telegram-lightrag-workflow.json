@@ -1,0 +1,135 @@
+{
+  "name": "TG + LightRAG",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": 3
+        }
+      },
+      "id": "1",
+      "name": "Timer",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot8826453977:AAHEkDpdnzeARSsSv5ofMqwMe2O2vrdiQcI/getUpdates",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeout",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "getUpdates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json.result;\nif (!result || result.length === 0) return [];\nconst items = [];\nfor (const u of result) {\n  if (u.message && u.message.text) {\n    items.push({json: u.message});\n  }\n}\nreturn items;"
+      },
+      "id": "3",
+      "name": "Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:9621/query",
+        "sendBody": true,
+        "contentType": "json",
+        "rawBody": "{\"query\":\"{{ $json.text }}\",\"mode\":\"mix\"}",
+        "options": {}
+      },
+      "id": "4",
+      "name": "LightRAG",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot8826453977:AAHEkDpdnzeARSsSv5ofMqwMe2O2vrdiQcI/sendMessage",
+        "sendBody": true,
+        "contentType": "json",
+        "rawBody": "{\"chat_id\":{{ $json.chat.id }},\"text\":\"{{ $(\"LightRAG\").item.json.response }}\"}"
+      },
+      "id": "5",
+      "name": "Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1250,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Timer": {
+      "main": [
+        [
+          {
+            "node": "getUpdates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getUpdates": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "LightRAG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LightRAG": {
+      "main": [
+        [
+          {
+            "node": "Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
