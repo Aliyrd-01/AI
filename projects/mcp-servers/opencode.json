@@ -1,0 +1,52 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "mysql": {
+      "type": "local",
+      "command": ["npx.cmd", "-y", "@benborla29/mcp-server-mysql"],
+      "enabled": true,
+      "environment": {
+        "MYSQL_HOST": "auth-db936.hstgr.io",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "u543957720_crypto",
+        "MYSQL_PASS": "REDACTED",
+        "MYSQL_DB": "u543957720_cryptoprice"
+      }
+    },
+    "postman": {
+      "type": "local",
+      "command": ["npx.cmd", "-y", "@postman/postman-mcp-server"],
+      "enabled": true,
+      "environment": {
+        "POSTMAN_API_KEY": "REDACTED"
+      }
+    },
+    "composio": {
+      "type": "remote",
+      "url": "https://connect.composio.dev/mcp",
+      "enabled": true,
+      "headers": {
+        "x-api-key": "REDACTED"
+      }
+    },
+    "postgresql": {
+      "type": "local",
+      "command": ["node", "D:\\n8n\\MCP\\pg-mcp-server\\server.js"],
+      "enabled": true,
+      "environment": {
+        "PG_HOST": "localhost",
+        "PG_PORT": "5432",
+        "PG_USER": "postgres",
+        "PG_PASSWORD": "REDACTED",
+        "PG_DATABASE": "testPost2",
+        "REMOTE_SECRET_KEY": "REDACTED",
+        "PORT": "9002"
+      }
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["npx.cmd", "-y", "@playwright/mcp"],
+      "enabled": true
+    }
+  }
+}

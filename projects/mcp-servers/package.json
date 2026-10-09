@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@benborla29/mcp-server-mysql": "^2.0.8",
+    "@postman/postman-mcp-server": "^2.9.0"
+  }
+}

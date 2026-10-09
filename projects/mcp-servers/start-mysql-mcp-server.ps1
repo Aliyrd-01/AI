@@ -1,0 +1,17 @@
+$env:MYSQL_HOST = "auth-db936.hstgr.io"
+$env:MYSQL_PORT = "3306"
+$env:MYSQL_USER = "u543957720_crypto"
+$env:MYSQL_PASS = "REDACTED"
+$env:MYSQL_DB = "u543957720_cryptoprice"
+$env:IS_REMOTE_MCP = "true"
+$env:REMOTE_SECRET_KEY = "REDACTED_KEY"
+$env:PORT = "9001"
+
+Write-Host "======================================"
+Write-Host "MySQL MCP Server (HTTP mode)"
+Write-Host "URL: http://localhost:9001/mcp"
+Write-Host "Auth: Bearer REDACTED_KEY"
+Write-Host "======================================"
+Write-Host ""
+
+& "C:\Program Files\nodejs\node.exe" "C:\Users\valen\AppData\Roaming\npm\node_modules\@benborla29\mcp-server-mysql\dist\index.js"
