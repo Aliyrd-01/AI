@@ -5,7 +5,7 @@
     python make_demo_video.py --lang ru  # один
 
 Требования:
-  - скриншоты:  shots/<lang>_<name>.png   (node tools/capture_shots.mjs <lang>)
+  - скриншоты:  shots/<lang>_<name>.png   (node capture_shots.mjs <lang>)
   - ffmpeg:     imageio-ffmpeg (ставится вместе с moviepy)
 
 Результат: docs/hub-demo-ru.mp4 и docs/hub-demo-en.mp4
