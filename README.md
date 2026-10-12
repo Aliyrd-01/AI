@@ -49,5 +49,7 @@ npm i --no-save playwright
 node record_demo.mjs          # результат: docs/hub-demo.webm
 ```
 
+Готовое видео: **`docs/hub-demo.mp4`** — обзор всех страниц хаба.
+
 ## Секреты
 `.env` (ключи Qdrant/LLM) — не коммитится. Шаблон: `.env.example`.

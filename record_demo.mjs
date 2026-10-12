@@ -22,7 +22,7 @@ const DWELL_MS = 3500;
 
 mkdirSync(OUT, { recursive: true });
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ channel: "chrome" });
 const ctx = await browser.newContext({
   viewport: { width: 1440, height: 900 },
   recordVideo: { dir: OUT, size: { width: 1440, height: 900 } },
