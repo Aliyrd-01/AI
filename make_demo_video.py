@@ -32,6 +32,13 @@ TMP = os.path.join(VO, "tmp")
 
 VOICES = {"ru": "Microsoft Irina Desktop", "en": "Microsoft Zira Desktop"}
 
+# Piper (офлайн, человечные мужские голоса)
+PIPER_DIR = os.path.join(HERE, "tools", "voices")
+PIPER_MODELS = {
+    "ru": os.path.join(PIPER_DIR, "ru_RU-denis-medium.onnx"),
+    "en": os.path.join(PIPER_DIR, "en_US-ryan-high.onnx"),
+}
+
 SCRIPTS = {
     "ru": {
         "pages": [
@@ -89,7 +96,7 @@ def ffprobe_duration(path: str) -> float:
 
 
 def sapi_tts(text: str, lang: str, out_wav: str):
-    """Офлайн озвучка через Windows SAPI (голоса Irina ru-RU / Zira en-US)."""
+    """(запасной вариант) Офлайн озвучка через Windows SAPI."""
     txt_file = os.path.join(TMP, "text.txt")
     with open(txt_file, "w", encoding="utf-8-sig") as f:
         f.write(text)
@@ -110,13 +117,25 @@ def sapi_tts(text: str, lang: str, out_wav: str):
         raise RuntimeError(f"SAPI TTS failed: {err[:200]}")
 
 
+def piper_tts(text: str, lang: str, out_wav: str):
+    """Офлайн озвучка через Piper — человечный мужской голос."""
+    txt_file = os.path.join(TMP, "text.txt")
+    with open(txt_file, "w", encoding="utf-8") as f:
+        f.write(text)
+    model = PIPER_MODELS[lang]
+    rc, _o, err = run([sys.executable, "-m", "piper",
+                       "-m", model, "-c", model + ".json",
+                       "-f", out_wav, "-i", txt_file])
+    if rc != 0 or not os.path.exists(out_wav):
+        raise RuntimeError(f"Piper TTS failed: {err[:200]}")
+
+
 def gen_audio(lang: str):
     os.makedirs(TMP, exist_ok=True)
-    voice = VOICES[lang]
     for name, text in SCRIPTS[lang]["pages"]:
         out_wav = os.path.join(VO, f"{lang}_{name}.wav")
-        sapi_tts(text, lang, out_wav)
-        print(f"  vo {lang}/{name} ({voice})")
+        piper_tts(text, lang, out_wav)
+        print(f"  vo {lang}/{name} (piper: {os.path.basename(PIPER_MODELS[lang])})")
 
 
 def build(lang: str) -> str | None:

@@ -45,7 +45,13 @@ for (const [slug, name] of PAGES) {
   } catch (e) {
     console.warn("warn:", slug, e.message);
   }
-  await page.waitForTimeout(2500);
+  // Ждём, пока Streamlit закончит выполнение скрипта (исчезнет статус-виджет),
+  // иначе кадр получается пустым ("Stop / Deploy").
+  await page.waitForTimeout(1200);
+  await page
+    .waitForFunction(() => !document.querySelector('[data-testid="stStatusWidget"]'), null, { timeout: 25000 })
+    .catch(() => {});
+  await page.waitForTimeout(800);
   await page.screenshot({ path: `shots/${LANG}_${name}.png` });
   console.log("shot", LANG, name);
 }
