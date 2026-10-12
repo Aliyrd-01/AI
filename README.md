@@ -40,5 +40,14 @@ Dockerfile / docker-compose.yml  локально и VPS
 Caddyfile                        реверс-прокси + HTTPS (VPS)
 ```
 
+## Демо-видео
+
+Записать обзор хаба (нужен запущенный хаб: `start.cmd`):
+
+```powershell
+npm i --no-save playwright
+node record_demo.mjs          # результат: docs/hub-demo.webm
+```
+
 ## Секреты
 `.env` (ключи Qdrant/LLM) — не коммитится. Шаблон: `.env.example`.
