@@ -47,6 +47,9 @@ T = {
                 "(PostgreSQL через MCP).",
         "ua_l": "Открыть агента →",
         "stack": "Стек: Python · Streamlit · Qdrant · FastEmbed · LangChain · n8n · PostgreSQL · MCP · Docker",
+        "video_h": "🎬 Демо-видео",
+        "video_ru": "Русская озвучка",
+        "video_en": "English voiceover",
     },
     "en": {
         "title": "🧠 AI Portfolio",
@@ -77,6 +80,9 @@ T = {
                 "(PostgreSQL via MCP).",
         "ua_l": "Open the agent →",
         "stack": "Stack: Python · Streamlit · Qdrant · FastEmbed · LangChain · n8n · PostgreSQL · MCP · Docker",
+        "video_h": "🎬 Demo video",
+        "video_ru": "Russian voiceover",
+        "video_en": "English voiceover",
     },
 }[lang]
 
@@ -118,5 +124,24 @@ with row2[2]:
     st.subheader(T["ua_t"])
     st.write(T["ua_d"])
     st.page_link("pages/6_Unified_Agent.py", label=T["ua_l"])
+
+st.divider()
+st.subheader(T["video_h"])
+import os as _os
+c_ru, c_en = st.columns(2)
+with c_ru:
+    st.caption(T["video_ru"])
+    _v = _os.path.join(HERE, "..", "docs", "hub-demo-ru.mp4")
+    if _os.path.exists(_v):
+        st.video(_v)
+    else:
+        st.info("docs/hub-demo-ru.mp4 — не найден (собери: `python make_demo_video.py`)")
+with c_en:
+    st.caption(T["video_en"])
+    _v = _os.path.join(HERE, "..", "docs", "hub-demo-en.mp4")
+    if _os.path.exists(_v):
+        st.video(_v)
+    else:
+        st.info("docs/hub-demo-en.mp4 — not found (run: `python make_demo_video.py`)")
 
 st.caption(T["stack"])
