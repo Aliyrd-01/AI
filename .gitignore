@@ -31,3 +31,4 @@ projects/**/Output/
 projects/**/Report/
 projects/**/rag_storage/
 projects/**/tiktoken/
+node_modules/

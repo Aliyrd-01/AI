@@ -1,58 +1,122 @@
-"""Portfolio hub — landing page.
+"""Portfolio hub — landing page (RU/EN).
 
 Streamlit multi-page entrypoint. Sidebar navigation is generated from ./pages/.
 Run locally:  streamlit run hub/Home.py
 """
 
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
 import streamlit as st
+from i18n import lang_switcher
 
-st.set_page_config(page_title="AI Portfolio", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="AI Portfolio — RAG + n8n", page_icon="🧠", layout="wide")
 
-st.title("🧠 AI Portfolio")
-st.caption("RAG-система, n8n-автоматизации и агенты: интерактивное демо + разборы пайплайнов.")
+lang = lang_switcher()
 
-st.markdown(
-    "Один проект, который собирает ключевые наработки. Всё запускается локально "
-    "одной командой и позже разворачивается на VPS."
-)
+T = {
+    "ru": {
+        "title": "🧠 AI Portfolio",
+        "caption": "RAG-система, n8n-автоматизации и агенты: интерактивное демо + разборы пайплайнов.",
+        "intro": "Один проект, который собирает ключевые наработки. Всё запускается локально "
+                 "одной командой и позже разворачивается на VPS.",
+        "rag_t": "🔎 RAG",
+        "rag_d": "Гибридный retrieval (dense+sparse RRF), CrossEncoder-реранкинг, цитаты, "
+                 "честный отказ, 11 стратегий, замеренные метрики.",
+        "rag_l": "Открыть демо →",
+        "n8n_t": "🔗 n8n",
+        "n8n_d": "3 воркфлоу: Content Publisher (RSS→LLM→Telegram), Lead Qualification "
+                 "(MCP + A/B промптов + CRM), AI Support & Escalation.",
+        "n8n_l": "Пайплайны →",
+        "agents_t": "🤖 Agents & MCP",
+        "agents_d": "Многоагентная система AutoAgent (triage → File/Web/Coding, "
+                    "multi-model по фазам) и MCP-серверы к Postgres/MySQL.",
+        "agents_l": "Агенты →",
+        "bench_t": "📊 Benchmarks",
+        "bench_d": "Метрики retrieval/генерации (Hit@5, NDCG@10, faithfulness) и сравнение LLM "
+                   "по TruthfulQA / GSM8K / BBH.",
+        "bench_l": "Метрики →",
+        "projects_t": "🧩 Проекты",
+        "projects_d": "GraphRAG/LightRAG, Telegram-LightRAG-бот, учебные модули — карточки и ссылки.",
+        "projects_l": "Все проекты →",
+        "ua_t": "🧭 Unified Agent",
+        "ua_d": "Один агент с инструментами: сам выбирает RAG-поиск или запрос к CRM "
+                "(PostgreSQL через MCP).",
+        "ua_l": "Открыть агента →",
+        "stack": "Стек: Python · Streamlit · Qdrant · FastEmbed · LangChain · n8n · PostgreSQL · MCP · Docker",
+    },
+    "en": {
+        "title": "🧠 AI Portfolio",
+        "caption": "RAG system, n8n automations and agents: interactive demo + pipeline breakdowns.",
+        "intro": "One project that brings key work together. Runs locally with a single command "
+                 "and deploys to a VPS later.",
+        "rag_t": "🔎 RAG",
+        "rag_d": "Hybrid retrieval (dense+sparse RRF), CrossEncoder reranking, citations, "
+                 "honest refusal, 11 strategies, measured metrics.",
+        "rag_l": "Open the demo →",
+        "n8n_t": "🔗 n8n",
+        "n8n_d": "3 workflows: Content Publisher (RSS→LLM→Telegram), Lead Qualification "
+                 "(MCP + A/B prompt testing + CRM), AI Support & Escalation.",
+        "n8n_l": "Pipelines →",
+        "agents_t": "🤖 Agents & MCP",
+        "agents_d": "Multi-agent AutoAgent system (triage → File/Web/Coding, multi-model per phase) "
+                    "and MCP servers for Postgres/MySQL.",
+        "agents_l": "Agents →",
+        "bench_t": "📊 Benchmarks",
+        "bench_d": "Retrieval/generation metrics (Hit@5, NDCG@10, faithfulness) and LLM comparison "
+                   "on TruthfulQA / GSM8K / BBH.",
+        "bench_l": "Metrics →",
+        "projects_t": "🧩 Projects",
+        "projects_d": "GraphRAG/LightRAG, Telegram-LightRAG bot, learning modules — cards and links.",
+        "projects_l": "All projects →",
+        "ua_t": "🧭 Unified Agent",
+        "ua_d": "One tool-calling agent: decides between RAG search and a CRM query "
+                "(PostgreSQL via MCP).",
+        "ua_l": "Open the agent →",
+        "stack": "Stack: Python · Streamlit · Qdrant · FastEmbed · LangChain · n8n · PostgreSQL · MCP · Docker",
+    },
+}[lang]
+
+st.title(T["title"])
+st.caption(T["caption"])
+
+st.markdown(T["intro"])
 st.write("")
 
 row1 = st.columns(3, gap="large")
 with row1[0]:
-    st.subheader("🔎 RAG")
-    st.write("Гибридный retrieval (dense+sparse RRF), CrossEncoder-реранкинг, цитаты, "
-             "честный отказ, 11 стратегий, замеренные метрики.")
-    st.page_link("pages/1_RAG.py", label="Открыть демо →")
+    st.subheader(T["rag_t"])
+    st.write(T["rag_d"])
+    st.page_link("pages/1_RAG.py", label=T["rag_l"])
 
 with row1[1]:
-    st.subheader("🔗 n8n")
-    st.write("3 воркфлоу: Content Publisher (RSS→LLM→Telegram), Lead Qualification "
-             "(MCP + A/B промптов + CRM), AI Support & Escalation.")
-    st.page_link("pages/2_n8n.py", label="Пайплайны →")
+    st.subheader(T["n8n_t"])
+    st.write(T["n8n_d"])
+    st.page_link("pages/2_n8n.py", label=T["n8n_l"])
 
 with row1[2]:
-    st.subheader("🤖 Agents & MCP")
-    st.write("Многоагентная система AutoAgent (triage → File/Web/Coding) и MCP-серверы "
-             "к Postgres/MySQL.")
-    st.page_link("pages/4_Agents.py", label="Агенты →")
+    st.subheader(T["agents_t"])
+    st.write(T["agents_d"])
+    st.page_link("pages/4_Agents.py", label=T["agents_l"])
 
 st.write("")
 row2 = st.columns(3, gap="large")
 with row2[0]:
-    st.subheader("📊 Benchmarks")
-    st.write("Метрики retrieval/генерации (Hit@5, NDCG@10, faithfulness) и сравнение LLM "
-             "по TruthfulQA / GSM8K / BBH.")
-    st.page_link("pages/5_Benchmarks.py", label="Метрики →")
+    st.subheader(T["bench_t"])
+    st.write(T["bench_d"])
+    st.page_link("pages/5_Benchmarks.py", label=T["bench_l"])
 
 with row2[1]:
-    st.subheader("🧩 Проекты")
-    st.write("GraphRAG/LightRAG, Telegram-LightRAG-бот, учебные модули — карточки и ссылки.")
-    st.page_link("pages/3_Projects.py", label="Все проекты →")
+    st.subheader(T["projects_t"])
+    st.write(T["projects_d"])
+    st.page_link("pages/3_Projects.py", label=T["projects_l"])
 
 with row2[2]:
-    st.subheader("🧭 Unified Agent")
-    st.write("Один агент с инструментами: сам выбирает RAG-поиск или запрос к CRM "
-             "(PostgreSQL через MCP).")
-    st.page_link("pages/6_Unified_Agent.py", label="Открыть агента →")
+    st.subheader(T["ua_t"])
+    st.write(T["ua_d"])
+    st.page_link("pages/6_Unified_Agent.py", label=T["ua_l"])
 
-st.caption("Стек: Python · Streamlit · Qdrant · FastEmbed · LangChain · n8n · PostgreSQL · MCP · Docker")
+st.caption(T["stack"])
