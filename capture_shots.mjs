@@ -41,17 +41,18 @@ if (LANG === "en") {
 
 for (const [slug, name] of PAGES) {
   try {
-    await page.goto(BASE + slug, { waitUntil: "networkidle", timeout: 30000 });
+    await page.goto(BASE + slug, { waitUntil: "networkidle", timeout: 35000 });
   } catch (e) {
     console.warn("warn:", slug, e.message);
   }
-  // Ждём, пока Streamlit закончит выполнение скрипта (исчезнет статус-виджет),
-  // иначе кадр получается пустым ("Stop / Deploy").
-  await page.waitForTimeout(1200);
+  // Даём Streamlit гарантированно отрендерить DOM и спрятать индикатор загрузки
+  await page.waitForTimeout(2000);
   await page
-    .waitForFunction(() => !document.querySelector('[data-testid="stStatusWidget"]'), null, { timeout: 25000 })
+    .waitForFunction(() => !document.querySelector('[data-testid="stStatusWidget"]'), null, { timeout: 30000 })
     .catch(() => {});
-  await page.waitForTimeout(800);
+  // Дополнительно ждём появления заголовка h1/h2 или контейнера данных
+  await page.waitForSelector('h1, h2, [data-testid="stVerticalBlock"]', { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1500);
   await page.screenshot({ path: `shots/${LANG}_${name}.png` });
   console.log("shot", LANG, name);
 }
