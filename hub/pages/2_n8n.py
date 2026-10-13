@@ -102,7 +102,7 @@ FLOWS = [
                   "(payments, complaints) are routed to a human operator with the full history.",
         },
         "tech": "n8n · Telegram API · LLM classification · dialog memory · human handoff",
-        "video": None,
+        "video": "support_demo.mp4",
         "images": [],
     },
 ]
