@@ -1,6 +1,5 @@
 """Agents & MCP — multi-agent framework and MCP servers (RU/EN)."""
 
-import html
 import json
 import os
 import sys
@@ -10,7 +9,7 @@ HUB = os.path.abspath(os.path.join(HERE, ".."))
 sys.path.insert(0, HUB)
 
 import streamlit as st
-import streamlit.components.v1 as components
+from diagrams import render_mermaid
 from i18n import lang_switcher
 
 st.set_page_config(page_title="Agents & MCP", page_icon="🤖", layout="wide")
@@ -18,16 +17,6 @@ st.set_page_config(page_title="Agents & MCP", page_icon="🤖", layout="wide")
 lang = lang_switcher()
 
 
-def render_mermaid(code: str, height: int = 420):
-    components.html(
-        f"""
-        <div class="mermaid">{html.escape(code)}</div>
-        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-        <script>mermaid.initialize({{ startOnLoad: true, theme: "base" }});</script>
-        """,
-        height=height,
-        scrolling=True,
-    )
 
 
 T = {

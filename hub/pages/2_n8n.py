@@ -1,6 +1,5 @@
 """n8n automation workflows — visual showcase (RU/EN)."""
 
-import html
 import json
 import os
 import sys
@@ -11,7 +10,7 @@ ASSETS = os.path.join(HUB, "assets", "n8n")
 sys.path.insert(0, HUB)
 
 import streamlit as st
-import streamlit.components.v1 as components
+from diagrams import render_mermaid
 from i18n import lang_switcher
 
 st.set_page_config(page_title="n8n Automations", page_icon="🔗", layout="wide")
@@ -86,7 +85,7 @@ FLOWS = [
         },
         "tech": "n8n · Webhook · MCP (Postgres CRM) · A/B prompt testing · OpenRouter · Telegram",
         "video": "leadqual_demo.mp4",
-        "images": ["n8n_workflow.png"],
+        "images": [],
     },
     {
         "key": "ai_support_escalation",
@@ -104,7 +103,7 @@ FLOWS = [
         },
         "tech": "n8n · Telegram API · LLM classification · dialog memory · human handoff",
         "video": None,
-        "images": ["n8n_debug.png"],
+        "images": [],
     },
 ]
 
@@ -127,19 +126,6 @@ def to_mermaid(wf: dict) -> str:
                 if t in ids:
                     lines.append(f"  {ids[src]} --> {ids[t]}")
     return "\n".join(lines)
-
-
-def render_mermaid(code: str, height: int = 560):
-    components.html(
-        f"""
-        <div class="mermaid">{html.escape(code)}</div>
-        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-        <script>mermaid.initialize({{ startOnLoad: true, theme: "base",
-            themeVariables: {{ fontSize: "13px" }} }});</script>
-        """,
-        height=height,
-        scrolling=True,
-    )
 
 
 def load_flow(fname: str):
@@ -185,7 +171,7 @@ for tab, meta in zip(tabs, FLOWS):
                 st.markdown(f"**{T['demo']}**")
                 st.video(vpath)
 
-        with st.expander(T["diagram"], expanded=not meta.get("video")):
+        with st.expander(T["diagram"], expanded=True):
             render_mermaid(to_mermaid(wf), height=560)
 
         for img in meta.get("images", []):
@@ -201,7 +187,7 @@ for tab, meta in zip(tabs, FLOWS):
                 mime="application/json",
                 key=f"dl_{meta['key']}_{lang}",
             )
-            st.json({k: wf.get(k) for k in ("name", "active", "settings")}, expanded=False)
+            st.json(wf, expanded=False)
 
 st.divider()
 st.caption(T["foot"])

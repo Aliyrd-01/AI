@@ -35,7 +35,7 @@ VOICES = {"ru": "Microsoft Irina Desktop", "en": "Microsoft Zira Desktop"}
 # Piper (офлайн, человечные мужские голоса)
 PIPER_DIR = os.path.join(HERE, "tools", "voices")
 PIPER_MODELS = {
-    "ru": os.path.join(PIPER_DIR, "ru_RU-denis-medium.onnx"),
+    "ru": os.path.join(PIPER_DIR, "ru_RU-dmitri-medium.onnx"),
     "en": os.path.join(PIPER_DIR, "en_US-ryan-high.onnx"),
 }
 
@@ -118,14 +118,16 @@ def sapi_tts(text: str, lang: str, out_wav: str):
 
 
 def piper_tts(text: str, lang: str, out_wav: str):
-    """Офлайн озвучка через Piper — человечный мужской голос."""
+    """Офлайн озвучка через Piper — качественный мужской голос."""
     txt_file = os.path.join(TMP, "text.txt")
     with open(txt_file, "w", encoding="utf-8") as f:
         f.write(text)
     model = PIPER_MODELS[lang]
+    # --length-scale 1.05 делает речь чуть более естественной и размеренной
     rc, _o, err = run([sys.executable, "-m", "piper",
                        "-m", model, "-c", model + ".json",
-                       "-f", out_wav, "-i", txt_file])
+                       "-f", out_wav, "-i", txt_file,
+                       "--length-scale", "1.05"])
     if rc != 0 or not os.path.exists(out_wav):
         raise RuntimeError(f"Piper TTS failed: {err[:200]}")
 
