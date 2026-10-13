@@ -142,52 +142,57 @@ def load_flow(fname: str):
 st.title("🔗 n8n Automation Workflows")
 st.caption(T["caption"])
 
-tabs = st.tabs([f["title"] for f in FLOWS])
+# Select active workflow
+selected_flow = st.radio(
+    "Workflow",
+    options=[f["title"] for f in FLOWS],
+    horizontal=True,
+    label_visibility="collapsed"
+)
 
-for tab, meta in zip(tabs, FLOWS):
-    with tab:
-        wf = load_flow(meta["file"])
-        st.subheader(meta["short"][lang])
-        st.write(meta["desc"][lang])
-        st.caption(f"**{T['tech']}:** {meta['tech']}")
+meta = next(f for f in FLOWS if f["title"] == selected_flow)
+wf = load_flow(meta["file"])
 
-        if not wf:
-            st.warning(T["notfound"].format(f=meta["file"]))
-            continue
+st.subheader(meta["short"][lang])
+st.write(meta["desc"][lang])
+st.caption(f"**{T['tech']}:** {meta['tech']}")
 
-        n_nodes = len(wf.get("nodes", []))
-        n_conns = sum(
-            len([t for b in outs.get("main", []) or [] for t in (b or [])])
-            for outs in (wf.get("connections", {}) or {}).values()
+if not wf:
+    st.warning(T["notfound"].format(f=meta["file"]))
+else:
+    n_nodes = len(wf.get("nodes", []))
+    n_conns = sum(
+        len([t for b in outs.get("main", []) or [] for t in (b or [])])
+        for outs in (wf.get("connections", {}) or {}).values()
+    )
+    c1, c2, c3 = st.columns(3)
+    c1.metric(T["nodes"], n_nodes)
+    c2.metric(T["conns"], n_conns)
+    c3.metric("Workflow", wf.get("name", "—"))
+
+    if meta.get("video"):
+        vpath = os.path.join(ASSETS, meta["video"])
+        if os.path.exists(vpath):
+            st.markdown(f"**{T['demo']}**")
+            st.video(vpath)
+
+    with st.expander(T["diagram"], expanded=True):
+        render_mermaid(to_mermaid(wf), height=560)
+
+    for img in meta.get("images", []):
+        ipath = os.path.join(ASSETS, img)
+        if os.path.exists(ipath):
+            st.image(ipath, caption=img)
+
+    with st.expander(T["json"]):
+        st.download_button(
+            T["download"],
+            data=json.dumps(wf, ensure_ascii=False, indent=2),
+            file_name=meta["file"],
+            mime="application/json",
+            key=f"dl_{meta['key']}_{lang}",
         )
-        c1, c2, c3 = st.columns(3)
-        c1.metric(T["nodes"], n_nodes)
-        c2.metric(T["conns"], n_conns)
-        c3.metric("Workflow", wf.get("name", "—"))
-
-        if meta.get("video"):
-            vpath = os.path.join(ASSETS, meta["video"])
-            if os.path.exists(vpath):
-                st.markdown(f"**{T['demo']}**")
-                st.video(vpath)
-
-        with st.expander(T["diagram"], expanded=True):
-            render_mermaid(to_mermaid(wf), height=560)
-
-        for img in meta.get("images", []):
-            ipath = os.path.join(ASSETS, img)
-            if os.path.exists(ipath):
-                st.image(ipath, caption=img)
-
-        with st.expander(T["json"]):
-            st.download_button(
-                T["download"],
-                data=json.dumps(wf, ensure_ascii=False, indent=2),
-                file_name=meta["file"],
-                mime="application/json",
-                key=f"dl_{meta['key']}_{lang}",
-            )
-            st.json(wf, expanded=False)
+        st.json(wf, expanded=False)
 
 st.divider()
 st.caption(T["foot"])
