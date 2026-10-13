@@ -118,17 +118,39 @@ def render_mermaid(code: str, height: int = 420):
           }}
         }});
         
-        async function draw() {{
+        async function renderGraph() {{
           const container = document.getElementById('mermaid-container');
           try {{
-            const {{ svg }} = await mermaid.render('mermaid-svg', graphDefinition);
+            // Generate unique ID for each render
+            const id = 'mermaid-svg-' + Math.random().toString(36).substring(2, 9);
+            const {{ svg }} = await mermaid.render(id, graphDefinition);
             container.innerHTML = svg;
+            const svgEl = container.querySelector('svg');
+            if (svgEl) {{
+              svgEl.removeAttribute('width');
+              svgEl.style.width = '100%';
+              svgEl.style.minWidth = '600px';
+              svgEl.style.height = 'auto';
+            }}
           }} catch (err) {{
+            console.error('Mermaid error:', err);
             document.getElementById('diag-error').style.display = 'block';
             document.getElementById('diag-error').innerText = 'Mermaid render error: ' + err.message;
           }}
         }}
-        draw();
+
+        // If iframe is initially hidden inside a tab, re-render when visible
+        if (document.hidden) {{
+          document.addEventListener('visibilitychange', () => {{
+            if (!document.hidden) renderGraph();
+          }});
+        }}
+        window.addEventListener('resize', renderGraph);
+
+        // Multiple attempts to ensure layout engine has computed container width
+        renderGraph();
+        setTimeout(renderGraph, 500);
+        setTimeout(renderGraph, 1500);
       </script>
     </body>
     </html>
