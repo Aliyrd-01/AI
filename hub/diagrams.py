@@ -23,14 +23,14 @@ def _is_dark_theme() -> bool:
 def render_mermaid(code: str, height: int = 420):
     dark = _is_dark_theme()
     theme = "dark" if dark else "default"
-    line = "#60a5fa" if dark else "#2563eb"
-    text = "#f3f4f6" if dark else "#111827"
-    node_bkg = "#1e293b" if dark else "#f8fafc"
-    node_border = "#3b82f6" if dark else "#94a3b8"
+    line = "#38bdf8" if dark else "#0284c7"
+    text = "#f8fafc" if dark else "#0f172a"
+    node_bkg = "#1e293b" if dark else "#ffffff"
+    node_border = "#0284c7" if dark else "#94a3b8"
     
     variables = {
         "fontSize": "13px",
-        "fontFamily": "sans-serif",
+        "fontFamily": "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif",
         "primaryColor": node_bkg,
         "primaryTextColor": text,
         "primaryBorderColor": node_border,
@@ -42,25 +42,49 @@ def render_mermaid(code: str, height: int = 420):
         "clusterBorder": node_border,
     }
     
-    # CSS overrides inside iframe to force arrows and paths to be brightly visible
     extra_css = f"""
-      .edgePath path.path {{
-        stroke: {line} !important;
-        stroke-width: 2px !important;
+      html, body {{
+        background: transparent !important;
+        color: {text} !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }}
-      .marker, marker path, marker polygon {{
+      .mermaid {{
+        display: flex !important;
+        justify-content: center !important;
+        background: transparent !important;
+        min-height: 100px;
+      }}
+      .mermaid svg {{
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+      }}
+      .edgePath .path, .edgePath path, path.flowchart-link {{
+        stroke: {line} !important;
+        stroke-width: 2.5px !important;
+      }}
+      .marker, marker path, marker polygon, #flowchart-pointEnd, #flowchart-pointStart {{
         fill: {line} !important;
         stroke: {line} !important;
       }}
-      .node rect, .node circle, .node polygon {{
+      .node rect, .node circle, .node polygon, .node path {{
         fill: {node_bkg} !important;
         stroke: {node_border} !important;
-        stroke-width: 1.5px !important;
+        stroke-width: 2px !important;
       }}
-      .node .label {{
+      .node .label, .node span, .node div, text {{
         color: {text} !important;
+        fill: {text} !important;
+      }}
+      #error-svg {{
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 10px;
+        border-radius: 6px;
       }}
     """
+    
+    raw_code_js = json.dumps(code)
     
     body = f"""
     <!DOCTYPE html>
@@ -72,28 +96,19 @@ def render_mermaid(code: str, height: int = 420):
           margin: 0;
           padding: 10px;
           background: transparent;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           overflow: auto;
-        }}
-        .mermaid {{
-          display: flex;
-          justify-content: center;
-        }}
-        .mermaid svg {{
-          max-width: 100% !important;
-          height: auto !important;
         }}
         {extra_css}
       </style>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
     </head>
     <body>
-      <div class="mermaid">
-{html.escape(code)}
-      </div>
+      <div id="mermaid-container" class="mermaid"></div>
+      <div id="diag-error" style="display:none; color:#ef4444; font-family:monospace; padding:10px;"></div>
       <script>
+        const graphDefinition = {raw_code_js};
         mermaid.initialize({{
-          startOnLoad: true,
+          startOnLoad: false,
           theme: '{theme}',
           themeVariables: {json.dumps(variables)},
           flowchart: {{
@@ -102,6 +117,18 @@ def render_mermaid(code: str, height: int = 420):
             htmlLabels: true
           }}
         }});
+        
+        async function draw() {{
+          const container = document.getElementById('mermaid-container');
+          try {{
+            const {{ svg }} = await mermaid.render('mermaid-svg', graphDefinition);
+            container.innerHTML = svg;
+          }} catch (err) {{
+            document.getElementById('diag-error').style.display = 'block';
+            document.getElementById('diag-error').innerText = 'Mermaid render error: ' + err.message;
+          }}
+        }}
+        draw();
       </script>
     </body>
     </html>
