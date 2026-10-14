@@ -26,12 +26,10 @@ T = {
         "auto_tab": "AutoAgent (multi-agent)",
         "mcp_tab": "MCP servers",
         "auto_h": "AutoAgent — маршрутизация задач по под-агентам",
-        "auto_d": "Форк фреймворка **AutoAgent (HKUDS)**: головной `System Triage Agent` принимает задачу "
-                  "на естественном языке и передаёт её профильному под-агенту — **File Surfer** (чтение/анализ "
-                  "файлов), **Web Surfer** (поиск в вебе), **Coding** (написание/правка кода). Результаты "
-                  "собираются и возвращаются пользователю.",
-        "qubax": "**Провайдер — Qubax** (отвязано от OpenCode Zen), base `https://api.qubax.ai/v1`, "
-                 "tool-calls включены (`FN_CALL=True`).",
+        "auto_d": "Головной диспетчер **System Triage Agent** принимает задачу на естественном языке "
+                  "и делегирует её выполнение специализированным субагентам: **File Surfer** (анализ структуры "
+                  "и чтение локальных файлов), **Web Surfer** (поиск в интернете), **Coding** (написание и рефакторинг кода). "
+                  "Архитектура поддерживает вызовы функций (function calling) и параллельное выполнение подзадач.",
         "arch": "Архитектура",
         "phase_models": "Модели по фазам (multi-model) — `ROLE_MODELS` в `.env`:",
         "role": "Роль",
@@ -76,16 +74,16 @@ T = {
             {"role": "reporter", "model": "glm-4.7-flash", "phase": "отчёты, документация"},
         ],
         "tool_rows": [
-            {"Tool": "list_tables", "d": "Список таблиц", "p": "—"},
-            {"Tool": "describe_table", "d": "Колонки таблицы", "p": "table"},
-            {"Tool": "select", "d": "SELECT-запрос", "p": "sql"},
-            {"Tool": "insert", "d": "Вставить строку", "p": "table, data"},
-            {"Tool": "update", "d": "Обновить строки", "p": "table, set, where"},
-            {"Tool": "delete_rows", "d": "Удалить строки", "p": "table, where"},
-            {"Tool": "create_table", "d": "Создать таблицу", "p": "sql"},
-            {"Tool": "add_column", "d": "Добавить колонку", "p": "table, column_def"},
-            {"Tool": "create_index", "d": "Создать индекс", "p": "table, columns"},
-            {"Tool": "run_sql", "d": "Любой SQL", "p": "sql"},
+            {"Инструмент (Tool)": "list_tables", "Описание": "Получение списка всех таблиц в базе данных", "Параметры": "—"},
+            {"Инструмент (Tool)": "describe_table", "Описание": "Схема и типы колонок целевой таблицы", "Параметры": "table"},
+            {"Инструмент (Tool)": "select", "Описание": "Выполнение безопасного чтения данных (SELECT)", "Параметры": "sql"},
+            {"Инструмент (Tool)": "insert", "Описание": "Создание новых записей в таблице", "Параметры": "table, data"},
+            {"Инструмент (Tool)": "update", "Описание": "Модификация существующих записей", "Параметры": "table, set, where"},
+            {"Инструмент (Tool)": "delete_rows", "Описание": "Удаление строк по условию", "Параметры": "table, where"},
+            {"Инструмент (Tool)": "create_table", "Описание": "Создание новой реляционной таблицы", "Параметры": "sql"},
+            {"Инструмент (Tool)": "add_column", "Описание": "Миграция схемы: добавление новой колонки", "Параметры": "table, column_def"},
+            {"Инструмент (Tool)": "create_index", "Описание": "Создание индексов для ускорения выборок", "Параметры": "table, columns"},
+            {"Инструмент (Tool)": "run_sql", "Описание": "Комплексные SQL-транзакции", "Параметры": "sql"},
         ],
     },
     "en": {
@@ -93,13 +91,11 @@ T = {
         "caption": "Multi-agent system and Model Context Protocol — giving LLMs access to tools and data.",
         "auto_tab": "AutoAgent (multi-agent)",
         "mcp_tab": "MCP servers",
-        "auto_h": "AutoAgent — routing tasks to sub-agents",
-        "auto_d": "A fork of the **AutoAgent (HKUDS)** framework: the `System Triage Agent` takes a "
-                  "natural-language task and hands it to the right sub-agent — **File Surfer** (reading/analysing "
-                  "files), **Web Surfer** (web search), **Coding** (writing/editing code). Results are "
-                  "aggregated and returned to the user.",
-        "qubax": "**Provider — Qubax** (detached from OpenCode Zen), base `https://api.qubax.ai/v1`, "
-                 "tool-calls enabled (`FN_CALL=True`).",
+        "auto_h": "AutoAgent — Autonomous Task Orchestration",
+        "auto_d": "The **System Triage Agent** orchestrates multi-agent workflows by delegating "
+                  "complex natural language instructions to specialized sub-agents: **File Surfer** (file tree and source parsing), "
+                  "**Web Surfer** (real-time web search), and **Coding** (code generation and refactoring). "
+                  "The architecture supports native function calling and parallel task execution.",
         "arch": "Architecture",
         "phase_models": "Per-phase models (multi-model) — `ROLE_MODELS` in `.env`:",
         "role": "Role",
@@ -144,16 +140,16 @@ T = {
             {"role": "reporter", "model": "glm-4.7-flash", "phase": "reports, documentation"},
         ],
         "tool_rows": [
-            {"Tool": "list_tables", "d": "List all tables", "p": "—"},
-            {"Tool": "describe_table", "d": "Show columns of a table", "p": "table"},
-            {"Tool": "select", "d": "Run a SELECT query", "p": "sql"},
-            {"Tool": "insert", "d": "Insert rows", "p": "table, data"},
-            {"Tool": "update", "d": "Update rows", "p": "table, set, where"},
-            {"Tool": "delete_rows", "d": "Delete rows", "p": "table, where"},
-            {"Tool": "create_table", "d": "Create a table", "p": "sql"},
-            {"Tool": "add_column", "d": "Add a column", "p": "table, column_def"},
-            {"Tool": "create_index", "d": "Create an index", "p": "table, columns"},
-            {"Tool": "run_sql", "d": "Run any SQL", "p": "sql"},
+            {"Tool": "list_tables", "Description": "List all tables in the database", "Parameters": "—"},
+            {"Tool": "describe_table", "Description": "Show schema and column types of a table", "Parameters": "table"},
+            {"Tool": "select", "Description": "Execute safe read-only SQL SELECT queries", "Parameters": "sql"},
+            {"Tool": "insert", "Description": "Insert new rows into a table", "Parameters": "table, data"},
+            {"Tool": "update", "Description": "Update existing rows by condition", "Parameters": "table, set, where"},
+            {"Tool": "delete_rows", "Description": "Delete rows by condition", "Parameters": "table, where"},
+            {"Tool": "create_table", "Description": "Create a new database table", "Parameters": "sql"},
+            {"Tool": "add_column", "Description": "Schema migration: add a new column", "Parameters": "table, column_def"},
+            {"Tool": "create_index", "Description": "Create database index for fast lookups", "Parameters": "table, columns"},
+            {"Tool": "run_sql", "Description": "Execute complex SQL transactions", "Parameters": "sql"},
         ],
     },
 }[lang]
@@ -166,22 +162,22 @@ tab_agent, tab_mcp = st.tabs([T["auto_tab"], T["mcp_tab"]])
 with tab_agent:
     st.subheader(T["auto_h"])
     st.write(T["auto_d"])
-    st.info(T["qubax"])
     c1, c2, c3 = st.columns(3)
     c1.metric(T["agents_n"], "1 + 3")
     c2.metric(T["modes"], "user / editor / workflow")
     c3.metric(T["provider"], "Qubax")
-    with st.expander(T["arch"], expanded=True):
-        render_mermaid(
-            "flowchart TD\n"
-            f'  U["{T["task"]}"] --> T["{T["triage"]}"]\n'
-            f'  T --> F["{T["file"]}"]\n'
-            f'  T --> W["{T["web"]}"]\n'
-            f'  T --> C["{T["coding"]}"]\n'
-            f'  F --> R["{T["result"]}"]\n'
-            f'  W --> R\n'
-            f'  C --> R'
-        )
+    st.markdown(f"**{T['arch']}**")
+    render_mermaid(
+        "flowchart TD\n"
+        f'  U["{T["task"]}"] --> T["{T["triage"]}"]\n'
+        f'  T --> F["{T["file"]}"]\n'
+        f'  T --> W["{T["web"]}"]\n'
+        f'  T --> C["{T["coding"]}"]\n'
+        f'  F --> R["{T["result"]}"]\n'
+        f'  W --> R\n'
+        f'  C --> R',
+        height=320
+    )
 
     st.markdown(f"**{T['phase_models']}**")
     st.dataframe(T["phase_rows"], use_container_width=True, hide_index=True)
@@ -194,13 +190,14 @@ with tab_mcp:
     c1.metric(T["tools_n"], "10")
     c2.metric(T["transport"], "Streamable HTTP")
     c3.metric(T["port"], "9002")
-    with st.expander(T["arch"], expanded=True):
-        render_mermaid(
-            "flowchart LR\n"
-            f'  A["{T["agent"]}"] --> C["{T["client"]}"]\n'
-            f'  C --> S["{T["server"]}"]\n'
-            f'  S --> D[("{T["db"]}")]'
-        )
+    st.markdown(f"**{T['arch']}**")
+    render_mermaid(
+        "flowchart LR\n"
+        f'  A["{T["agent"]}"] --> C["{T["client"]}"]\n'
+        f'  C --> S["{T["server"]}"]\n'
+        f'  S --> D[("{T["db"]}")]',
+        height=220
+    )
 
     st.markdown(T["tools_h"])
     st.dataframe(T["tool_rows"], use_container_width=True, hide_index=True)
