@@ -176,8 +176,14 @@ else:
             st.markdown(f"**{T['demo']}**")
             st.video(vpath)
 
-    with st.expander(T["diagram"], expanded=True):
-        render_mermaid(to_mermaid(wf), height=560)
+    if meta.get("key") == "ai_support_escalation":
+        hd_canvas = os.path.join(ASSETS, "support_canvas_hd.png")
+        if os.path.exists(hd_canvas):
+            st.markdown("**Полотно воркфлоу в n8n**" if lang == "ru" else "**n8n Workflow Canvas**")
+            st.image(hd_canvas, use_container_width=True)
+
+    st.markdown(f"**{T['diagram']}**")
+    render_mermaid(to_mermaid(wf), height=560)
 
     for img in meta.get("images", []):
         ipath = os.path.join(ASSETS, img)

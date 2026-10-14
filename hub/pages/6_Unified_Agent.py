@@ -87,17 +87,18 @@ T = {
 st.title(T["title"])
 st.caption(T["caption"])
 
-with st.expander(T["how"], expanded=True):
-    render_mermaid(
-        "flowchart TD\n"
-        f'  U["{T["task_label"]}"] --> A["{T["triage_label"]}"]\n'
-        f'  A -->|tool| R["{T["kb_label"]}"]\n'
-        f'  A -->|tool| D["{T["db_label"]}"]\n'
-        f'  R --> A\n'
-        f'  D --> A\n'
-        f'  A --> Ans["{T["ans_label"]}"]'
-    )
-    st.caption(T["note"])
+st.markdown(f"**{T['how']}**")
+render_mermaid(
+    "flowchart TD\n"
+    f'  U["{T["task_label"]}"] --> A["{T["triage_label"]}"]\n'
+    f'  A -->|tool| R["{T["kb_label"]}"]\n'
+    f'  A -->|tool| D["{T["db_label"]}"]\n'
+    f'  R --> A\n'
+    f'  D --> A\n'
+    f'  A --> Ans["{T["ans_label"]}"]',
+    height=320
+)
+st.caption(T["note"])
 
 EXAMPLES = {
     "ru": [
