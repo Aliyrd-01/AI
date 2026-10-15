@@ -1,7 +1,0 @@
-file 'D:\workspace\portfolio\docs\vo\seg_ru_01.mp4'
-file 'D:\workspace\portfolio\docs\vo\seg_ru_02.mp4'
-file 'D:\workspace\portfolio\docs\vo\seg_ru_03.mp4'
-file 'D:\workspace\portfolio\docs\vo\seg_ru_04.mp4'
-file 'D:\workspace\portfolio\docs\vo\seg_ru_05.mp4'
-file 'D:\workspace\portfolio\docs\vo\seg_ru_06.mp4'
-file 'D:\workspace\portfolio\docs\vo\seg_ru_07.mp4'

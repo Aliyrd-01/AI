@@ -1,7 +1,0 @@
-file 'D:/AI/portfolio/docs/vo_n8n/leadqual_demo_00.wav'
-file 'D:/AI/portfolio/docs/vo_n8n/leadqual_demo_01.wav'
-file 'D:/AI/portfolio/docs/vo_n8n/leadqual_demo_02.wav'
-file 'D:/AI/portfolio/docs/vo_n8n/leadqual_demo_03.wav'
-file 'D:/AI/portfolio/docs/vo_n8n/leadqual_demo_04.wav'
-file 'D:/AI/portfolio/docs/vo_n8n/leadqual_demo_05.wav'
-file 'D:/AI/portfolio/docs/vo_n8n/leadqual_demo_06.wav'

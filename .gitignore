@@ -32,3 +32,7 @@ projects/**/Report/
 projects/**/rag_storage/
 projects/**/tiktoken/
 node_modules/
+
+docs/vo/
+docs/vo_n8n/
+hub/assets/n8n/*_raw.webm

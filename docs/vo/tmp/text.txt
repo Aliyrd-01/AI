@@ -1,1 +1,0 @@
-And the main tool: the Unified Agent. One agent decides on its own whether to search the knowledge base or query the CRM, and answers with source tags.
