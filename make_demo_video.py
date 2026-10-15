@@ -42,8 +42,9 @@ PIPER_MODELS = {
 SCRIPTS = {
     "ru": {
         "pages": [
-            ("home", "Привет! Это мое AI-портфолио: RAG-система и n8n автоматизации в одном проекте. "
-                     "Слева разделы: RAG, n8n, агенты, бенчмарки и проекты."),
+            ("home", "Это моё AI-портфолио. Здесь собраны основные работы: RAG-система, "
+                     "автоматизации на n8n и агентные решения. В сайдбаре — разделы: "
+                     "RAG, n8n, агенты, метрики и проекты."),
             ("rag", "Интерактивное RAG демо: гибридный поиск по тремстам десяти тысячам документов, "
                     "реранкинг и ответы с цитатами. Задаем вопрос и получаем ответ со ссылками "
                     "на источники и метриками."),
@@ -61,8 +62,9 @@ SCRIPTS = {
     },
     "en": {
         "pages": [
-            ("home", "Hi! This is my AI portfolio: a RAG system and n8n automations in one project. "
-                     "On the left: RAG, n8n, agents, benchmarks and projects."),
+            ("home", "This is my AI portfolio. It brings together the main work: a RAG system, "
+                     "n8n automations and agent solutions. In the sidebar you will find "
+                     "RAG, n8n, Agents, Benchmarks and Projects."),
             ("rag", "This is an interactive RAG demo: hybrid search over three hundred ten thousand documents, "
                     "reranking, and answers with citations. Ask a question and get an answer with "
                     "source links and metrics."),
@@ -118,16 +120,16 @@ def sapi_tts(text: str, lang: str, out_wav: str):
 
 
 def piper_tts(text: str, lang: str, out_wav: str):
-    """Офлайн озвучка через Piper — качественный мужской голос."""
+    """Офлайн озвучка через Piper — спокойный мужской голос, с паузами для внятности."""
     txt_file = os.path.join(TMP, "text.txt")
     with open(txt_file, "w", encoding="utf-8") as f:
         f.write(text)
     model = PIPER_MODELS[lang]
-    # --length-scale 1.05 делает речь чуть более естественной и размеренной
+    # length-scale 1.3 = заметно медленнее и разборчивее; sentence-silence — паузы между фразами
     rc, _o, err = run([sys.executable, "-m", "piper",
                        "-m", model, "-c", model + ".json",
                        "-f", out_wav, "-i", txt_file,
-                       "--length-scale", "1.05"])
+                       "--length-scale", "1.3", "--sentence-silence", "0.5"])
     if rc != 0 or not os.path.exists(out_wav):
         raise RuntimeError(f"Piper TTS failed: {err[:200]}")
 

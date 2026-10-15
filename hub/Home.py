@@ -21,8 +21,6 @@ T = {
     "ru": {
         "title": "🧠 AI Portfolio",
         "caption": "RAG-система, n8n-автоматизации и агенты: интерактивное демо + разборы пайплайнов.",
-        "intro": "Один проект, который собирает ключевые наработки. Всё запускается локально "
-                 "одной командой и позже разворачивается на VPS.",
         "rag_t": "🔎 RAG",
         "rag_d": "Гибридный retrieval (dense+sparse RRF), CrossEncoder-реранкинг, цитаты, "
                  "честный отказ, 11 стратегий, замеренные метрики.",
@@ -54,8 +52,6 @@ T = {
     "en": {
         "title": "🧠 AI Portfolio",
         "caption": "RAG system, n8n automations and agents: interactive demo + pipeline breakdowns.",
-        "intro": "One project that brings key work together. Runs locally with a single command "
-                 "and deploys to a VPS later.",
         "rag_t": "🔎 RAG",
         "rag_d": "Hybrid retrieval (dense+sparse RRF), CrossEncoder reranking, citations, "
                  "honest refusal, 11 strategies, measured metrics.",
@@ -89,7 +85,6 @@ T = {
 st.title(T["title"])
 st.caption(T["caption"])
 
-st.markdown(T["intro"])
 st.write("")
 
 row1 = st.columns(3, gap="large")
