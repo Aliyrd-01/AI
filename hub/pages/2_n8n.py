@@ -108,7 +108,18 @@ FLOWS = [
 ]
 
 
-def to_mermaid(wf: dict) -> str:
+def to_mermaid(wf: dict, keep=None) -> str:
+    """Компактная блок-схема: только ключевые узлы (keep) как последовательный путь.
+    Если keep=None — полный граф (для небольших схем)."""
+    if keep:
+        lines = ["flowchart LR"]
+        for i, name in enumerate(keep):
+            safe = name.replace('"', "'")
+            lines.append(f'  k{i}["{safe}"]')
+            if i:
+                lines.append(f'  k{i - 1} --> k{i}')
+        return "\n".join(lines)
+
     nodes = wf.get("nodes", [])
     conns = wf.get("connections", {})
     ids, lines = {}, ["flowchart TD"]
@@ -126,6 +137,18 @@ def to_mermaid(wf: dict) -> str:
                 if t in ids:
                     lines.append(f"  {ids[src]} --> {ids[t]}")
     return "\n".join(lines)
+
+
+# Ключевые шаги для компактных диаграмм (чтобы не было огромных схем со скроллом)
+CURATED = {
+    "news_content_publisher": ["RSS Forklog", "Deduplication", "Preprocessing",
+                               "OpenRouter AI", "Final Formatting", "Telegram (Photo)"],
+    "lead_qualification": ["Webhook", "Validate Lead", "MCP Enrich HTTP",
+                           "OpenRouter API A", "Score > 70?", "Telegram Hot Alert",
+                           "PostgreSQL (CRM)"],
+    "ai_support_escalation": ["Telegram Trigger", "Is Operator", "Classify",
+                              "Needs Operator", "Forward to Operator", "AI Response"],
+}
 
 
 def load_flow(fname: str):
@@ -176,14 +199,9 @@ else:
             st.markdown(f"**{T['demo']}**")
             st.video(vpath)
 
-    if meta.get("key") == "ai_support_escalation":
-        hd_canvas = os.path.join(ASSETS, "support_canvas_hd.png")
-        if os.path.exists(hd_canvas):
-            st.markdown("**Полотно воркфлоу в n8n**" if lang == "ru" else "**n8n Workflow Canvas**")
-            st.image(hd_canvas, use_container_width=True)
-
     st.markdown(f"**{T['diagram']}**")
-    render_mermaid(to_mermaid(wf), height=460)
+    keep = CURATED.get(meta["key"])
+    render_mermaid(to_mermaid(wf, keep=keep), height=240 if keep else 460)
 
     for img in meta.get("images", []):
         ipath = os.path.join(ASSETS, img)
