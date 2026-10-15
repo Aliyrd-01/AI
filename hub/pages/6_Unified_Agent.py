@@ -96,7 +96,7 @@ render_mermaid(
     f'  R --> A\n'
     f'  D --> A\n'
     f'  A --> Ans["{T["ans_label"]}"]',
-    height=320
+    height=280
 )
 st.caption(T["note"])
 

@@ -183,7 +183,7 @@ else:
             st.image(hd_canvas, use_container_width=True)
 
     st.markdown(f"**{T['diagram']}**")
-    render_mermaid(to_mermaid(wf), height=560)
+    render_mermaid(to_mermaid(wf), height=460)
 
     for img in meta.get("images", []):
         ipath = os.path.join(ASSETS, img)
