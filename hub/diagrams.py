@@ -56,6 +56,7 @@ def render_mermaid(code: str, height: int = 420):
       }}
       .mermaid svg {{
         max-width: 100% !important;
+        width: 100% !important;
         height: auto !important;
         display: block !important;
       }}
@@ -113,7 +114,7 @@ def render_mermaid(code: str, height: int = 420):
           themeVariables: {json.dumps(variables)},
           flowchart: {{
             curve: 'basis',
-            useMaxWidth: false,
+            useMaxWidth: true,
             htmlLabels: true
           }}
         }});
@@ -128,8 +129,9 @@ def render_mermaid(code: str, height: int = 420):
             const svgEl = container.querySelector('svg');
             if (svgEl) {{
               svgEl.removeAttribute('width');
+              svgEl.removeAttribute('height');
               svgEl.style.width = '100%';
-              svgEl.style.minWidth = '600px';
+              svgEl.style.maxWidth = '100%';
               svgEl.style.height = 'auto';
             }}
           }} catch (err) {{

@@ -1,0 +1,6 @@
+file 'D:/AI/portfolio/docs/vo_n8n/news_demo_00.wav'
+file 'D:/AI/portfolio/docs/vo_n8n/news_demo_01.wav'
+file 'D:/AI/portfolio/docs/vo_n8n/news_demo_02.wav'
+file 'D:/AI/portfolio/docs/vo_n8n/news_demo_03.wav'
+file 'D:/AI/portfolio/docs/vo_n8n/news_demo_04.wav'
+file 'D:/AI/portfolio/docs/vo_n8n/news_demo_05.wav'

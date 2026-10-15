@@ -1,0 +1,134 @@
+{
+  "leadqual_demo": {
+    "workflow_id": "R6TUfWY5jcGwZupm",
+    "steps": [
+      {
+        "node": null,
+        "text": "Этот воркфлоу автоматизирует квалификацию и скоринг входящих B2B-лидов. Рассмотрим архитектуру пайплайна.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\leadqual_demo_00.wav",
+        "duration": 6.61
+      },
+      {
+        "node": "Webhook",
+        "text": "Приём заявки: данные поступают через Webhook из формы захвата на сайте.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\leadqual_demo_01.wav",
+        "duration": 4.93
+      },
+      {
+        "node": "Validate Lead",
+        "text": "Валидация контактных данных. Некорректные обращения отсеиваются автоматически, команда получает системное уведомление.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\leadqual_demo_02.wav",
+        "duration": 6.83
+      },
+      {
+        "node": "MCP Enrich HTTP",
+        "text": "Обогащение через MCP: система обращается к корпоративной базе данных за профилем компании, индустрией и позицией контактного лица.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\leadqual_demo_03.wav",
+        "duration": 8.54
+      },
+      {
+        "node": "OpenRouter API A",
+        "text": "Интеллектуальный скоринг: языковая модель оценивает лид по стобалльной шкале. Применяется A/B-архитектура с двумя промптами — консервативным и расширенным.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\leadqual_demo_04.wav",
+        "duration": 9.93
+      },
+      {
+        "node": "PostgreSQL (CRM)",
+        "text": "Приоритетные лиды мгновенно уходят в Telegram, а все данные синхронизируются с CRM в PostgreSQL.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\leadqual_demo_05.wav",
+        "duration": 6.43
+      },
+      {
+        "node": null,
+        "text": "Результат — мгновенная реакция на перспективные сделки и полная автоматизация рутинной квалификации.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\leadqual_demo_06.wav",
+        "duration": 6.37
+      }
+    ],
+    "vo": "D:\\AI\\portfolio\\docs\\vo_n8n\\leadqual_demo_vo.wav"
+  },
+  "news_demo": {
+    "workflow_id": "YAyuG9GA2jUeICG2",
+    "steps": [
+      {
+        "node": null,
+        "text": "Автоматическая публикация материалов: пайплайн собирает, анализирует и публикует контент без участия человека.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\news_demo_00.wav",
+        "duration": 7.07
+      },
+      {
+        "node": "RSS Forklog",
+        "text": "Сбор данных из RSS-источников по расписанию.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\news_demo_01.wav",
+        "duration": 3.56
+      },
+      {
+        "node": "Deduplication",
+        "text": "Дедупликация записей и извлечение полного текста статьи.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\news_demo_02.wav",
+        "duration": 4.11
+      },
+      {
+        "node": "OpenRouter AI",
+        "text": "AI-анализ: перевод, суммаризация и оценка релевантности материала.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\news_demo_03.wav",
+        "duration": 4.4
+      },
+      {
+        "node": "Telegram (Photo)",
+        "text": "Финальное форматирование и публикация готового поста в Telegram-канал.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\news_demo_04.wav",
+        "duration": 4.45
+      },
+      {
+        "node": null,
+        "text": "Результат — постоянный поток отфильтрованных и проанализированных материалов.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\news_demo_05.wav",
+        "duration": 4.4
+      }
+    ],
+    "vo": "D:\\AI\\portfolio\\docs\\vo_n8n\\news_demo_vo.wav"
+  },
+  "support_demo": {
+    "workflow_id": "jOJivAqG5l6rfQgk",
+    "steps": [
+      {
+        "node": null,
+        "text": "Сервис поддержки: автоматическая обработка обращений с маршрутизацией на оператора.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\support_demo_00.wav",
+        "duration": 5.31
+      },
+      {
+        "node": "Telegram Trigger",
+        "text": "Приём сообщений через Telegram-триггер.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\support_demo_01.wav",
+        "duration": 2.7
+      },
+      {
+        "node": "Is Operator",
+        "text": "Проверка роли пользователя и состояния диалога.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\support_demo_02.wav",
+        "duration": 3.42
+      },
+      {
+        "node": "Classify",
+        "text": "LLM-классификация: определение типа обращения.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\support_demo_03.wav",
+        "duration": 4.2
+      },
+      {
+        "node": "Forward to Operator",
+        "text": "Авто-ответ для типовых вопросов и эскалация сложных тикетов оператору.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\support_demo_04.wav",
+        "duration": 4.45
+      },
+      {
+        "node": null,
+        "text": "Результат — снижение нагрузки на первую линию поддержки.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n\\support_demo_05.wav",
+        "duration": 3.76
+      }
+    ],
+    "vo": "D:\\AI\\portfolio\\docs\\vo_n8n\\support_demo_vo.wav"
+  }
+}
