@@ -2,6 +2,7 @@
 
 import json
 import os
+import secrets
 import sys
 import time
 
@@ -77,6 +78,16 @@ T = {
         "chat_note": "Диалог помнит контекст: follow-up переписывается LLM в самостоятельный "
                      "запрос перед поиском (вопрос → «а что насчёт тёмной мочи?» → "
                      "«what causes dark urine»), поэтому в поиск уходит полный запрос, а не обрубок.",
+        "session": "Сессия",
+        "s_req": "запросов",
+        "s_tok": "токенов",
+        "s_cache": "кэш retrieval",
+        "s_reset": "Сбросить",
+        "copy": "Копировать",
+        "copied": "скопировано",
+        "download": "Скачать .md",
+        "cache_hit": "из кэша (без пересчёта)",
+        "cache_miss": "поиск заново",
     },
     "en": {
         "caption": "dense + sparse (RRF) → rerank → LLM with citations · Qdrant Cloud · FastEmbed · LangChain",
@@ -114,6 +125,16 @@ T = {
         "chat_note": "The chat keeps context: a follow-up is rewritten by an LLM into a standalone "
                      "query before retrieval (question -> 'what about dark urine?' -> "
                      "'what causes dark urine'), so retrieval gets a full query, not a fragment.",
+        "session": "Session",
+        "s_req": "requests",
+        "s_tok": "tokens",
+        "s_cache": "retrieval cache",
+        "s_reset": "Reset",
+        "copy": "Copy",
+        "copied": "copied",
+        "download": "Download .md",
+        "cache_hit": "cache hit (no recompute)",
+        "cache_miss": "fresh retrieval",
         "bench_r": "Retrieval benchmarks",
         "bench_g": "Generation",
         "no_results": "No results — run `python hub/eval/eval_retrieval.py`.",
@@ -284,19 +305,54 @@ def retrieve_docs(strategy, question, top_k, rerank_top, langs=(), sources=(), c
     return _apply_meta_filter(docs, langs, sources)
 
 
+# Cache-hit detection: st.cache_data gives no hit/miss API, so the inner call returns a
+# nonce that is created once per unique argument set. Seeing the same nonce again means the
+# value came from the cache (no recompute) — honest hit/miss, no guessing.
+# Counters/nonces live in st.session_state because a Streamlit page script is re-executed on
+# every rerun (module-level state would reset each time).
 @st.cache_data(show_spinner=False, max_entries=256)
+def _cached_retrieve_inner(strategy, question, top_k, rerank_top, langs=(), sources=(), collection=None):
+    return (retrieve_docs(strategy, question, top_k, rerank_top, langs, sources, collection),
+            secrets.token_hex(8))
+
+
+def _cache_stats():
+    if "cache_stats" not in st.session_state:
+        st.session_state["cache_stats"] = {"hit": 0, "miss": 0}
+    return st.session_state["cache_stats"]
+
+
+def _seen_nonces():
+    if "seen_nonces" not in st.session_state:
+        st.session_state["seen_nonces"] = []
+    return st.session_state["seen_nonces"]
+
+
 def cached_retrieve(strategy, question, top_k, rerank_top, langs=(), sources=(), collection=None):
-    return retrieve_docs(strategy, question, top_k, rerank_top, langs, sources, collection)
+    """Return (docs, cache_hit)."""
+    docs, nonce = _cached_retrieve_inner(strategy, question, top_k, rerank_top,
+                                         langs, sources, collection)
+    seen = _seen_nonces()
+    stats = _cache_stats()
+    if nonce in seen:
+        stats["hit"] += 1
+        return docs, True
+    stats["miss"] += 1
+    if len(seen) >= 500:
+        del seen[:250]
+    seen.append(nonce)
+    return docs, False
 
 
 def _run_retrieval(strategy, question, top_k, rerank_top, langs, sources, collection=None):
     try:
-        return cached_retrieve(strategy, question, top_k, rerank_top, langs, sources, collection), None
+        docs, hit = cached_retrieve(strategy, question, top_k, rerank_top, langs, sources, collection)
+        return docs, None, hit
     except Exception as e:  # noqa: BLE001
         if strategy == "hybrid":
             raise
-        docs = cached_retrieve("hybrid", question, top_k, rerank_top, langs, sources, collection)
-        return docs, f"{type(e).__name__}: {e}"
+        docs, hit = cached_retrieve("hybrid", question, top_k, rerank_top, langs, sources, collection)
+        return docs, f"{type(e).__name__}: {e}", hit
 
 
 # Native retrieval scores live on wildly different scales, so comparing them to a
@@ -330,6 +386,73 @@ def _normalized_top_score(strategy, docs):
     if kind == "logit":
         return raw, max(0.0, min(1.0, raw / scale))
     return raw, (raw / (raw + scale) if raw > 0 else 0.0)
+
+
+_SESS_DEFAULT = {"req": 0, "tok_in": 0, "tok_out": 0, "cost": 0.0}
+
+
+def _session_stats():
+    if "sess" not in st.session_state:
+        st.session_state["sess"] = dict(_SESS_DEFAULT)
+    return st.session_state["sess"]
+
+
+def _track_usage(tok_in, tok_out, cost):
+    s = _session_stats()
+    s["req"] += 1
+    s["tok_in"] += int(tok_in or 0)
+    s["tok_out"] += int(tok_out or 0)
+    s["cost"] += float(cost or 0.0)
+
+
+def _cache_note(hit):
+    return f"⚡ {T['cache_hit']}" if hit else f"🌐 {T['cache_miss']}"
+
+
+def render_usage_bar(key):
+    """Session counter (requests / tokens / $ / retrieval cache) + reset."""
+    s = _session_stats()
+    stats = _cache_stats()
+    total = stats["hit"] + stats["miss"]
+    c1, c2 = st.columns([6, 1])
+    with c1:
+        st.caption(f"📈 **{T['session']}** · {s['req']} {T['s_req']} · "
+                   f"{s['tok_in']:,} in / {s['tok_out']:,} out {T['s_tok']} · "
+                   f"**${s['cost']:.6f}** · {T['s_cache']} "
+                   f"{stats['hit']}/{total}")
+    with c2:
+        if st.button(T["s_reset"], key=f"reset_{key}"):
+            st.session_state["sess"] = dict(_SESS_DEFAULT)
+            st.session_state["cache_stats"] = {"hit": 0, "miss": 0}
+            st.session_state["seen_nonces"] = []
+            st.rerun()
+
+
+def copy_button(text, key, height=46):
+    """Clipboard button (Streamlit has none); falls back to execCommand in the iframe."""
+    import streamlit.components.v1 as components
+
+    bid = f"cp_{key}"
+    payload = json.dumps(text or "")
+    label = json.dumps(f"📋 {T['copy']}")
+    ok = json.dumps(f"✓ {T['copied']}")
+    components.html(f"""
+<button id="{bid}" style="width:100%;padding:5px 10px;border-radius:8px;border:1px solid #9aa;
+ background:transparent;color:inherit;cursor:pointer;font:inherit">{T['copy']}</button>
+<script>
+const b = document.getElementById("{bid}");
+const txt = {payload};
+b.onclick = async () => {{
+  try {{ await navigator.clipboard.writeText(txt); }}
+  catch (e) {{
+    const ta = document.createElement("textarea");
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove();
+  }}
+  b.textContent = {ok};
+  setTimeout(() => {{ b.textContent = {label}; }}, 1500);
+}};
+</script>""", height=height)
 
 
 def _log_feedback(question, answer, strategy, verdict):
@@ -409,7 +532,7 @@ if dialog_mode:
         st.session_state["chat"] = []
     history = st.session_state["chat"]
 
-    for turn in history:
+    for ti, turn in enumerate(history):
         with st.chat_message(turn["role"]):
             st.markdown(turn["content"])
             if turn["role"] != "assistant":
@@ -426,6 +549,13 @@ if dialog_mode:
                     st.markdown(f"**[{i}]** `{corpus['source']}#{d[0]}` · score "
                                 f"`{round(float(d[2]), 3)}`{mark}")
                     st.text((d[1] or "")[:300])
+            cb1, cb2, _sp = st.columns([1, 1, 3])
+            with cb1:
+                copy_button(turn["content"], key=f"hist_{ti}")
+            with cb2:
+                st.download_button(T["download"], data=(turn["content"] or "").encode("utf-8"),
+                                   file_name=f"answer_{ti}.md", mime="text/markdown",
+                                   key=f"dl_hist_{ti}")
             if turn.get("meta"):
                 st.caption(turn["meta"])
 
@@ -443,7 +573,7 @@ if dialog_mode:
             except Exception:  # noqa: BLE001
                 search_query = prompt
             try:
-                docs, warn = _run_retrieval(strategy, search_query, top_k, rerank_top,
+                docs, warn, cache_hit = _run_retrieval(strategy, search_query, top_k, rerank_top,
                                             tuple(lang_filter), tuple(source_filter),
                                             corpus["collection"])
             except Exception as e:  # noqa: BLE001
@@ -511,8 +641,16 @@ if dialog_mode:
                     cost = tok_in * (0.004 / 1_000_000) + tok_out * (0.0162 / 1_000_000)
                     info = describe_llm(llm)
                     meta = (f"~{tok_in} in / ~{tok_out} out tokens · est. **${cost:.6f}** · "
-                            f"gen {t_gen:.1f}s · `{info['served']}`")
+                            f"gen {t_gen:.1f}s · {_cache_note(cache_hit)} · `{info['served']}`")
                     st.caption(meta)
+                    _track_usage(tok_in, tok_out, cost)
+                    cb1, cb2, _sp = st.columns([1, 1, 3])
+                    with cb1:
+                        copy_button(answer, key="chat")
+                    with cb2:
+                        st.download_button(T["download"], data=(answer or "").encode("utf-8"),
+                                           file_name=f"answer_{int(time.time())}.md",
+                                           mime="text/markdown", key="dl_chat")
                     if issues and not refused:
                         st.caption(f"⚠️ citation issues: {issues}")
 
@@ -523,6 +661,8 @@ if dialog_mode:
         history.append({"role": "assistant", "content": answer, "docs": docs or [],
                         "cited": cited, "refused": refused, "draft": draft,
                         "search_query": search_query, "meta": meta})
+    st.divider()
+    render_usage_bar("chat")
     st.stop()
 
 question = st.text_input(T["q"], key="q", placeholder="e.g. what color is amber urine")
@@ -549,7 +689,8 @@ def render_result(res, streamed=False):
 
     from common import describe_llm
     info = describe_llm(res["llm"])
-    st.caption(f"**{T['llm']}:** `{info['provider']}` · served `{info['served']}`")
+    st.caption(f"**{T['llm']}:** `{info['provider']}` · served `{info['served']}` · "
+               f"{_cache_note(res.get('cache_hit'))}")
 
     with st.expander(f"{T['sources']} ({len(res['docs'])})", expanded=True):
         st.caption(f"{T['conf']}: `{res.get('top_conf', 0.0):.2f}`")
@@ -566,6 +707,14 @@ def render_result(res, streamed=False):
 
     st.caption(f"~{res['tok_in']} in / ~{res['tok_out']} out tokens · est. **${res['cost']:.6f}** per query")
 
+    ca, cb, _sp = st.columns([1, 1, 3])
+    with ca:
+        copy_button(res["answer"], key="qa")
+    with cb:
+        st.download_button(T["download"], data=(res["answer"] or "").encode("utf-8"),
+                           file_name=f"answer_{int(res['t2'])}.md", mime="text/markdown",
+                           key="dl_qa")
+
     fa, fb, _sp = st.columns([1, 1, 4])
     if fa.button(T["helpful"], key="fb_up"):
         _log_feedback(res["q"], res["answer"], res["strategy"], "up")
@@ -573,6 +722,8 @@ def render_result(res, streamed=False):
     if fb.button(T["not_helpful"], key="fb_down"):
         _log_feedback(res["q"], res["answer"], res["strategy"], "down")
         st.toast(T["fb_log"])
+
+    render_usage_bar("qa")
 
 
 asked = st.button(T["ask"], type="primary", disabled=not question.strip())
@@ -584,10 +735,11 @@ if asked:
     sources = tuple(source_filter)
 
     t0 = time.time()
+    cache_hit = False
     try:
         with st.spinner(T["retrieving"]):
-            docs, warn = _run_retrieval(strategy, q, top_k, rerank_top, langs, sources,
-                                        corpus["collection"])
+            docs, warn, cache_hit = _run_retrieval(strategy, q, top_k, rerank_top, langs, sources,
+                                                   corpus["collection"])
     except Exception as e:  # noqa: BLE001
         st.error(f"**{type(e).__name__}:** {e}")
         docs, warn = None, None
@@ -661,8 +813,9 @@ if asked:
                 "source": corpus["source"], "refused": refused, "draft": draft,
                 "t0": t0, "t1": t1, "t_gen0": t_gen0, "t2": t2,
                 "ttft": ttft["v"], "llm": llm, "top_conf": top_conf,
-                "tok_in": tok_in, "tok_out": tok_out, "cost": cost,
+                "tok_in": tok_in, "tok_out": tok_out, "cost": cost, "cache_hit": cache_hit,
             }
+            _track_usage(tok_in, tok_out, cost)
             st.session_state["rag_res"] = res
             render_result(res, streamed=True)
 
@@ -678,7 +831,7 @@ if question.strip():
             for name in STRATEGIES:
                 t0 = time.time()
                 try:
-                    ds, _w = _run_retrieval(name, question.strip(), top_k, rerank_top, (), (),
+                    ds, _w, _h = _run_retrieval(name, question.strip(), top_k, rerank_top, (), (),
                                             corpus["collection"])
                     rows.append({"strategy": name, "docs": len(ds), "s": round(time.time() - t0, 2),
                                  "top score": round(max((float(d[2]) for d in ds), default=0.0), 3),
