@@ -17,7 +17,7 @@ const pool = new Pool({
   host: process.env.PG_HOST || "localhost",
   port: parseInt(process.env.PG_PORT || "5432"),
   user: process.env.PG_USER || "postgres",
-  password: process.env.PG_PASSWORD || "YOUR_PG_PASSWORD",
+  password: process.env.PG_PASSWORD,
   database: process.env.PG_DATABASE || "testPost2",
 });
 
@@ -40,7 +40,7 @@ function mcpError(msg) {
 }
 
 const APP_PORT = parseInt(process.env.PORT || "9002");
-const SECRET_KEY = process.env.REMOTE_SECRET_KEY || "YOUR_MCP_TOKEN";
+const SECRET_KEY = process.env.REMOTE_SECRET_KEY || "";
 
 async function handleToolCall(name, args) {
   switch (name) {

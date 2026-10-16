@@ -221,11 +221,11 @@ def _cache_store(question: str, result: dict, filters: dict | None = None):
 # ─── MySQL Logging ────────────────────────────────────────────────────────
 
 MYSQL_CONFIG = {
-    "host": os.getenv("RAG_MYSQL_HOST", "YOUR_MYSQL_HOST"),
+    "host": os.getenv("RAG_MYSQL_HOST", ""),
     "port": int(os.getenv("RAG_MYSQL_PORT", "3306")),
-    "user": os.getenv("RAG_MYSQL_USER", "YOUR_MYSQL_USER"),
+    "user": os.getenv("RAG_MYSQL_USER", ""),
     "password": os.getenv("RAG_MYSQL_PASS", ""),
-    "database": os.getenv("RAG_MYSQL_DB", "YOUR_MYSQL_USERprice"),
+    "database": os.getenv("RAG_MYSQL_DB", ""),
     "charset": "utf8mb4",
 }
 MYSQL_LOG_ENABLED = bool(pymysql and MYSQL_CONFIG["password"])
