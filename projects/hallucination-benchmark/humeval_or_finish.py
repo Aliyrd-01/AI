@@ -1,4 +1,4 @@
-import json, time, sys, subprocess, tempfile
+import json, os, time, sys, subprocess, tempfile
 import requests
 
 OR_KEY = 'REDACTED_KEY'
@@ -8,7 +8,7 @@ MODELS = [
     ('google/gemma-4-26b-a4b-it:free', 'Gemma 4 26B'),
 ]
 
-with open('D:\\AI\\hallucination-benchmark\\humaneval.json', 'r', encoding='utf-8') as f:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'humaneval.json'), 'r', encoding='utf-8') as f:
     problems = json.load(f)[:50]
 
 def ask_or(model, prompt):
@@ -75,5 +75,5 @@ for model, label in MODELS:
                     time.sleep(5)
         time.sleep(3)
         if (i+1) % 10 == 0:
-            sys.stdout.write('  [' + str(i+1) + '/50] passed='REDACTED'\n'); sys.stdout.flush()
+            sys.stdout.write('  [' + str(i+1) + '/50] passed=' + str(passed) + '\n'); sys.stdout.flush()
     sys.stdout.write('  ' + label + ': ' + str(passed) + '/50 = ' + str(passed/50*100) + '%\n'); sys.stdout.flush()

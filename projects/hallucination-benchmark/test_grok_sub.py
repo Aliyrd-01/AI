@@ -6,7 +6,7 @@ import csv, os, re, subprocess, sys, tempfile, time, shutil
 QUESTIONS_COUNT = int(sys.argv[1]) if len(sys.argv) > 1 else 20
 DELAY = 1
 MODEL = 'grok-4.5'
-GROK_BIN = os.environ.get('GROK_BIN') or shutil.which('grok') or r'C:\Users\user\.grok\bin\grok.exe'
+GROK_BIN = os.environ.get('GROK_BIN') or shutil.which('grok') or 'grok'
 
 def ask_grok(prompt: str) -> str:
     with tempfile.TemporaryDirectory(prefix='grok-bench-') as tmp:

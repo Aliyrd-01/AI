@@ -5,6 +5,7 @@ ZEN_KEY = 'REDACTED_KEY'
 MISTRAL_KEY = 'REDACTED_KEY'
 OPENROUTER_KEY = 'REDACTED_KEY'
 DELAY = 1
+BASE = os.path.dirname(os.path.abspath(__file__))
 
 MODELS = [
     ('opencode-zen', 'big-pickle', 'Big Pickle'),
@@ -77,10 +78,10 @@ def run_test(code, test_code, timeout=10):
         except: pass
         return False
 
-with open('D:\\AI\\hallucination-benchmark\\humaneval.json', 'r', encoding='utf-8') as f:
+with open(os.path.join(BASE, 'humaneval.json'), 'r', encoding='utf-8') as f:
     problems = json.load(f)[:PROBLEMS_COUNT]
 
-log_path = 'D:\\AI\\hallucination-benchmark\\humaneval_results.json'
+log_path = os.path.join(BASE, 'humaneval_results.json')
 results = {}
 
 for provider, model, label in MODELS:

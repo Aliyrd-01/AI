@@ -134,4 +134,4 @@ with tab_llm:
             })
         rows.sort(key=lambda r: (r["Total %"] or 0), reverse=True)
         st.dataframe(rows, use_container_width=True, hide_index=True)
-        st.caption(T["src"] + ": `D:\\AI\\hallucination-benchmark`")
+        st.caption(T["src"] + ": `projects/hallucination-benchmark`")

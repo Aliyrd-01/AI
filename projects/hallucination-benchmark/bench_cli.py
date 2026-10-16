@@ -1,7 +1,7 @@
 import os, re, subprocess, sys, time
 import bench_free as b
 
-OC = r'C:\Users\user\AppData\Local\Zed\external_agents\registry\opencode\v_1.18.34_236ce8f55c2ac138_97619089081f3a69\opencode.exe'
+OC = os.environ.get('OC_BIN') or 'opencode'
 ANSI = re.compile(r'\x1b\[[0-9;]*m')
 
 

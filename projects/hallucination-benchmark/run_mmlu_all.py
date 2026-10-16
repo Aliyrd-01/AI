@@ -5,6 +5,7 @@ ZEN_KEY = 'REDACTED_KEY'
 MISTRAL_KEY = 'REDACTED_KEY'
 OPENROUTER_KEY = 'REDACTED_KEY'
 DELAY = 1
+BASE = os.path.dirname(os.path.abspath(__file__))
 
 MODELS = [
     ('opencode-zen', 'big-pickle', 'Big Pickle'),
@@ -49,10 +50,10 @@ def extract_letter(text):
             return ch
     return '?'
 
-with open('D:\\AI\\hallucination-benchmark\\mmlu_500.json', 'r', encoding='utf-8') as f:
+with open(os.path.join(BASE, 'mmlu_500.json'), 'r', encoding='utf-8') as f:
     questions = json.load(f)[:QUESTIONS_COUNT]
 
-log_path = 'D:\\AI\\hallucination-benchmark\\mmlu_results.json'
+log_path = os.path.join(BASE, 'mmlu_results.json')
 results = {}
 
 for provider, model, label in MODELS:

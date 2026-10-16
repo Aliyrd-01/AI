@@ -17,7 +17,7 @@
 ## Структура проекта
 
 ```
-C:\Users\user\.gemini\antigravity\scratch\mcp_test\
+<папка проекта mcp_test>\
 ├── package.json      # зависимости
 ├── server.mjs        # MCP-сервер (предоставляет инструменты)
 └── node_modules/     # установленные пакеты
@@ -54,7 +54,7 @@ npx n8n
 ### Терминал 3: MCP-сервер
 
 ```powershell
-cd C:\Users\user\.gemini\antigravity\scratch\mcp_test
+cd <папка проекта mcp_test>
 node server.mjs
 ```
 

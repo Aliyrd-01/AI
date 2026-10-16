@@ -19,7 +19,7 @@ _BASE = (os.getenv("QUBAX_API_BASE") or os.getenv("OPENAI_API_BASE") or "https:/
 _KEY = os.getenv("QUBAX_API_KEY") or os.getenv("OPENAI_API_KEY") or ""
 MODEL = os.getenv("AGENT_MODEL") or (os.getenv("QUBAX_MODELS", "").split(",")[0].strip() or "qwen3-235b-a22b-2507")
 MCP_URL = os.getenv("MCP_URL", "http://localhost:9002/mcp")
-MCP_TOKEN = os.getenv("MCP_TOKEN", "YOUR_MCP_TOKEN")
+MCP_TOKEN = os.getenv("MCP_TOKEN", "")
 
 SYSTEM = (
     "You are a unified assistant with two tools: "

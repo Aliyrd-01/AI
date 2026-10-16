@@ -260,7 +260,7 @@
         500
       ],
       "parameters": {
-        "chatId": "=YOUR_TELEGRAM_CHAT_ID",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "Сообщение от @{{ $('Telegram Trigger').item.json.message.from.username }} (ID: {{ $('Telegram Trigger').item.json.message.chat.id }})\n\n{{ $('Telegram Trigger').item.json.message.text }}",
         "additionalFields": {}
       },
@@ -385,7 +385,7 @@
         600
       ],
       "parameters": {
-        "chatId": "=YOUR_TELEGRAM_CHAT_ID",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "Новый запрос!\nОт: @{{ $('Telegram Trigger').item.json.message.from.username }} (ID: {{ $('Telegram Trigger').item.json.message.chat.id }})\n\n{{ $('Telegram Trigger').item.json.message.text }}",
         "additionalFields": {}
       },

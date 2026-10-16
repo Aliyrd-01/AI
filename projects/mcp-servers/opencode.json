@@ -6,11 +6,11 @@
       "command": ["npx.cmd", "-y", "@benborla29/mcp-server-mysql"],
       "enabled": true,
       "environment": {
-        "MYSQL_HOST": "YOUR_MYSQL_HOST",
+        "MYSQL_HOST": "",
         "MYSQL_PORT": "3306",
-        "MYSQL_USER": "YOUR_MYSQL_USER",
-        "MYSQL_PASS": "REDACTED",
-        "MYSQL_DB": "YOUR_MYSQL_USERprice"
+        "MYSQL_USER": "",
+        "MYSQL_PASS": "",
+        "MYSQL_DB": ""
       }
     },
     "postman": {
@@ -31,7 +31,7 @@
     },
     "postgresql": {
       "type": "local",
-      "command": ["node", "D:\\n8n\\MCP\\pg-mcp-server\\server.js"],
+      "command": ["node", "pg-mcp-server/server.js"],
       "enabled": true,
       "environment": {
         "PG_HOST": "localhost",

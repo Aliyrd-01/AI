@@ -50,7 +50,7 @@ T = {
         "req": "Запрос:",
         "resp": "Ответ (сокращённо):",
         "endpoint": "Эндпоинт: `POST http://localhost:9002/mcp` · Auth: `Authorization: Bearer <token>` · "
-                    "Туториал: `D:\\AI\\MCP\\mcp_tutorial.md`",
+                    "Туториал: `projects/mcp-servers/mcp_tutorial.md`",
         "task": "Задача (natural language)",
         "triage": "System Triage Agent",
         "file": "File Surfer",
@@ -116,7 +116,7 @@ T = {
         "req": "Request:",
         "resp": "Response (abridged):",
         "endpoint": "Endpoint: `POST http://localhost:9002/mcp` · Auth: `Authorization: Bearer <token>` · "
-                    "Tutorial: `D:\\AI\\MCP\\mcp_tutorial.md`",
+                    "Tutorial: `projects/mcp-servers/mcp_tutorial.md`",
         "task": "Task (natural language)",
         "triage": "System Triage Agent",
         "file": "File Surfer",
@@ -181,7 +181,7 @@ with tab_agent:
 
     st.markdown(f"**{T['phase_models']}**")
     st.dataframe(T["phase_rows"], use_container_width=True, hide_index=True)
-    st.caption(f"{T['src']}: `D:\\AI\\AutoAgent` → `projects/autoagent` · CLI: `auto main` (`auto_zen.py`)")
+    st.caption(f"{T['src']}: `projects/autoagent` · CLI: `auto main` (`auto_zen.py`)")
 
 with tab_mcp:
     st.subheader(T["mcp_h"])
