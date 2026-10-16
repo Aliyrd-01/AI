@@ -62,18 +62,71 @@ def get_sparse():
 
 
 def _fix_mojibake(text: str) -> str:
-    """Repair UTF-8 text that was decoded as cp1252 (e.g. "Colorâ€"" -> "Color—").
+    """Repair UTF-8 text that was decoded with a single-byte codec.
 
     The MS MARCO corpus was indexed with a broken encoding, so retrieved payloads
-    contain mojibake. Repairing on read fixes both the LLM context and the UI
-    without reindexing the collection.
+    contain mojibake. Two flavours appear here:
+      * Windows-1252 ("Colorâ€"urine" -> "Color—urine"): bytes 0x80..0x9F became
+        punctuation like €, ", ', …;
+      * Latin-1 ("itâ\\x80\\x99s" -> "it’s"): bytes 0x80..0x9F stayed as C1 control
+        chars U+0080..U+009F.
+    We try a whole-string cp1252 then latin-1 round-trip; if that fails (e.g. the
+    passage also has a real "β" outside both codecs, or a real "µ" next to mojibake)
+    we fall back to a greedy per-position decoder that repairs only the byte runs
+    that actually form valid UTF-8, leaving everything else untouched.
     """
     if not text:
         return text
-    try:
-        return text.encode("cp1252").decode("utf-8")
-    except (UnicodeEncodeError, UnicodeDecodeError):
-        return text
+    for enc in ("cp1252", "latin-1"):
+        try:
+            return text.encode(enc).decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            continue
+
+    def _byte(ch: str):
+        for enc in ("cp1252", "latin-1"):
+            try:
+                return ch.encode(enc)[0]
+            except UnicodeEncodeError:
+                continue
+        return None
+
+    out = []
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        byte = _byte(ch)
+        if byte is None:
+            out.append(ch)
+            i += 1
+            continue
+        if 0xC2 <= byte <= 0xDF:
+            seqlen = 2
+        elif 0xE0 <= byte <= 0xEF:
+            seqlen = 3
+        elif 0xF0 <= byte <= 0xF4:
+            seqlen = 4
+        else:
+            out.append(ch)
+            i += 1
+            continue
+        chunk = text[i:i + seqlen]
+        decoded = None
+        if len(chunk) == seqlen:
+            for enc in ("cp1252", "latin-1"):
+                try:
+                    decoded = b"".join(c.encode(enc) for c in chunk).decode("utf-8")
+                    break
+                except (UnicodeEncodeError, UnicodeDecodeError):
+                    decoded = None
+        if decoded is not None:
+            out.append(decoded)
+            i += seqlen
+        else:
+            out.append(ch)
+            i += 1
+    return "".join(out)
 
 
 def _row(point):
@@ -96,24 +149,31 @@ def _load_idf():
     Коллекция создана без modifier=IDF, поэтому Qdrant не применяет IDF сам.
     Без него sparse-вектор — это term-frequency: частые слова вроде "what" весят
     столько же, сколько редкие термины, и sparse-поиск деградирует (Hit@5 0.46).
+
+    Stats are per-collection: `idf_stats.json` for the default corpus (rag_v2_q_test),
+    otherwise `idf_stats_<collection>.json` (written by eval/build_corpus.py).
     """
-    if _IDF_CACHE:
-        return _IDF_CACHE
+    coll = COLLECTION
+    if coll in _IDF_CACHE:
+        return _IDF_CACHE[coll]
+    fname = "idf_stats.json" if coll == "rag_v2_q_test" else f"idf_stats_{coll}.json"
     path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "eval", "idf_stats.json"
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "eval", fname
     )
     if not os.path.exists(path):
+        _IDF_CACHE[coll] = None
         return None
     try:
         with open(path, encoding="utf-8") as f:
             raw = json.load(f)
-        _IDF_CACHE["n_docs"] = raw["n_docs"]
-        _IDF_CACHE["df"] = {int(k): v for k, v in raw["df"].items()}
-        _IDF_CACHE["avg_len"] = sum(_IDF_CACHE["df"].values()) / max(len(_IDF_CACHE["df"]), 1)
+        stats = {"n_docs": raw["n_docs"],
+                 "df": {int(k): v for k, v in raw["df"].items()}}
+        stats["avg_len"] = sum(stats["df"].values()) / max(len(stats["df"]), 1)
     except Exception as e:
         print(f"  ⚠ IDF stats unavailable ({e}), using raw term-frequency")
-        return None
-    return _IDF_CACHE
+        stats = None
+    _IDF_CACHE[coll] = stats
+    return stats
 
 
 def apply_bm25_idf(svec, k1: float = 1.2, b: float = 0.75):
@@ -167,6 +227,20 @@ def _sparse_query_tuples(query: str):
 def _sparse_query(query: str):
     idx, vals = _sparse_query_tuples(query)
     return qm.SparseVector(indices=list(idx), values=list(vals))
+
+
+def get_collection_name() -> str:
+    """Active Qdrant collection (the multi-corpus selector switches it)."""
+    return COLLECTION
+
+
+def set_collection(name: str) -> None:
+    """Switch the active corpus. The sparse-query cache is per-query but the IDF
+    applied to it depends on the collection, so drop it on switch."""
+    global COLLECTION
+    if name and name != COLLECTION:
+        COLLECTION = name
+        _sparse_query_tuples.cache_clear()
 
 
 def get_cross_encoder():

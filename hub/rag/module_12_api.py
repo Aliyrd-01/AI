@@ -582,7 +582,7 @@ async def _stream_gen(question: str, top_k: int = 5):
         None, search_hybrid, question, top_k
     )
     context = format_context(docs)
-    prompt = CITATIONS_PROMPT.invoke({"context": context, "question": question})
+    prompt = CITATIONS_PROMPT.invoke({"context": context, "question": question, "source": "msmarco"})
 
     yield f"data: {json.dumps({'type': 'meta', 'n_docs': len(docs)})}\n\n"
 

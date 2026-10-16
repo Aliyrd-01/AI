@@ -6,6 +6,7 @@ tools/
 # runtime artifacts
 hub/eval/feedback.jsonl
 hub/eval/_ab_cache/
+data/
 __pycache__/
 *.pyc
 
