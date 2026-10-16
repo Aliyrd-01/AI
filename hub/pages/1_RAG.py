@@ -117,6 +117,7 @@ T = {
         "sources": "Sources",
         "cited": "✅ cited",
         "mode": "Mode",
+        "conf": "Top document confidence (0..1)",
         "mode_qa": "Q&A (single question)",
         "mode_chat": "Chat (memory + follow-ups)",
         "chat_ph": "Ask about the corpus...",
