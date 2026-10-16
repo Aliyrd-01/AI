@@ -43,7 +43,9 @@ _ANSWER_LANGUAGE = os.getenv("RAG_ANSWER_LANGUAGE", "English")
 
 CITATIONS_PROMPT = ChatPromptTemplate.from_messages([
     ("system", "You are a RAG assistant. Answer based ONLY on the provided context. "
-     "ALWAYS add citations [n](msmarco#id) after every fact taken from the context. "
+     "ALWAYS add citations [n]({source}#id) after every fact taken from the context. "
+     "A citation MUST be a markdown link in exactly that form; a bare number "
+     "(like '... 6.') is NOT a citation and is a mistake. "
      "The number n is the document number in the context block. "
      "If the context lacks the information, honestly say you cannot answer - do not guess. "
      "Do not invent facts. "
@@ -60,7 +62,7 @@ CITATIONS_PROMPT = ChatPromptTemplate.from_messages([
 class AnswerCard(BaseModel):
     answer: str = Field(description="краткий ответ на вопрос")
     confidence: str = Field(description="high / medium / low — уверенность в ответе")
-    sources: list[str] = Field(description="список цитат вида msmarco#id")
+    sources: list[str] = Field(description="список цитат вида source#id")
 
 
 STRUCTURED_PROMPT = ChatPromptTemplate.from_messages([
@@ -96,13 +98,13 @@ def reorder_lost_in_middle(docs):
     return [ranked[0]] + ranked[2:] + [ranked[1]]
 
 
-def format_context(docs, reorder=True):
+def format_context(docs, reorder=True, source="msmarco"):
     if reorder:
         docs = reorder_lost_in_middle(docs)
     lines = []
     for i, d in enumerate(docs):
         doc_id, text = d[0], d[1]
-        lines.append(f"[{i+1}](msmarco#{doc_id})\n{text}")
+        lines.append(f"[{i+1}]({source}#{doc_id})\n{text}")
     return "\n\n".join(lines)
 
 
@@ -115,14 +117,14 @@ def generate_baseline(query, context, llm):
     return llm.invoke(prompt).content
 
 
-def generate_citations(query, context, llm, config=None):
-    prompt = CITATIONS_PROMPT.invoke({"context": context, "question": query})
+def generate_citations(query, context, llm, config=None, source="msmarco"):
+    prompt = CITATIONS_PROMPT.invoke({"context": context, "question": query, "source": source})
     return llm.invoke(prompt, config=config or {}).content
 
 
-def generate_citations_stream(query, context, llm, config=None):
+def generate_citations_stream(query, context, llm, config=None, source="msmarco"):
     """Streaming variant of generate_citations; yields text chunks for st.write_stream."""
-    prompt = CITATIONS_PROMPT.invoke({"context": context, "question": query})
+    prompt = CITATIONS_PROMPT.invoke({"context": context, "question": query, "source": source})
     for chunk in llm.stream(prompt, config=config or {}):
         text = getattr(chunk, "content", "") or ""
         if text:
@@ -165,7 +167,36 @@ def generate_structured(query, context, llm):
 
 
 def extract_citations(text):
-    return re.findall(r'\[(\d+)\]\(msmarco#([^)]+)\)', text)
+    return re.findall(r'\[(\d+)\]\([A-Za-z0-9_.\-]+#([^)]+)\)', text)
+
+
+_BARE_CITE_RE = re.compile(
+    r'(?<![\w.\d\]])(\d{1,3})(?=(?:[.,;:)][^\d])|(?:[.,;:)]?$))')
+
+
+def normalize_citations(answer, retrieved_ids, source="msmarco"):
+    """Repair bare-number references into real `[n](source#id)` citations.
+
+    Some models answer with "... a dark yellow color 6." instead of the required
+    `[6](msmarco#id)` link; with strict grounding that would look ungrounded.
+    The repair runs ONLY when the answer has no well-formed citation at all, and
+    only for numbers that plausibly point at the context block: in range, not a
+    decimal / date / part of a word, followed by punctuation or end of text.
+    """
+    answer = answer or ""
+    if extract_citations(answer):
+        return answer
+    n = len(retrieved_ids)
+    if not n:
+        return answer
+
+    def _sub(m):
+        k = int(m.group(1))
+        if k < 1 or k > n:
+            return m.group(0)
+        return f"[{k}]({source}#{retrieved_ids[k - 1]})"
+
+    return _BARE_CITE_RE.sub(_sub, answer)
 
 
 def verify_grounding(answer, retrieved_ids, num_docs):
@@ -179,6 +210,64 @@ def verify_grounding(answer, retrieved_ids, num_docs):
         if str(d) not in retrieved_ids:
             issues.append(f"doc {d} not in retrieved set")
     return issues, doc_ids, bool(issues)
+
+
+REFUSAL_EN = ("I cannot answer this from the retrieved corpus: the response cites no "
+              "document that was actually retrieved (strict grounding is on).")
+
+
+CONDENSE_PROMPT = ChatPromptTemplate.from_messages([
+    ("system", "You rewrite the user's latest message into a STANDALONE search query for a "
+               "retrieval system. Resolve pronouns and ellipsis using the conversation "
+               "(e.g. 'and what about dark urine?' -> 'what causes dark urine'). Keep all "
+               "entities and the language of the user. Output ONLY the query, no quotes, "
+               "no explanation, no punctuation around it."),
+    ("user", "Conversation so far:\n{history}\n\nLatest user message: {question}\n\n"
+             "Standalone search query:"),
+])
+
+
+def condense_query(history, question, llm, max_turns=6, max_chars=400):
+    """Rewrite a follow-up into a standalone retrieval query using chat history.
+
+    `history` is a list of (role, content) pairs, oldest first. With no history the
+    question is returned unchanged (single-turn behaviour).
+    """
+    pairs = [(r, (c or "").strip()) for r, c in history if (c or "").strip()]
+    if not pairs:
+        return question
+    hist = "\n".join(f"{r}: {c[:max_chars]}" for r, c in pairs[-max_turns:])
+    prompt = CONDENSE_PROMPT.invoke({"history": hist, "question": question})
+    try:
+        out = (llm.invoke(prompt).content or "").strip()
+    except Exception:  # noqa: BLE001
+        return question
+    out = out.splitlines()[0].strip().strip('"').strip("'").strip() if out else ""
+    return out or question
+
+
+
+def apply_strict_grounding(answer, retrieved_ids, refusal=None):
+    """Deterministic strict-grounding gate (used by the hub and the API).
+
+    Keeps the generation pipeline honest about its source: an answer that cites
+    none of the retrieved documents is not grounded in the corpus, so it is
+    replaced by a refusal while the raw model output is preserved as `draft`.
+
+    Returns: dict(refused, issues, cited, answer, draft).
+    """
+    answer = answer or ""
+    retrieved = {str(i) for i in retrieved_ids}
+    issues, cited, _has_issues = verify_grounding(answer, sorted(retrieved), len(retrieved))
+    valid = {str(d) for d in cited if str(d) in retrieved}
+    refused = not valid
+    return {
+        "refused": refused,
+        "issues": issues,
+        "cited": valid,
+        "answer": (refusal or REFUSAL_EN) if refused else answer,
+        "draft": answer if refused else "",
+    }
 
 
 def _parse_faithfulness(response: str) -> float:
@@ -200,8 +289,8 @@ def check_faithfulness(context, answer, llm, config=None):
         return 0.0
 
 
-def stream_answer(prompt_template, query, context, llm):
-    prompt = prompt_template.invoke({"context": context, "question": query})
+def stream_answer(prompt_template, query, context, llm, source="msmarco"):
+    prompt = prompt_template.invoke({"context": context, "question": query, "source": source})
     for chunk in llm.stream(prompt):
         yield chunk.content
 

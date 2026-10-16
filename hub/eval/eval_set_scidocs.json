@@ -1,0 +1,1098 @@
+{
+  "collection": "rag_scidocs",
+  "dataset": "mteb/scidocs",
+  "items": [
+    {
+      "qid": "78495383450e02c5fe817e408726134b3084905d",
+      "query": "A Direct Search Method to solve Economic Dispatch Problem with Valve-Point Effect",
+      "relevant": [
+        "2a047d8c4c2a4825e0f0305294e7da14f8de6fd3",
+        "506172b0e0dd4269bdcfe96dda9ea9d8602bbfb6",
+        "51317b6082322a96b4570818b7a5ec8b2e330f2f",
+        "632589828c8b9fca2c3a59e97451fde8fa7d188d",
+        "86e87db2dab958f1bd5877dc7d5b8105d6e31e46"
+      ]
+    },
+    {
+      "qid": "7dcb308b9292a8bc87d6f7793d2ca5e0e19dfa40",
+      "query": "Bearish-Bullish Sentiment Analysis on Financial Microblogs",
+      "relevant": [
+        "033b62167e7358c429738092109311af696e9137",
+        "105a0b3826710356e218685f87b20fe39c64c706",
+        "110599f48c30251aba60f68b8484a7b0307bcb87",
+        "4b53f660eb6cfe9180f9e609ad94df8606724a3d",
+        "7f90ef42f22d4f9b86d33b0ad7f16261273c8612"
+      ]
+    },
+    {
+      "qid": "8c872ecd87945e71fcd9fa1b6cb1133cfe805bf2",
+      "query": "Predicting defects in SAP Java code: An experience report",
+      "relevant": [
+        "28d3ec156472c35ea8e1b7acad969b725111fe56",
+        "334c4806912d851ef2117e67728cfa624dbec9a3",
+        "383ca85aaca9f306ea7ae04fb0b6b76f1e393395",
+        "3ea9cd35f39e8c128f39f13148e91466715f4ee2"
+      ]
+    },
+    {
+      "qid": "3a63667284dc8b9687ed1620406030bfe39af3c9",
+      "query": "Active-Metric Learning for Classification of Remotely Sensed Hyperspectral Images",
+      "relevant": [
+        "01996726f44253807537cec68393f1fce6a9cafa",
+        "0e1431fa42d76c44911b07078610d4b9254bd4ce",
+        "2ae40898406df0a3732acc54f147c1d377f54e2a",
+        "49e85869fa2cbb31e2fd761951d0cdfa741d95f3",
+        "bf07d60ba6d6c6b8cabab72dfce06f203782df8f"
+      ]
+    },
+    {
+      "qid": "071f47b7bc5830643e31dbed82e0375bf9b26559",
+      "query": "Ad Hoc Retrieval Experiments Using WordNet and Automatically Constructed Thesauri",
+      "relevant": [
+        "356f5f4224ee090a11e83a7e3cc130b2fdb0e612",
+        "37b0f219c1f2fbc4b432b24a5fe91dd733f19b7f",
+        "ca56018ed7042d8528b5a7cd8f332c5737b53b1f",
+        "e50a316f97c9a405aa000d883a633bd5707f1a34"
+      ]
+    },
+    {
+      "qid": "ee9596725d1db17f2b1e2207dd3ea260343bfe4f",
+      "query": "Underwater Acoustic Target Tracking: A Review",
+      "relevant": [
+        "0435ef56d5ba8461021cf9e5d811a014ed4e98ac",
+        "11897106a75d5ba3bf5fb4677943bd6f33daadf7",
+        "1e7e4d2b2be08c01f1347dee53e99473d2a9e83d",
+        "5dd2b359fa6a0f7ebe3ca123df01b852bef08421",
+        "93074961701ca6983a6c0fdc2964d11e282b8bae"
+      ]
+    },
+    {
+      "qid": "a65196dfff31425281c690a7f2ca65247147da6b",
+      "query": "Unsupervised Diverse Colorization via Generative Adversarial Networks",
+      "relevant": [
+        "10d710c01acb10c4aea702926d21697935656c3d",
+        "325d145af5f38943e469da6369ab26883a3fd69e",
+        "326a0914dcdf7f42b5e1c2887174476728ca1b9d",
+        "5287d8fef49b80b8d500583c07e935c7f9798933",
+        "57bbbfea63019a57ef658a27622c357978400a50"
+      ]
+    },
+    {
+      "qid": "a04b5b99f5d9d8748843e870536a4a9f65562012",
+      "query": "Lane Detection ( Part I ) : Mono-Vision Based Method",
+      "relevant": [
+        "1c0f7854c14debcc34368e210568696a01c40573",
+        "20f5b475effb8fd0bf26bc72b4490b033ac25129",
+        "235aff8bdb65654163110b35f268de6933814c49",
+        "27edbcf8c6023905db4de18a4189c2093ab39b23",
+        "4d2cd0b25c5b0f69b6976752ebca43ec5f04a461"
+      ]
+    },
+    {
+      "qid": "de8e80d409aaaa3244da4f2cb5b5bb053d453cee",
+      "query": "Detection of distributed denial of service attacks using machine learning algorithms in software defined networks",
+      "relevant": [
+        "1821fbfc03a45af816a8d7aef50321654b0aeec0",
+        "3192a953370bc8bf4b906261e8e2596355d2b610",
+        "9a1b3247fc7f0abf892a40884169e0ed10d3b684",
+        "a10d128fd95710308dfee83953c5b26293b9ede7",
+        "c84b10c01a84f26fe8a1c978c919fbe5a9f9a661"
+      ]
+    },
+    {
+      "qid": "ae0fb9c6ebb8ce12610c477d2388447a13dc4694",
+      "query": "Distributed Privacy-Preserving Collaborative Intrusion Detection Systems for VANETs",
+      "relevant": [
+        "0dacd4593ba6bce441bae37fc3ff7f3b70408ee1",
+        "24d800e6681a129b7787cbb05d0e224acad70e8d",
+        "32334506f746e83367cecb91a0ab841e287cd958",
+        "49934d08d42ed9e279a82cbad2086377443c8a75",
+        "61efdc56bc6c034e9d13a0c99d0b651a78bfc596"
+      ]
+    },
+    {
+      "qid": "648678f1edab0d2139958070744b826d2b24c79e",
+      "query": "Social engineering attack framework",
+      "relevant": [
+        "10466df2b511239674d8487101229193c011a657",
+        "1750a3716a03aaacdfbb0e25214beaa5e1e2b6ee",
+        "24b4076e2f58325f5d86ba1ca1f00b08a56fb682",
+        "7c459c36e19629ff0dfb4bd0e541cc5d2d3f03e0",
+        "bf003bb2d52304fea114d824bc0bf7bfbc7c3106"
+      ]
+    },
+    {
+      "qid": "8a6080396fa7195c7c627bea4b2aeeb9ca39b5f8",
+      "query": "A Biologically Plausible Learning Rule for Deep Learning in the Brain",
+      "relevant": [
+        "17ebe1eb19655543a6b876f91d41917488e70f55",
+        "57b199e1d22752c385c34191c1058bcabb850d9f",
+        "7592f8a1d4fa2703b75cad6833775da2ff72fe7b",
+        "9539a0c4f8766c08dbaf96561cf6f1f409f5d3f9",
+        "cbcd9f32b526397f88d18163875d04255e72137f"
+      ]
+    },
+    {
+      "qid": "4715401473dca02ebaa5bdd4d4003705ed91c380",
+      "query": "Tampering with the Delivery of Blocks and Transactions in Bitcoin",
+      "relevant": [
+        "14829636fee5a1cf8dee9737849a8e2bdaf9a91f",
+        "35fe18606529d82ce3fc90961dd6813c92713b3c",
+        "3d16ed355757fc13b7c6d7d6d04e6e9c5c9c0b78",
+        "5e86853f533c88a1996455d955a2e20ac47b3878",
+        "5fb1285e05bbd78d0094fe8061c644ea09d9da8d"
+      ]
+    },
+    {
+      "qid": "6519bf5580fcdcc9c50fd72c6c8dc5d040d443e8",
+      "query": "A survey of multi-source energy harvesting systems",
+      "relevant": [
+        "34feeafb5ff7757b67cf5c46da0869ffb9655310",
+        "3689220c58f89e9e19cc0df51c0a573884486708",
+        "4833d690f7e0a4020ef48c1a537dbb5b8b9b04c6",
+        "61c1d66defb225eda47462d1bc393906772c9196"
+      ]
+    },
+    {
+      "qid": "3be10c45163c61dfb9f250412699b3f8cb0ada1d",
+      "query": "Churn prediction in telecom using Random Forest and PSO based data balancing in combination with various feature selection strategies",
+      "relevant": [
+        "090a6772a1d69f07bfe7e89f99934294a0dac1b9",
+        "0df013671e9e901a9126deb4957e22e3d937b1a5",
+        "32f7aef5c13c715b00b966eaaba5dd2fe35df1a4",
+        "738f4d2137fc767b1802963b5e45a2216c27b77c",
+        "ae341ad66824e1f30a2675fd50742b97794c8f57"
+      ]
+    },
+    {
+      "qid": "566c89a1ace18f57ac3212e6d62634b501990b31",
+      "query": "Discovering social circles in ego networks",
+      "relevant": [
+        "1d70f0d7bd782c65273bc689b6ada8723e52d7a3",
+        "312a2edbec5fae34beaf33faa059d37d04cb7235",
+        "3e656e08d2b8d1bf84db56090f4053316b01c10f",
+        "56ff48f2b22014d5f59fd2db2b0fc0c651038de1",
+        "62bb7ce6ae6ed38f0ae4d304d56e8edfba1870d0"
+      ]
+    },
+    {
+      "qid": "370fda29c5aaff285311a87824c5f28db33da021",
+      "query": "Permutation invariant training of deep models for speaker-independent multi-talker speech separation",
+      "relevant": [
+        "0b3cfbf79d50dae4a16584533227bb728e3522aa",
+        "0c7d7b4c546e38a4097a97bf1d16a60012916758",
+        "7e0f013e85eff9b089f58d9a3e98605ae1a7ba18",
+        "c1cd441dad61b9d9d294a19a7043adb1582f786b",
+        "ecd4bc32bb2717c96f76dd100fcd1255a07bd656"
+      ]
+    },
+    {
+      "qid": "6c89453c09abde95d998f5acd244f00519472ee0",
+      "query": "SemEval-2014 Task 3: Cross-Level Semantic Similarity",
+      "relevant": [
+        "1528def1ddbd2deb261ebb873479f27f48251031",
+        "2445089d4277ccbec3727fecfe73eaa4cc57e414",
+        "3cbf0dcbc36a8f70e9b2b2f46b16e5057cbd9a7d",
+        "528fa9bb03644ba752fb9491be49b9dd1bce1d52",
+        "d87ceda3042f781c341ac17109d1e94a717f5f60"
+      ]
+    },
+    {
+      "qid": "74d4bf32242a3d22df63e0cd3c7b5a0038220cd2",
+      "query": "Design Approach to a Novel Dual-Mode Wideband Circular Sector Patch Antenna",
+      "relevant": [
+        "1965a7d9a3eb0727c054fb235b1758c8ffbb8e22",
+        "4f86fdb8312794929b9a11770fba271c5bf886fa",
+        "7d712ea3803485467a46b46b71242477560c18f0",
+        "9462cd1ec2e404b22f76c88b6149d1e84683acb7",
+        "9f7b1b9d4f7dc2dcf850dcb311ecd309be380226"
+      ]
+    },
+    {
+      "qid": "714c194a2fc326151b905270558aa137f9f22730",
+      "query": "Two privacy-preserving approaches for data publishing with identity reservation",
+      "relevant": [
+        "03dbbd987ea1fd5307ba5ae2f56d88e4f465b88c",
+        "3dfce4601c3f413605399267b3314b90dc4b3362",
+        "5c15b11610d7c3ee8d6d99846c276795c072eec3",
+        "9492fb8d3b3ce09451fc1df46d5e3c200095f5eb",
+        "b30706600c01e23e11b303842fe548d62bf3ecf8"
+      ]
+    },
+    {
+      "qid": "c79b88a8d8ba491cead38b431703d84015153a8f",
+      "query": "An integrated framework on mining logs files for computing system management",
+      "relevant": [
+        "0a283fb395343cd26984425306ca24c85b09ccdb",
+        "13082af1fd6bb9bfe63e73cf007de1655b7f9ae0",
+        "1ac5b0628ff249c388ff5ca934a9ccbec577cbd7",
+        "6eb69624732a589e91816cc7722be0b0cdd28767",
+        "cd866d4510e397dbc18156f8d840d7745943cc1a"
+      ]
+    },
+    {
+      "qid": "b2a20116c0609e23d3adfeaa604500fddca66178",
+      "query": "DeltaCFS: Boosting Delta Sync for Cloud Storage Services by Learning from NFS",
+      "relevant": [
+        "044a9cb24e2863c6bcaaf39b7a210fbb11b381e9",
+        "148ec401da7d5859a9488c0f9a34200de71cc824",
+        "41f1abe566060e53ad93d8cfa8c39ac582256868",
+        "46f766c11df69808453e14c900bcb3f4e081fcae",
+        "964b6997a9c7852deff71d34894dbdc38d34fbdf"
+      ]
+    },
+    {
+      "qid": "8a93cd1b6fbf7c8c86637bae18d979dafeb9a7c1",
+      "query": "Factor-based Compositional Embedding Models",
+      "relevant": [
+        "0354210007fbe92385acf407549b5cacb41b5835",
+        "04cc04457e09e17897f9256c86b45b92d70a401f",
+        "052b1d8ce63b07fec3de9dbb583772d860b7c769",
+        "2538e3eb24d26f31482c479d95d2e26c0e79b990",
+        "317deb87586baa4ee7c7b5dfc603ebed94d1da07"
+      ]
+    },
+    {
+      "qid": "281b6888d5df1dddb350fac4e9be5c8272519109",
+      "query": "A Dual Attentive Neural Network Framework with Community Metadata for Answer Selection",
+      "relevant": [
+        "07f3f736d90125cb2b04e7408782af411c67dd5a",
+        "0af737eae02032e66e035dfed7f853ccb095d6f5",
+        "1c059493904b2244d2280b8b4c0c7d3ca115be73",
+        "468b9055950c428b17f0bf2ff63fe48a6cb6c998",
+        "81eb0a1ea90a6f6d5e7f14cb3397a4ee0f77824a"
+      ]
+    },
+    {
+      "qid": "0a40663fdcf7c5fb7cfc459693116c41309e7eca",
+      "query": "Algorithmic Nuggets in Content Delivery",
+      "relevant": [
+        "02bb762c3bd1b3d1ad788340d8e9cdc3d85f33e1",
+        "155ca30ef360d66af571eee47c7f60f300e154db",
+        "2a0d27ae5c82d81b4553ea44e81eb986be5fd126",
+        "3593269a4bf87a7d0f7aba639a50bc74cb288fb1",
+        "691564e0f19d5f62597adc0720d0e51ddbce9b89"
+      ]
+    },
+    {
+      "qid": "8501e330d78391f4e690886a8eb8fac867704ea6",
+      "query": "Train longer, generalize better: closing the generalization gap in large batch training of neural networks",
+      "relevant": [
+        "0d57ba12a6d958e178d83be4c84513f7e42b24e5",
+        "22ba26e56fc3e68f2e6a96c60d27d5f721ea00e9",
+        "27da8d31b23f15a8d4feefe0f309dfaad745f8b0",
+        "8e0eacf11a22b9705a262e908f17b1704fd21fa7",
+        "bcdce6325b61255c545b100ef51ec7efa4cced68"
+      ]
+    },
+    {
+      "qid": "beac53e8074b4822943a3374ff5e9fed98a891b8",
+      "query": "Generate to Adapt: Aligning Domains Using Generative Adversarial Networks",
+      "relevant": [
+        "02227c94dd41fe0b439e050d377b0beb5d427cda",
+        "081651b38ff7533550a3adfc1c00da333a8fe86c",
+        "17facd6efab9d3be8b1681bb2c1c677b2cb02628",
+        "1c734a14c2325cb76783ca0431862c7f04a69268",
+        "1e21b925b65303ef0299af65e018ec1e1b9b8d60"
+      ]
+    },
+    {
+      "qid": "6ae4d0b388aa9262e80c3eedc1cb3e5f06842368",
+      "query": "Visualization of complex attacks and state of attacked network",
+      "relevant": [
+        "0b8651737442ec30052724a68e85fefc4c941970",
+        "0c90a3d183dc5f467c692fb7cbf60303729c8078",
+        "3c1f860a678f3f6f33f2cbfdfa7dfc7119a57a00",
+        "844f1a88efc648b5c604c0a098b5c49f3fea4139",
+        "9fe265de1cfab7a97b5efd81d7d42b386b15f2b9"
+      ]
+    },
+    {
+      "qid": "7db20fcc1d71edc32c365f145148d24b9f1427a5",
+      "query": "A proposal of LDMOS using Deep Trench poly field plate",
+      "relevant": [
+        "3f203c85493bce692da54648ef3f015db956a924",
+        "ad3324136e70d546e2744bda4e2b14e6b5311c55",
+        "d0a5e8fd8ca4537e6c0b76e90ae32f86de3cb0fc",
+        "dd73a3d6682f3e1e70fd7b4d04971128fad5f27b",
+        "f1aa9bbf85aa1a0b3255b38032c08781f491f4d3"
+      ]
+    },
+    {
+      "qid": "335ad0ff82c728aca99fb0059c607cb18129526f",
+      "query": "Bring you to the past: Automatic Generation of Topically Relevant Event Chronicles",
+      "relevant": [
+        "0229c0eb39efed90db6691469daf0bb7244cf649",
+        "19e8aaa1021f829c8ff0378158d9b69699ea4f83",
+        "280f9cc6ee7679d02a7b8b58d08173628057f3ea",
+        "39c230241d51b1435472115aaa8c62b94ab9927d",
+        "6d823b8098ec2b13fb5dcbb02bb55d7030d37d5a"
+      ]
+    },
+    {
+      "qid": "04e4034344bda5c97015ea634e6eb1b65ef3a898",
+      "query": "Agile Team Perceptions of Productivity Factors",
+      "relevant": [
+        "00f51b60ef3929097ada76a16ff71badc2277165",
+        "0ee47ca8e90f3dd2107b6791c0da42357c56f5bc",
+        "a023f6d6c383f4a3839036f07b1ea0aa04da9cbb",
+        "b58b3a1dd84fe44f91510df00905a1ed33c1525c",
+        "d7b9dde9a7d304b378079049a0c2af40454a13bb"
+      ]
+    },
+    {
+      "qid": "271a4077c037b86fb7daf6bff3e66682322ff7d7",
+      "query": "Movement segmentation using a primitive library",
+      "relevant": [
+        "04c5268d7a4e3819344825e72167332240a69717",
+        "0c4867f11c9758014d591381d8b397a1d38b04a7",
+        "139a860b94e9b89a0d6c85f500674fe239e87099",
+        "1c01e44df70d6fde616de1ef90e485b23a3ea549",
+        "39a6cc80b1590bcb2927a9d4c6c8f22d7480fbdd"
+      ]
+    },
+    {
+      "qid": "3d23666c6d97d6ba3c86044d83c697821084bed6",
+      "query": "Variational Sequential Labelers for Semi-Supervised Learning",
+      "relevant": [
+        "018300f5f0e679cee5241d9c69c8d88e00e8bf31",
+        "040522d17bb540726a2e8d45ee264442502723a0",
+        "0a10d64beb0931efdc24a28edaa91d539194b2e2",
+        "2538e3eb24d26f31482c479d95d2e26c0e79b990",
+        "32cbd065ac9405530ce0b1832a9a58c7444ba305"
+      ]
+    },
+    {
+      "qid": "fd4537b92ab9fa7c653e9e5b9c4f815914a498c0",
+      "query": "One-Sided Unsupervised Domain Mapping",
+      "relevant": [
+        "02227c94dd41fe0b439e050d377b0beb5d427cda",
+        "1450296fb936d666f2f11454cc8f0108e2306741",
+        "639937b3a1b8bded3f7e9a40e85bd3770016cf3c",
+        "6424b69f3ff4d35249c0bb7ef912fbc2c86f4ff4",
+        "6b4da897dce4d6636670a83b64612f16b7487637"
+      ]
+    },
+    {
+      "qid": "191ea925c2115755b44380c99d84f4a1099b4dcd",
+      "query": "Aggregating Content and Network Information to Curate Twitter User Lists",
+      "relevant": [
+        "0c46b067779d7132c5fd097baadc261348afb261",
+        "1ad8410d0ded269af4a0116d8b38842a7549f0ae",
+        "3531e0eb9ec8a6ac786146c71ead7f8d624fd2ca",
+        "3f4558f0526a7491e2597941f99c14fea536288d",
+        "7e8a5e0a87fab337d71ce04ba02b7a5ded392421"
+      ]
+    },
+    {
+      "qid": "458f1428273254fc5dd399f3c104f507680ddd54",
+      "query": "Measuring discrimination in algorithmic decision making",
+      "relevant": [
+        "04f39720b9b20f8ab990228ae3fe4f473e750fe3",
+        "17fac85921a6538161b30665f55991f7c7e0f940",
+        "2a622720d4021259a6f6d3c6298559d1b56e7e62",
+        "37c3303d173c055592ef923235837e1cbc6bd986",
+        "4556f3f9463166aa3e27b2bec798c0ca7316bd65"
+      ]
+    },
+    {
+      "qid": "19115f66f6ac1c02568bbb38eceedfa3521a8cc2",
+      "query": "Deep and Shallow Architecture of Multilayer Neural Networks",
+      "relevant": [
+        "2375f6d71ce85a9ff457825e192c36045e994bdd",
+        "60b7c281f3a677274b7126c67b7f4059c631b1ea",
+        "6bfa668b84ae5cd7e19dbda5d78688ee9dc4b25c",
+        "ee7f0bc85b339d781c2e0c7e6db8e339b6b9fec2"
+      ]
+    },
+    {
+      "qid": "84424eee012089dac9414979f0cb1465c97c4408",
+      "query": "An inverse Yarbus process: Predicting observers’ task from eye movement patterns",
+      "relevant": [
+        "03406ec0118137ca1ab734a8b6b3678a35a43415",
+        "1319bf6218cbcd85ac7512991447ecd9d776577d",
+        "26e8f3cc46b710a013358bf0289df4de033446ba",
+        "b68b04cb44f2d0a9762715fabb4005756926374f",
+        "b73f2d7b58bfc555d8037b3fdb673c4cec1aecf0"
+      ]
+    },
+    {
+      "qid": "5bb6b779de7929c573f39cd84169cafbd72e5bae",
+      "query": "Could We Issue Driving Licenses to Autonomous Vehicles?",
+      "relevant": [
+        "2f991be8d35e4c1a45bfb0d646673b1ef5239a1f",
+        "546add32740ac350dda44bab06f56d4e206622ab",
+        "8db9df2eadea654f128c1887722c677c708e8a47",
+        "a4d513cfc9d4902ef1a80198582f29b8ba46ac28",
+        "b5a047dffc3d70dce19de61257605dfc8c69535c"
+      ]
+    },
+    {
+      "qid": "7b6652910c5cc0df9ff6bc91912a02e58a742d26",
+      "query": "Evolutionary mining of relaxed dependencies from big data collections",
+      "relevant": [
+        "28f840416cfe7aed3cda11e266119d247fcc3f9e",
+        "5288d14f6a3937df5e10109d4e23d79b7ddf080f",
+        "5425f7109dca2022ff9bde0ed3f113080d0d606b",
+        "57fb4b0c63400dc984893461b1f5a73244b3e3eb",
+        "c2f4c6d7e06da14c4b3ce3a9b97394a64708dc52"
+      ]
+    },
+    {
+      "qid": "df0ef17f63582603dafb1ac5c489dec1416ecbf4",
+      "query": "Real World BCI: Cross-Domain Learning and Practical Applications",
+      "relevant": [
+        "061356704ec86334dbbc073985375fe13cd39088",
+        "14318685b5959b51d0f1e3db34643eb2855dc6d9",
+        "1827de6fa9c9c1b3d647a9d707042e89cf94abf0",
+        "a7ab6fe31ee11a6b59e4d0c15de9f81661ef0d58",
+        "fdddcec753050d624a72d3de6f23c5b560f1cb25"
+      ]
+    },
+    {
+      "qid": "f2d5039b55d626ef5466a80e950bddd5cc1819d4",
+      "query": "Inverse Reinforcement Learning",
+      "relevant": [
+        "117a50fbdfd473e43e550c6103733e6cb4aecb4c",
+        "11b6bdfe36c48b11367b27187da11d95892f0361",
+        "2532d0567c8334e4cadf282a73ffe399c1c32476",
+        "6f20506ce955b7f82f587a14301213c08e79463b",
+        "77024583e21d0cb7591900795f43f1a42dd6acf8"
+      ]
+    },
+    {
+      "qid": "7492683af60d02dbd658acdc61249571f8c20fc8",
+      "query": "J-Sim: a simulation and emulation environment for wireless sensor networks",
+      "relevant": [
+        "003715e5bda2dfd2373c937ded390e469e8d84b1",
+        "006df3db364f2a6d7cc23f46d22cc63081dd70db",
+        "16e6938256f8fd82de59aac2257805f692278f03",
+        "49ed15db181c74c7067ec01800fb5392411c868c",
+        "53b85e4066944b1753aae8e3418028a67d9372e1"
+      ]
+    },
+    {
+      "qid": "f7f32e86c23a902ac55fba8b8191026f563bec5b",
+      "query": "Subjectivity and Sentiment Analysis of Modern Standard Arabic",
+      "relevant": [
+        "310b72fbc3d384ca88ca994b33476b8a2be2e27f",
+        "59d9160780bf3eac8c621983a36ff332a3497219",
+        "7c89cbf5d860819c9b5e5217d079dc8aafcba336",
+        "9141d85998eadb1bca5cca027ae07670cfafb015",
+        "c2ac213982e189e4ad4c7f60608914a489ec9051"
+      ]
+    },
+    {
+      "qid": "a22e737d38a1bc671893a7ed341aba436571097a",
+      "query": "Developmental Changes in the Relationship Between Grammar and the Lexicon",
+      "relevant": [
+        "0cfe588996f1bc319f87c6f75160d1cf1542d9a9",
+        "162cd1259ad106990c6bfd36db19751f940274d3",
+        "53dd71dc5598d41c06d3eef1315e098dc4cbca28",
+        "7085126d3d21b559e38231f3fa283aae0ca50cd8",
+        "a6ad17f9df9346c56bab090b35ef73ff94f56c01"
+      ]
+    },
+    {
+      "qid": "4b80771429b786ea87740738378ba1eb1504a57f",
+      "query": "Literature Fingerprinting: A New Method for Visual Literary Analysis",
+      "relevant": [
+        "21fb86020f68bf2dd57cd1b8a0e8adead5d9a9ae",
+        "288c67457f09c0c30cadd7439040114e9c377bc3",
+        "384bb3944abe9441dcd2cede5e7cd7353e9ee5f7",
+        "49fa97db6b7f3ab2b3a623c3552aa680b80c8dd2",
+        "4eae6ee36de5f9ae3c05c6ca385938de98cd5ef8"
+      ]
+    },
+    {
+      "qid": "9003fb79e7848ced3be975c3d87a9348a4b8d377",
+      "query": "Moral development, executive functioning, peak experiences and brain patterns in professional and amateur classical musicians: Interpreted in light of a Unified Theory of Performance",
+      "relevant": [
+        "6d3f38ea64c84d5ca1569fd73497e34525baa215",
+        "781ee20481f4e2e4accfa2b1cd6d70d5854bb171",
+        "8ed0ee88e811aaaad56d1a42e2cfce02edcc90ff",
+        "cc54251f84c8577ca862fec41a1766c9a0d4a7b8"
+      ]
+    },
+    {
+      "qid": "ac58b487e864afafe71c6158553eed10fbc8eef5",
+      "query": "A NEW PERSPECTIVE ON PORT SUPPLY CHAIN MANAGEMENT ACCORDING TO THE SERVICE DOMINANT LOGIC",
+      "relevant": [
+        "030467d08fb735b2855aa9e71185126ba389f9d9",
+        "314617f72bff343c7a9f0d550dc8f918a691f2bd",
+        "678680169e8b75430c1239e7e5289f656e009809",
+        "9bf6a003ed9dab85b8d22b2dd50b4325c6ab67ef",
+        "bd1c85bf52295adad0b1a59d79d7429091beeb22"
+      ]
+    },
+    {
+      "qid": "30c9a7660281ad8e4538ff9beb20282c74fac810",
+      "query": "Online Social Networks anatomy: On the analysis of Facebook and WhatsApp in cellular networks",
+      "relevant": [
+        "0a65bc1de050f544648977e786c499a0166fa22a",
+        "13bf13f019632a4edb967635e72e3e140f89e90e",
+        "21b07e146c9b56dbe3d516b59b69d989be2998b7",
+        "2d2b1f9446e9b4cdb46327cda32a8d9621944e29",
+        "2dff0f21a23f9e3b6e0c50ce3fec75de4ff00359"
+      ]
+    },
+    {
+      "qid": "129397ed6557da93db5ba18cf112ee7b0a7927d8",
+      "query": "Stochastic Variational Deep Kernel Learning",
+      "relevant": [
+        "09d8995d289fd31a15df47c824a9fdb79114a169",
+        "192687300b76bca25d06744b6586f2826c722645",
+        "2cac0942a692c3dbb46bcf826d71d202ab0f2e02",
+        "3bae80eca92a6e607cacdf03da393a1059c0d062",
+        "722fcc35def20cfcca3ada76c8dd7a585d6de386"
+      ]
+    },
+    {
+      "qid": "1a66df57f88e689438d505474eff73e3a9180c5b",
+      "query": "Survey on modeling and indexing events in multimedia",
+      "relevant": [
+        "1aa5a8ad5b7031ba39e1dc0537484694364a1312",
+        "21cbb7e58e8f3e5912b32df3e75b004e5a0c00cc",
+        "4fa2b00f78b2a73b63ad014f3951ec902b8b24ae",
+        "6a7c63a73724c0ca68b1675e256bb8b9a35c94f4",
+        "d71c84fbaff0d7f2cbcf2f03630e189c58939a4a"
+      ]
+    },
+    {
+      "qid": "e00ab75a8aa637d9c4c5c020e9f2c54b31528031",
+      "query": "3D ActionSLAM: wearable person tracking in multi-floor environments",
+      "relevant": [
+        "0e278a94018c3bbe464c3747cd155af10dc4fdab",
+        "1677bd5219b40cff4db32b03dea230e0afc4896e",
+        "30f67b7275cec21a94be945dfe4beff08c7e004a",
+        "3303b29b10ce7cd76c799ad0c796521751347f9f",
+        "5a6a91287d06016ccce00c1c35e04af5d46c2b16"
+      ]
+    },
+    {
+      "qid": "7707c7aac35a4d206eb061305256452051ae4dcf",
+      "query": "Data Warehouse Life-Cycle and Design",
+      "relevant": [
+        "03af306bcb882da089453fa57539f62aa7b5289e",
+        "1126ceee34acd741396c493c84d8b6072a18bfd7",
+        "25e0853ae37c2200de5d3597ae9e86131ce25aee",
+        "5b30ca7b3cbd38380c23333310f673f835b2dd3e",
+        "ca966559c378c0d22d17b1bbce7f55b41cbbfba5"
+      ]
+    },
+    {
+      "qid": "23386571ed332e4a465c0a6fa899f310caa217c8",
+      "query": "Topic-Relevance Map: Visualization for Improving Search Result Comprehension",
+      "relevant": [
+        "054fc7be5084e0f2cec80e6d708c3eafbffc6497",
+        "44b05f00f032c0d59df4b712b83ff82a913e950a",
+        "4b4afd45404d2fd994c5bd0fb79181e702594b61",
+        "7e9507924ceebd784503fd25128218a7119ff722",
+        "a96898490180c86b63eee2e801de6e25de5aa71d"
+      ]
+    },
+    {
+      "qid": "e7ec9e900556d9d9e47b274911ad304bcf198256",
+      "query": "Common Mode EMI Noise Suppression for Bridgeless PFC Converters",
+      "relevant": [
+        "36927265f588ed093c2cbdbf7bf95ddd72f000a9",
+        "60ba158cb1a619726db31b684a7bf818e2f8256b",
+        "77c87f82a73edab2c46d600fc3d7821cdb15359a",
+        "864e1700594dfdf46a4981b5bc07a54ebeab11ba",
+        "c0b7e09f212ec85da22974c481e7b93efeba1504"
+      ]
+    },
+    {
+      "qid": "ca464085b3da330f2ea895543a78c446a3af1bb6",
+      "query": "Calcium hydroxylapatite for jawline rejuvenation: consensus recommendations.",
+      "relevant": [
+        "325be255b9eb19cb721b7ec0429e46570181370e",
+        "3e8482443faa2319a6c2c04693402d9b5264bc0a",
+        "5841bf263cfd388a7af631f0f85fc6fa07dca945",
+        "b6626537ce41ccd7b8442799eb4c33576f1ce482",
+        "c668bf08ccce6f68ad2a285727dbfb7433f3cfa7"
+      ]
+    },
+    {
+      "qid": "f09db8a42d713774483f023b31e0ee96361823f4",
+      "query": "Adversarial Texts with Gradient Methods",
+      "relevant": [
+        "0825788b9b5a18e3dfea5b0af123b5e939a4f564",
+        "0826c98d1b1513aa2f45e6654bb5075a58b64649",
+        "307e3d7d5857942d7d2c9d97f7437777535487e0",
+        "326cfa1ffff97bd923bb6ff58d9cb6a3f60edbe5",
+        "83a6cacc126d85c45605797406262677c256a6af"
+      ]
+    },
+    {
+      "qid": "958ebc7e24012b419316489515f2c2f908773bd5",
+      "query": "Pose tracking from natural features on mobile phones",
+      "relevant": [
+        "10cfa5bfab3da9c8026d3a358695ea2a5eba0f33",
+        "5137516a2604bb0828e59dc517b252d489409986",
+        "69524d5b10b0bb7e4aa1c9057eefe197b230922e",
+        "779f05bf98049762df4298043ac6f38c82a07607",
+        "7c20a16d1666e990e6499995556578c1649d191b"
+      ]
+    },
+    {
+      "qid": "73d54af530d22599cc76b9785ae0a663cc694df2",
+      "query": "Neural Variational Inference For Embedding Knowledge Graphs",
+      "relevant": [
+        "00ca2e50ae1c5f4499d9271c72466d2f9d4ae137",
+        "053dec3537df88a1f68b53e33e1462a6b88066f6",
+        "05aba481e8a221df5d8775a3bb749001e7f2525e",
+        "272216c1f097706721096669d85b2843c23fa77d",
+        "9ecd3d4c75f5e927fc3167dd185d7825e14a814b"
+      ]
+    },
+    {
+      "qid": "de77514c78432a0b17cf30baa024434173908f89",
+      "query": "Autonomous underwater grasping using multi-view laser reconstruction",
+      "relevant": [
+        "375d5a31e1f15b4b4dab3428f0517e014fa61a91",
+        "aae4665c2bd9f04e0c7f993123b30d87486b79f7",
+        "d45eaee8b2e047306329e5dbfc954e6dd318ca1e",
+        "d8b69a91ff70de099aeaee3b448ef02f889f3faf",
+        "dec3de4ae1cb82c75189eb98b5ebb9a1a683f334"
+      ]
+    },
+    {
+      "qid": "7c88a0f765ce3c9025345cf133251cb947fe6ee5",
+      "query": "Hierarchical multi-label classification over ticket data using contextual loss",
+      "relevant": [
+        "05357314fe2da7c2248b03d89b7ab9e358cbf01e",
+        "06d0a9697a0f0242dbdeeff08ec5266b74bfe457",
+        "094d9601e6f6c45579647e20b5f7b0eeb4e2819f",
+        "234f11713077aa09179533a1f37c075662e25b0f",
+        "2acbd7681ac7c06cae1541b8925f95294bc4dc45"
+      ]
+    },
+    {
+      "qid": "a9d7e7e918a68d1b95c6c6b29f7fabbbe01010f7",
+      "query": "Iterative Hough Forest with Histogram of Control Points for 6 DoF object registration from depth images",
+      "relevant": [
+        "02a808de5aa34685955fd1473433161edd20fd80",
+        "1bde4205a9f1395390c451a37f9014c8bea32a8a",
+        "1e8f46aeed1a96554a2d759d7ca194e1f9c22de1",
+        "1eca34e935b5e0f172ff5557697317f32b646f5e",
+        "242caa8e04b73f56a8d4adae36028cc176364540"
+      ]
+    },
+    {
+      "qid": "0bfa2ab02f3c9a9fe06fcebf34bd8f371e206512",
+      "query": "Let's go public! taking a spoken dialog system to the real world",
+      "relevant": [
+        "07c095dc513b7ac94a9360fab68ec4d2572797e2",
+        "1347af2305933f77953c881a78c6029ab50ae460",
+        "387ef15ce6de4a74b1a51f3694419b90d3d81fba",
+        "43d15ec7a3f7c26830541ea57f4af56b61983ca4"
+      ]
+    },
+    {
+      "qid": "5e1b80b4774582b948c6dcd656daaba6724ffc2d",
+      "query": "Evaluation of a Brute Forcing Tool that Extracts the RAT from a Malicious Document File",
+      "relevant": [
+        "067c7857753e21e7317b556c86e30be60aa7cac0",
+        "0992ef63a94c4b9dfc05f96b3a144c1e7237c539",
+        "0c668ee24d58ecca165f788d40765e79ed615471",
+        "0dac671dae4192cfe96d290b50cc3f1105798825",
+        "b90dd2f366988d9bb76399d4137c1768fe460c8f"
+      ]
+    },
+    {
+      "qid": "382bbb79d7ffda63395db3d9b4ebce55d0b2f038",
+      "query": "Individuality and Alignment in Generated Dialogues",
+      "relevant": [
+        "12f661171799cbd899e1ff4ae0a7e2170c3d547b",
+        "197a7fc2f8d57d93727b348851b59b34ce990afd",
+        "395f4b41578c3ff5139ddcf9e90eb60801b50394",
+        "7dd4a0fb7368a510840cffd7dcad618962d3b8e4",
+        "9c1775c992847f31a9bda931a1ecb8cac5365367"
+      ]
+    },
+    {
+      "qid": "f7bdc97a6b4c5d65c145479ae74b3a244121ae89",
+      "query": "Digital Image Authentication Model Based on Edge Adaptive Steganography",
+      "relevant": [
+        "31864e13a9b3473ebb07b4f991f0ae3363517244",
+        "874b9e74fb000c6554c6941f73ddd4c66c6de38d",
+        "8c82c93dfc7d3672e58efd982a23791a8a419053",
+        "934ac849af9e478b7c0c3c599b9047e291d96ae2",
+        "b41c45b2ca0c38a4514f0779395ebdf3d34cecc0"
+      ]
+    },
+    {
+      "qid": "e659e72b7962c9ad586a2d35a7099550102fb054",
+      "query": "Brain-computer interface systems: progress and prospects.",
+      "relevant": [
+        "08f7fb99edd844aac90fccfa51f5d55cbdf15cbd",
+        "382b521a3a385ea8a339b68c54183e2681602735",
+        "6777d0f3b5b606f218437905346a9182712840cc",
+        "97e5088bfb7583f1a40881d7c41f7be63ebb2846",
+        "d76beb59a23c01c9bec1940c4cec1ca26e00480a"
+      ]
+    },
+    {
+      "qid": "3136f52540fb7925998eff94e9c016d2e1a6fe12",
+      "query": "Tablets and humanoid robots as engaging platforms for teaching languages",
+      "relevant": [
+        "1d7383438d2ad4705fcfae4c9c56b5ac8a86d3f3",
+        "563ea3682f1e3d14dee418fe1fbb52f433185242",
+        "73f8d428fa37bc677d6e08e270336e066432c8c9",
+        "c4f19894a279d10aa2001facc7d35516e8d654ff",
+        "ce66e4006c9948b7ed080c239540dfd0746ff639"
+      ]
+    },
+    {
+      "qid": "0bf046038a555bc848030a28530f9836e5611b96",
+      "query": "ModDrop: Adaptive Multi-Modal Gesture Recognition",
+      "relevant": [
+        "02a98118ce990942432c0147ff3c0de756b4b76a",
+        "14ce7635ff18318e7094417d0f92acbec6669f1c",
+        "50ca90bc847694a7a2d9a291f0d903a15e408481",
+        "586d7b215d1174f01a1dc2f6abf6b2eb0f740ab6",
+        "afbd6dbf502004ad2be091afc084580d02a56a2e"
+      ]
+    },
+    {
+      "qid": "5a4b46ef8898610ab16a1ced6f4a976db0f1962c",
+      "query": "Jack the Reader - A Machine Reading Framework",
+      "relevant": [
+        "0a6d7e8e61c54c796f53120fdb86a25177e00998",
+        "6ac1962fd1f2b90da02c63c16af39a3c7a3e6df6",
+        "9f8eb04dbafdfda997ac5e06cd6c521f82bf4e4c",
+        "c05727976dfae43ae13aa520774fc3bd369d49b5",
+        "f010affab57b5fcf1cd6be23df79d8ec98c7289c"
+      ]
+    },
+    {
+      "qid": "232427099d4a8acf1dc29efc852f09c5964e6165",
+      "query": "A New View of Predictive State Methods for Dynamical System Learning",
+      "relevant": [
+        "0122bba20a91c739ffb6dd4c68cf84b9305ccfc0",
+        "0c5e3186822a3d10d5377b741f36b6478d0a8667",
+        "16611312448f5897c7a84e2f590617f4fa3847c4",
+        "5ec33788f9908f69255c9df424c51c7495546893",
+        "645b2c28c28bd28eaa187a2faafa5ec12bc12e3a"
+      ]
+    },
+    {
+      "qid": "100636ca50edf63d4336bb071f3e172cb0ebccaa",
+      "query": "Deep Reinforcement Learning for Conversational AI",
+      "relevant": [
+        "15cf63f8d44179423b4100531db4bb84245aa6f1",
+        "268a7cd1bf65351bba4eb97aac373d624af2c08f",
+        "32de3580916a1e5f36bc54779ba5904c19daa403",
+        "3b9732bb07dc99bde5e1f9f75251c6ea5039373e",
+        "4cd91a0bc0474ce5560209cbeb79b21a1403eac1"
+      ]
+    },
+    {
+      "qid": "7a373793804ea9813d64641919e14841f927c38f",
+      "query": "GeoNet: Geometric Neural Network for Joint Depth and Surface Normal Estimation",
+      "relevant": [
+        "07f77ad9c58b21588a9c6fa79ca7917dd58cca98",
+        "1abf6491d1b0f6e8af137869a01843931996a562",
+        "2fdbd2cdb5b028e77b7640150496ae13eab05f30",
+        "3fe41cfefb187e83ad0a5417ab01c212f318577f",
+        "420c46d7cafcb841309f02ad04cf51cb1f190a48"
+      ]
+    },
+    {
+      "qid": "e788f08148b4b06f4e537b27b51338f1c88ccea8",
+      "query": "FaCT++ Description Logic Reasoner: System Description",
+      "relevant": [
+        "0f26b165700dc85548ea3d570d757aba838f5a97",
+        "1750a3716a03aaacdfbb0e25214beaa5e1e2b6ee",
+        "36ada37bede2f0fd3dbab2f8d4d33df8670ff00b",
+        "57820e6f974d198bf4bbdf26ae7e1063bac190c3",
+        "862576569343cfa7c699784267543b81fad23c3a"
+      ]
+    },
+    {
+      "qid": "8fad88b5678bfecab78d0d6389f649ccfb310d22",
+      "query": "EvoNN: a customizable evolutionary neural network with heterogenous activation functions",
+      "relevant": [
+        "45b7d3881dd92c8c73b99fa3497e5d28a2106c24",
+        "505c58c2c100e7512b7f7d906a9d4af72f6e8415",
+        "50975d6cd92e71f828ffd54bf776c32daa79e295",
+        "6ae5deae0167649c37117d11681a223a271923c3",
+        "6e744cf0273a84b087e94191fd654210e8fec8e9"
+      ]
+    },
+    {
+      "qid": "e48e9cf407af2694ecfefd441c2c28faffdf0835",
+      "query": "Antipodal Vivaldi antenna for phased array antenna applications",
+      "relevant": [
+        "843018e9d8ebda9a4ec54256a9f70835e0edff7e",
+        "8839b84e8432f6787d2281806430a65d39a94499",
+        "984df1f081fbd623600ec45635e5d9a4811c0aef",
+        "d7ccf0988c16b0b373274bcf57991f036e253f5c",
+        "e3f4fdf6d2f10ebe4cfc6d0544afa63976527d60"
+      ]
+    },
+    {
+      "qid": "065985d4d0854c51f52ad7a7507b267d9b88ab1c",
+      "query": "Multi-class active learning for image classification",
+      "relevant": [
+        "07f1bf314056d39c24e995dab1e0a44a5cae3df0",
+        "0acf1a74e6ed8c323192d2b0424849820fe88715",
+        "1a090df137014acab572aa5dc23449b270db64b4",
+        "9ae252d3b0821303f8d63ba9daf10030c9c97d37",
+        "fa6cbc948677d29ecce76f1a49cea01a75686619"
+      ]
+    },
+    {
+      "qid": "44a56dc083e3e2b07f11aae29c1ee560f46efa4a",
+      "query": "A Novel Fast Framework for Topic Labeling Based on Similarity-preserved Hashing",
+      "relevant": [
+        "1e56ed3d2c855f848ffd91baa90f661772a279e1",
+        "27ae23bb8d284a1fa8c8ab24e23a72e1836ff5cc",
+        "2b8a80b18cc7a4461c6e532c2f3de7e570d4fcd6",
+        "682988d3cc614c122745d0e87ad9df0f44c3e432",
+        "99f231f29d8bbd410bb3edc096a502b1ebda8526"
+      ]
+    },
+    {
+      "qid": "3b198869df03d98b81c0c882753845a3bca36c63",
+      "query": "Flexible Radio Access Beyond 5G: A Future Projection on Waveform, Numerology, and Frame Design Principles",
+      "relevant": [
+        "38b1824bbab96f9ab2e1079ea2b60ae313e6cb7f",
+        "43a87c07f2cbfeab0801b9cf2ece5f7e0689d287",
+        "4d1efe967fde304dc31e19665b9c328969a79128",
+        "de19bd1be876549cbccb79e545c43442a6223f7a",
+        "f1732fe25d335af43c0ff90c1b35f9b5a5c38dc5"
+      ]
+    },
+    {
+      "qid": "9a7e12ef462e779263ee3f2dd415d2d21233f15d",
+      "query": "Unraveling the Anxious Mind: Anxiety, Worry, and Frontal Engagement in Sustained Attention Versus Off-Task Processing",
+      "relevant": [
+        "00844516c86828a4cc81471b573cb1a1696fcde9",
+        "0ca9e60d077c97f8f9f9e43110e899ed45284ecd",
+        "21bfc289cf7e2309e70f390ae14d89df7c911a67",
+        "261208c69aeca0243e43511845a0d8023d31acbe",
+        "2ce0d2f6efe74b9df4c0eccb434322d931c5dd47"
+      ]
+    },
+    {
+      "qid": "76dac031066a95715a3b116eb2094ec9bdd15171",
+      "query": "Reinforcement Learning for Coreference Resolution",
+      "relevant": [
+        "05357314fe2da7c2248b03d89b7ab9e358cbf01e",
+        "09370d132a1e238a778f5e39a7a096994dc25ec1",
+        "0bacca0993a3f51649a6bb8dbb093fc8d8481ad4",
+        "2704a9af1b368e2b68b0fe022b2fd48b8c7c25cc",
+        "d3c79bd62814782c7075c7fea80d1f87e337a538"
+      ]
+    },
+    {
+      "qid": "26ebc1b9e21db68d5abf01acd2a0c38d260c65a1",
+      "query": "Deep Residual Bidir-LSTM for Human Activity Recognition Using Wearable Sensors",
+      "relevant": [
+        "0b3cfbf79d50dae4a16584533227bb728e3522aa",
+        "272216c1f097706721096669d85b2843c23fa77d",
+        "2c03df8b48bf3fa39054345bafabfeff15bfd11d",
+        "5763c2c62463c61926c7e192dcc340c4691ee3aa",
+        "83de43bc849ad3d9579ccf540e6fe566ef90a58e"
+      ]
+    },
+    {
+      "qid": "a1be02429ab4ec852656f8833c3160f4592cc547",
+      "query": "Reward-estimation variance elimination in sequential decision processes",
+      "relevant": [
+        "053dec3537df88a1f68b53e33e1462a6b88066f6",
+        "085fb3acabcbf80ef1bf47daec50d246475b072b",
+        "1aa02f027663a626f3aa17ed9bab52377a23f634",
+        "96fccad0177530b81941d208355887de2d658d2c",
+        "afbe59950a7d452ce0a3f412ee865f1e1d94d9ef"
+      ]
+    },
+    {
+      "qid": "a1f5c39aece58f6504e0334d96eaede32c7329cf",
+      "query": "Emotion recognition using Speech Processing Using k-nearest neighbor algorithm",
+      "relevant": [
+        "286f0650438d0cc5123057909662d242d7bbce07",
+        "34850eb3f55633599e8e8f36db4bedf541d30b94",
+        "67efaba1be4c0462a5fc2ce9762f7edf9719c6a0",
+        "953e69c66f2bdfcc65e4d677fa429571cdec2a60"
+      ]
+    },
+    {
+      "qid": "8ff6581f94c366e34c6f2d55806f7781194c33c8",
+      "query": "On visual gaze tracking based on a single low cost camera",
+      "relevant": [
+        "19aca01bafe52131ec95473dac105889aa6a4d33",
+        "28312c3a47c1be3a67365700744d3d6665b86f22",
+        "2c21e4808dcb8f9d935d98af07d733b8134525ab",
+        "342f0a9db326eb32df8edb8268e573ea6c7d3999",
+        "e0f296dd7a8c9e315e4bd4e1108142f2e9e6faec"
+      ]
+    },
+    {
+      "qid": "fd65ca4e3ae95302f74bf863988cdb95d6a12824",
+      "query": "Speech Emotion Recognition with Emotion-Pair Based Framework Considering Emotion Distribution Information in Dimensional Emotion Space",
+      "relevant": [
+        "002a8b9ef513d46dc8dcce85c04a87ae6a221b4c",
+        "042f8effa0841dca3a41b58fab12f0fd8e3f9ccb",
+        "3f168efed1bc3d97c0f7ddb2f3e79f2eb230bafa",
+        "782f2b8924ed5104b42308a0565429747780f0c2",
+        "a474b149717cb37d6c507395ba27844a92889939"
+      ]
+    },
+    {
+      "qid": "3565d884735ead613a5aa0903f06a2cc86d05b6b",
+      "query": "Analysis and Experimental Kinematics of a Skid-Steering Wheeled Robot Based on a Laser Scanner Sensor",
+      "relevant": [
+        "27f9b805de1f125273a88786d2383621e60c6094",
+        "656dce6c2b7315518cf0aea5d5b2500f869ab223",
+        "760c81c0a19f8358dde38691b81fe2f20c829b44",
+        "7df9117c67587f516fd4b13bd9df88aff9ab79b3",
+        "9d9fc59f80f41915793e7f59895c02dfa6c1e5a9"
+      ]
+    },
+    {
+      "qid": "c2e57b2871fdfd06566820c5329815ac06f66197",
+      "query": "DeepMem: Learning Graph Neural Network Models for Fast and Robust Memory Forensic Analysis",
+      "relevant": [
+        "04caa1a55b12d5f3830ed4a31c4b47921a3546f2",
+        "0704bb7b7918cd512b5e66ea4b4993e50b8ae92f",
+        "47da821786eea4e6d9d69cc5aa1f248e958ea6e4",
+        "54ee58c3623b7fdf8b7e9e29355a24478f574eea",
+        "7693cafd6f29623f61d66f031cadd60b6ce827d7"
+      ]
+    },
+    {
+      "qid": "59e2037f5079794cb9128c7f0900a568ced14c2a",
+      "query": "Clothing and People - A Social Signal Processing Perspective",
+      "relevant": [
+        "03684e4a57d2c33e0ed219cad9e3b180175f2464",
+        "04c2cda00e5536f4b1508cbd80041e9552880e67",
+        "09fa54f1ab7aaa83124d2415bfc6eb51e4b1f081",
+        "30ea6c4991ceabc8d197ccff3e45fb0a00a3f6c5",
+        "324608bf8fecc064bc491da21291465ab42fa6b6"
+      ]
+    },
+    {
+      "qid": "3f95e155b1c40911149fe994197a502ef44ebbbe",
+      "query": "Music emotion recognition: the role of individuality",
+      "relevant": [
+        "12f8ae73af6280171a1c5fb8818320427c4f255f",
+        "4ccb0d37c69200dc63d1f757eafb36ef4853c178",
+        "667ba06f64d3687d290a899deb2fdf7dabe7fd1c",
+        "9d4a2052502fe2c60e48d7c8997da1269df6f48f",
+        "fffda2474b1754897c854e0c322796f1fc9f4db8"
+      ]
+    },
+    {
+      "qid": "0674058618d04def58c79a0b28174301ef591433",
+      "query": "RainForest—A Framework for Fast Decision Tree Construction of Large Datasets",
+      "relevant": [
+        "1f25ed3c9707684cc0cdf3e8321c791bc7164147",
+        "39b58ef6487c893219c77c61c762eee5694d0e36",
+        "7c3a4b84214561d8a6e4963bbb85a17a5b1e003a",
+        "84dae6a2870c68005732b9db6890f375490f2d4e",
+        "d26b70479bc818ef7079732ba014e82368dbf66f"
+      ]
+    },
+    {
+      "qid": "23a7c8d9f142184d28e56b0751e172fef6539275",
+      "query": "OCA: Opinion corpus for Arabic",
+      "relevant": [
+        "1532b1ceb90272770b9ad0cee8cd572164be658f",
+        "167e1359943b96b9e92ee73db1df69a1f65d731d",
+        "49a6ba0f8668e4da188017a45aec84c9336c7fe5",
+        "7063f78639f7620f081895a14eb5a55a3b7c6057",
+        "bc7308a97ec2d3f7985d48671abe7a8942a5b9f8"
+      ]
+    },
+    {
+      "qid": "ee6b940d3ae36f9b124586b15a49cec45f24b90a",
+      "query": "Cross-Coupled Substrate Integrated Waveguide Filters With Improved Stopband Performance",
+      "relevant": [
+        "54797270f673a2efc9c4b86b5de3befa59b13bd2",
+        "aaf7be312dd3d22b032cbbf9530ad56bf8e7800b",
+        "eefb364424648a3498dcee451bf0af00463fab1a",
+        "f24a1af3bd8873920593786d81590d29520cfebc",
+        "f9caa828cc99bdfb1f42b255136d9c78ee9a1f1a"
+      ]
+    },
+    {
+      "qid": "2bd338ef8751b62d23e53fbb44d67042d634da2f",
+      "query": "FastFlow: High-level and Efficient Streaming on Multi-core",
+      "relevant": [
+        "045a975c1753724b3a0780673ee92b37b9827be6",
+        "0541d5338adc48276b3b8cd3a141d799e2d40150",
+        "2032be0818be583f159cc75f2022ed78222fb772",
+        "43089ffed8c6c653f6994fb96f7f48bbcff2a598",
+        "7c3a4b84214561d8a6e4963bbb85a17a5b1e003a"
+      ]
+    },
+    {
+      "qid": "ddbb6e0913ac127004be73e2d4097513a8f02d37",
+      "query": "Face Detection Using Quantized Skin Color Regions Merging and Wavelet Packet Analysis",
+      "relevant": [
+        "0d94a0a51cdecbdec81c97d2040ed28d3e9c96de",
+        "a6f1dfcc44277d4cfd8507284d994c9283dc3a2f",
+        "b217788dd6d274ad391ee950e6f6a34033bd2fc7",
+        "fa2603efaf717974c77162c93d800defae61a129"
+      ]
+    },
+    {
+      "qid": "d6b56cc6e05300426b6194dd3f6a38720678827e",
+      "query": "Redirected Walking in Virtual Reality",
+      "relevant": [
+        "33c859730444bd835dbf5f0956110f45a735ee89",
+        "76fee58c7308b185db38d4177d04902172993561",
+        "984031f16dded96a8ae48a6dd9d49edefa98aa46",
+        "bd75508d29a69fbf3bf1454c06554e6850d76bd5",
+        "e352612f51ad34c764f128cc62e91b51fe7a9759"
+      ]
+    },
+    {
+      "qid": "df39e24c3cc21dc4c79995ec2b424a37dac999c7",
+      "query": "Defensive Distillation is Not Robust to Adversarial Examples",
+      "relevant": [
+        "38418928d6d842fe6edadc809f384278d793d610",
+        "49e77b981a0813460e2da2760ff72c522ae49871",
+        "5c3785bc4dc07d7e77deef7e90973bdeeea760a5",
+        "83bfdd6a2b28106b9fb66e52832c45f08b828541",
+        "cbcd9f32b526397f88d18163875d04255e72137f"
+      ]
+    },
+    {
+      "qid": "74bd4761b373447079c6e5cd31832c00fab2fa77",
+      "query": "Ten Simple Rules for Developing Usable Software in Computational Biology",
+      "relevant": [
+        "1e62935d9288446abdaeb1fec84daa12a684b300",
+        "2bdcc4dbf14e13d33740531ea8954463ca7e68a2",
+        "50341a2e4dec45165c75da37296ee7984b71e044",
+        "517d6e3999bd425069e45346045adcbd2d0c9299",
+        "f919bc88b746d7a420b6364142e0ac13aa80de44"
+      ]
+    },
+    {
+      "qid": "ddbf21ca1de9617894b15d45787a27557f02a494",
+      "query": "Two-level Message Clustering for Topic Detection in Twitter",
+      "relevant": [
+        "1e56ed3d2c855f848ffd91baa90f661772a279e1",
+        "3531e0eb9ec8a6ac786146c71ead7f8d624fd2ca",
+        "7314be5cd836c8f06bd1ecab565b00b65259eac6",
+        "c951df3db2e0c515bdbdf681137cf6705ef61c0d",
+        "d582d6d459601eabeac24f4bb4231c3e93882259"
+      ]
+    },
+    {
+      "qid": "f754cab548f2c209ea7d932084ef768b92b27614",
+      "query": "An Agent-based Indoor Wayfinding Based on Digital Sign System",
+      "relevant": [
+        "15e72433bed1f8cb79ab3282458b3b9038475da2",
+        "1eb9816a331288c657b0899cb20a1a073c3c7314",
+        "4023ae0ba18eed43a97e8b8c9c8fcc9a671b7aa3",
+        "90aac67f7bbb5bccbb101dc637825897df8fab91",
+        "9d49388512688e55ea1a882a210552653e8afd61"
+      ]
+    }
+  ]
+}

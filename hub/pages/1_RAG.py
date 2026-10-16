@@ -11,6 +11,7 @@ RAG_DIR = os.path.join(HUB, "rag")
 EVAL_DIR = os.path.join(HUB, "eval")
 sys.path.insert(0, HUB)
 sys.path.insert(0, RAG_DIR)
+sys.path.insert(0, EVAL_DIR)
 
 import streamlit as st
 from i18n import lang_switcher
@@ -28,7 +29,10 @@ T = {
         "after_rerank": "After rerank",
         "answering": "Ответ",
         "min_score": "Мин. top score (0 = выкл)",
-        "strict": "Строгий grounding (помечать ответы без цитат)",
+        "strict": "Строгий grounding (отказ, если ответ без цитат)",
+        "refuse": "**Отказано:** ответ не опирается на найденные документы — ни одной валидной цитаты. "
+                  "Модель отвечала по своим знаниям, а не по корпусу.",
+        "draft": "Черновик без подтверждения (скрыт строгим grounding)",
         "meta": "Фильтр по метаданным",
         "language": "Язык",
         "source": "Источник",
@@ -44,6 +48,7 @@ T = {
         "llm": "LLM",
         "sources": "Источники",
         "cited": "✅ цитируется",
+        "conf": "Достоверность top-дока (0..1)",
         "bench_r": "Retrieval benchmarks",
         "bench_g": "Генерация",
         "no_results": "Нет результатов — запусти `python hub/eval/eval_retrieval.py`.",
@@ -56,6 +61,22 @@ T = {
         "failed_fb": "Не полезно",
         "weak": "**Нет ответа в корпусе** — retrieval слабый или пустой.",
         "fb_log": "Спасибо — записал.",
+        "bench_static": "📊 Статичный оффлайн-снимок (не пересчитывается)",
+        "live_sub": "Живой бенчмарк на eval-наборе (на этой машине)",
+        "live_cap": "Реальный прогон: Hit@K / MRR@10 / NDCG@10 по eval-набору активного корпуса.",
+        "live_strats": "Стратегии",
+        "live_limit": "Вопросов",
+        "live_run": "Запустить",
+        "live_note": "HyDE / multi_query вызывают LLM — медленно. Начни с dense_only / sparse_only / hybrid.",
+        "mode": "Режим",
+        "mode_qa": "Q&A (один вопрос)",
+        "mode_chat": "Диалог (память + follow-up)",
+        "chat_ph": "Спроси о корпусе...",
+        "chat_clear": "Очистить диалог",
+        "search_q": "Поиск по запросу",
+        "chat_note": "Диалог помнит контекст: follow-up переписывается LLM в самостоятельный "
+                     "запрос перед поиском (вопрос → «а что насчёт тёмной мочи?» → "
+                     "«what causes dark urine»), поэтому в поиск уходит полный запрос, а не обрубок.",
     },
     "en": {
         "caption": "dense + sparse (RRF) → rerank → LLM with citations · Qdrant Cloud · FastEmbed · LangChain",
@@ -65,7 +86,10 @@ T = {
         "after_rerank": "After rerank",
         "answering": "Answering",
         "min_score": "Min top score (0 = off)",
-        "strict": "Strict grounding (flag uncited answers)",
+        "strict": "Strict grounding (refuse uncited answers)",
+        "refuse": "**Refused:** the answer does not cite any retrieved document - not a single "
+                  "valid citation. The model answered from its own knowledge, not from the corpus.",
+        "draft": "Unverified draft (hidden by strict grounding)",
         "meta": "Metadata filter",
         "language": "Language",
         "source": "Source",
@@ -81,6 +105,15 @@ T = {
         "llm": "LLM",
         "sources": "Sources",
         "cited": "✅ cited",
+        "mode": "Mode",
+        "mode_qa": "Q&A (single question)",
+        "mode_chat": "Chat (memory + follow-ups)",
+        "chat_ph": "Ask about the corpus...",
+        "chat_clear": "Clear chat",
+        "search_q": "Searched for",
+        "chat_note": "The chat keeps context: a follow-up is rewritten by an LLM into a standalone "
+                     "query before retrieval (question -> 'what about dark urine?' -> "
+                     "'what causes dark urine'), so retrieval gets a full query, not a fragment.",
         "bench_r": "Retrieval benchmarks",
         "bench_g": "Generation",
         "no_results": "No results — run `python hub/eval/eval_retrieval.py`.",
@@ -93,6 +126,13 @@ T = {
         "failed_fb": "Not helpful",
         "weak": "**No answer in corpus** — retrieval too weak or empty.",
         "fb_log": "Thanks — logged.",
+        "bench_static": "📊 Static offline snapshot (not recomputed here)",
+        "live_sub": "Live benchmark on the eval set (this machine)",
+        "live_cap": "Real run: Hit@K / MRR@10 / NDCG@10 over the active corpus eval set.",
+        "live_strats": "Strategies",
+        "live_limit": "Queries",
+        "live_run": "Run",
+        "live_note": "HyDE / multi_query call the LLM — slow. Start with dense_only / sparse_only / hybrid.",
     },
 }[lang]
 
@@ -111,13 +151,54 @@ STRATEGIES = {
 }
 NEEDS_RERANK = ("hybrid_cross_encoder", "hybrid_hyde_cross_encoder", "hybrid_llm_rerank")
 
-EXAMPLES = [
-    "what color is amber urine",
-    "what causes dark amber urine",
-    "what do elevated liver enzymes mean",
-    "how does a bill become law in the united states",
-    "is autoimmune hepatitis a bile acid synthesis disorder",
-]
+CORPORA = {
+    "MS MARCO": {
+        "collection": "rag_v2_q_test",
+        "source": "msmarco",
+        "desc": "MS MARCO · web passages (Q&A)",
+        "eval_set": "eval_set.json",
+        "build": None,
+        "meta_langs": ["en"],
+        "meta_sources": ["msmarco"],
+        "examples": [
+            "what color is amber urine",
+            "what causes dark amber urine",
+            "what do elevated liver enzymes mean",
+            "how does a bill become law in the united states",
+            "is autoimmune hepatitis a bile acid synthesis disorder",
+            "what causes hiccups",
+            "how much water should you drink a day",
+            "how long does it take to boil an egg",
+            "what is the tallest mountain in the world",
+        ],
+    },
+    "SciDocs": {
+        "collection": "rag_scidocs",
+        "source": "scidocs",
+        "desc": "SciDocs (BeIR) · scientific paper abstracts",
+        "eval_set": "eval_set_scidocs.json",
+        "build": "python hub/eval/build_corpus.py --dataset scidocs",
+        "meta_langs": ["en"],
+        "meta_sources": ["scidocs"],
+        "examples": [],
+    },
+}
+
+
+def corpus_examples(key):
+    """Example queries for a corpus: curated list, else the corpus eval set."""
+    static = CORPORA[key].get("examples") or []
+    if static:
+        return static
+    path = os.path.join(EVAL_DIR, CORPORA[key]["eval_set"])
+    if not os.path.exists(path):
+        return static
+    try:
+        with open(path, encoding="utf-8") as f:
+            items = json.load(f).get("items", [])
+        return [it["query"] for it in items[:6] if it.get("query")] or static
+    except Exception:
+        return static
 
 
 # ─── Secrets → os.environ ───────────────────────────────────────────────────
@@ -138,10 +219,10 @@ load_secrets_to_env()
 
 
 @st.cache_resource(show_spinner="Loading Qdrant client...")
-def get_collection_info():
-    from module_5_retrieval import COLLECTION, get_client
-    info = get_client().get_collection(COLLECTION)
-    return COLLECTION, info.points_count
+def get_collection_info(collection_name):
+    from module_5_retrieval import get_client
+    info = get_client().get_collection(collection_name)
+    return collection_name, info.points_count
 
 
 @st.cache_resource(show_spinner="Loading LLM pool...")
@@ -164,8 +245,11 @@ def _apply_meta_filter(docs, langs=(), sources=()):
     return out
 
 
-def retrieve_docs(strategy, question, top_k, rerank_top, langs=(), sources=()):
+def retrieve_docs(strategy, question, top_k, rerank_top, langs=(), sources=(), collection=None):
     import module_5_retrieval as m
+
+    if collection:
+        m.set_collection(collection)
 
     llm = None
     if strategy in ("dense_hyde", "hybrid_hyde", "hybrid_hyde_cross_encoder", "multi_query"):
@@ -201,18 +285,51 @@ def retrieve_docs(strategy, question, top_k, rerank_top, langs=(), sources=()):
 
 
 @st.cache_data(show_spinner=False, max_entries=256)
-def cached_retrieve(strategy, question, top_k, rerank_top, langs=(), sources=()):
-    return retrieve_docs(strategy, question, top_k, rerank_top, langs, sources)
+def cached_retrieve(strategy, question, top_k, rerank_top, langs=(), sources=(), collection=None):
+    return retrieve_docs(strategy, question, top_k, rerank_top, langs, sources, collection)
 
 
-def _run_retrieval(strategy, question, top_k, rerank_top, langs, sources):
+def _run_retrieval(strategy, question, top_k, rerank_top, langs, sources, collection=None):
     try:
-        return cached_retrieve(strategy, question, top_k, rerank_top, langs, sources), None
+        return cached_retrieve(strategy, question, top_k, rerank_top, langs, sources, collection), None
     except Exception as e:  # noqa: BLE001
         if strategy == "hybrid":
             raise
-        docs = cached_retrieve("hybrid", question, top_k, rerank_top, langs, sources)
+        docs = cached_retrieve("hybrid", question, top_k, rerank_top, langs, sources, collection)
         return docs, f"{type(e).__name__}: {e}"
+
+
+# Native retrieval scores live on wildly different scales, so comparing them to a
+# single 0..1 "min top score" slider is meaningless as-is. Measured on rag_v2_q_test:
+#   dense cosine ~0.75..0.86 · sparse BM25 ~120..170 · Qdrant RRF (2 prefetch, hybrid)
+#   ~0..0.83 · Qdrant RRF (4 prefetch, hybrid_hyde) ~0..1.67 · python RRF (_rrf_merge:
+#   hybrid_weighted/dense_hyde ~0.033, multi_query ~0.065) · cross-encoder logits ~0..10+.
+# Each strategy's raw top score is mapped to a comparable 0..1 confidence:
+#   cosine -> clamp · logit -> raw/scale · anything else -> saturating raw/(raw+scale).
+_SCORE_SCALE = {
+    "dense_only": ("cosine", 1.0),
+    "hybrid_llm_rerank": ("cosine", 1.0),
+    "sparse_only": ("sat", 12.0),
+    "hybrid": ("sat", 0.25),
+    "hybrid_diverse": ("sat", 0.25),
+    "hybrid_hyde": ("sat", 0.50),
+    "hybrid_weighted": ("sat", 0.02),
+    "dense_hyde": ("sat", 0.02),
+    "multi_query": ("sat", 0.04),
+    "hybrid_cross_encoder": ("logit", 10.0),
+    "hybrid_hyde_cross_encoder": ("logit", 10.0),
+}
+
+
+def _normalized_top_score(strategy, docs):
+    """Return (raw_top, confidence_0_to_1) for the threshold slider."""
+    raw = max((float(d[2]) for d in docs), default=0.0)
+    kind, scale = _SCORE_SCALE.get(strategy, ("sat", 0.03))
+    if kind == "cosine":
+        return raw, max(0.0, min(1.0, raw))
+    if kind == "logit":
+        return raw, max(0.0, min(1.0, raw / scale))
+    return raw, (raw / (raw + scale) if raw > 0 else 0.0)
 
 
 def _log_feedback(question, answer, strategy, verdict):
@@ -228,6 +345,11 @@ def _log_feedback(question, answer, strategy, verdict):
 
 with st.sidebar:
     st.header(T["retrieval"])
+    mode = st.selectbox(T["mode"], [T["mode_qa"], T["mode_chat"]], key="ui_mode")
+    dialog_mode = mode == T["mode_chat"]
+    corpus_key = st.selectbox(T["corpus"], list(CORPORA), index=0)
+    corpus = CORPORA[corpus_key]
+
     strategy = st.selectbox(T["strategy"], list(STRATEGIES), index=0,
                             format_func=lambda k: STRATEGIES[k])
     top_k = st.slider(T["top_k"], 1, 20, 8)
@@ -241,31 +363,222 @@ with st.sidebar:
 
     st.divider()
     st.markdown(f"**{T['meta']}**")
-    lang_filter = st.multiselect(T["language"], ["en"], default=[])
-    source_filter = st.multiselect(T["source"], ["msmarco"], default=[])
+    lang_filter = st.multiselect(T["language"], corpus["meta_langs"], default=[])
+    source_filter = st.multiselect(T["source"], corpus["meta_sources"], default=[])
 
     st.divider()
     st.markdown(f"**{T['corpus']}**")
     try:
-        collection, points = get_collection_info()
+        coll_name, points = get_collection_info(corpus["collection"])
     except Exception as e:  # noqa: BLE001
-        collection, points = "rag_v2_q_test", 0
-        st.error(f"Qdrant unavailable: {e}")
-    st.code(collection, language=None)
-    st.caption(f"MS MARCO · {points:,} passages · dense 768d + sparse BM25 + client IDF")
+        coll_name, points = corpus["collection"], 0
+        if "doesn't exist" in str(e) or "Not found" in str(e):
+            st.warning(f"Collection `{coll_name}` is not built yet.")
+        else:
+            st.error(f"Qdrant unavailable: {e}")
+    st.code(coll_name, language=None)
+    st.caption(f"{corpus['desc']} · {points:,} docs · dense 768d + sparse BM25 + client IDF")
+    if points == 0 and corpus.get("build"):
+        st.caption(f"Build it with: `{corpus['build']}`")
 
     st.divider()
     st.markdown(f"**{T['try']}**")
-    for q in EXAMPLES:
-        if st.button(q, use_container_width=True, key=f"ex_{q}"):
+    for q in corpus_examples(corpus_key):
+        if st.button(q, use_container_width=True, key=f"ex_{corpus_key}_{q}"):
             st.session_state["q"] = q
+
+    if dialog_mode:
+        st.divider()
+        if st.button(T["chat_clear"], use_container_width=True, key="chat_clear"):
+            st.session_state["chat"] = []
+            st.rerun()
 
 st.title("🔎 RAG — Production Demo")
 st.caption(T["caption"])
 
+if dialog_mode:
+    from common import describe_llm
+    from module_7_generation import (
+        apply_strict_grounding, condense_query, count_tokens, extract_citations,
+        format_context, generate_citations, generate_citations_stream,
+        normalize_citations, sanitize_context, verify_grounding,
+    )
+
+    st.caption(T["chat_note"])
+    if "chat" not in st.session_state:
+        st.session_state["chat"] = []
+    history = st.session_state["chat"]
+
+    for turn in history:
+        with st.chat_message(turn["role"]):
+            st.markdown(turn["content"])
+            if turn["role"] != "assistant":
+                continue
+            if turn.get("refused"):
+                st.error(T["refuse"])
+                with st.expander(T["draft"], expanded=False):
+                    st.markdown(turn.get("draft") or "—")
+            docs = turn.get("docs") or []
+            with st.expander(f"{T['sources']} ({len(docs)})"):
+                st.caption(f"{T['search_q']}: `{turn.get('search_query', '')}`")
+                for i, d in enumerate(docs, 1):
+                    mark = f"  {T['cited']}" if str(d[0]) in (turn.get("cited") or set()) else ""
+                    st.markdown(f"**[{i}]** `{corpus['source']}#{d[0]}` · score "
+                                f"`{round(float(d[2]), 3)}`{mark}")
+                    st.text((d[1] or "")[:300])
+            if turn.get("meta"):
+                st.caption(turn["meta"])
+
+    prompt = st.chat_input(T["chat_ph"])
+    if prompt:
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        pairs = [(t["role"], t["content"]) for t in history]
+        llm = get_llm()
+        t0 = time.time()
+        with st.spinner(T["retrieving"]):
+            try:
+                search_query = condense_query(pairs, prompt, llm) if pairs else prompt
+            except Exception:  # noqa: BLE001
+                search_query = prompt
+            try:
+                docs, warn = _run_retrieval(strategy, search_query, top_k, rerank_top,
+                                            tuple(lang_filter), tuple(source_filter),
+                                            corpus["collection"])
+            except Exception as e:  # noqa: BLE001
+                docs, warn = None, f"{type(e).__name__}: {e}"
+        t1 = time.time()
+
+        answer, draft, refused, cited, top_conf = "", "", False, set(), 0.0
+        meta = ""
+        with st.chat_message("assistant"):
+            if warn and docs:
+                st.warning(f"`{strategy}` failed ({warn}) — fell back to **hybrid**.")
+            if not docs:
+                answer = T["weak"]
+                st.warning(answer)
+            else:
+                top_raw, top_conf = _normalized_top_score(strategy, docs)
+                if min_score > 0 and top_conf < min_score:
+                    answer = f"{T['weak']} · top confidence `{top_conf:.2f}` < `{min_score:.2f}`"
+                    st.warning(answer)
+                else:
+                    st.caption(f"{T['search_q']}: `{search_query}`")
+                    context = sanitize_context(format_context(docs, source=corpus["source"]))
+                    t_gen0 = time.time()
+                    ttft = {"v": None}
+                    ph = st.empty()
+                    buf = [""]
+
+                    def _stream():
+                        for chunk in generate_citations_stream(search_query, context, llm,
+                                                               source=corpus["source"]):
+                            if ttft["v"] is None:
+                                ttft["v"] = time.time() - t_gen0
+                            buf[0] += chunk
+                            ph.markdown(buf[0])
+                            yield chunk
+
+                    try:
+                        for _ in _stream():
+                            pass
+                    except Exception:  # noqa: BLE001
+                        answer = generate_citations(search_query, context, llm,
+                                                    source=corpus["source"])
+                        ph.markdown(answer)
+                    answer = buf[0] or answer
+                    t_gen = time.time() - t_gen0
+
+                    retrieved_ids = [str(d[0]) for d in docs]
+                    repaired = normalize_citations(answer, retrieved_ids, corpus["source"])
+                    if repaired != answer:
+                        answer = repaired
+                        ph.markdown(answer)
+                    cited = {str(did) for _, did in extract_citations(answer)}
+                    issues, _c, _h = verify_grounding(answer, retrieved_ids, len(docs))
+                    if strict_grounding:
+                        gate = apply_strict_grounding(answer, retrieved_ids, refusal=T["refuse"])
+                        refused, draft = gate["refused"], gate["draft"]
+                        if refused:
+                            answer = gate["answer"]
+                            ph.empty()
+                            st.error(T["refuse"])
+                            with st.expander(T["draft"], expanded=False):
+                                st.markdown(draft)
+                    tok_in = count_tokens(context + search_query)
+                    tok_out = count_tokens(answer)
+                    cost = tok_in * (0.004 / 1_000_000) + tok_out * (0.0162 / 1_000_000)
+                    info = describe_llm(llm)
+                    meta = (f"~{tok_in} in / ~{tok_out} out tokens · est. **${cost:.6f}** · "
+                            f"gen {t_gen:.1f}s · `{info['served']}`")
+                    st.caption(meta)
+                    if issues and not refused:
+                        st.caption(f"⚠️ citation issues: {issues}")
+
+            if not meta:
+                st.caption(f"top confidence `{top_conf:.2f}`")
+
+        history.append({"role": "user", "content": prompt})
+        history.append({"role": "assistant", "content": answer, "docs": docs or [],
+                        "cited": cited, "refused": refused, "draft": draft,
+                        "search_query": search_query, "meta": meta})
+    st.stop()
+
 question = st.text_input(T["q"], key="q", placeholder="e.g. what color is amber urine")
 
-if st.button(T["ask"], type="primary", disabled=not question.strip()):
+def render_result(res, streamed=False):
+    """Отрисовка сохранённого ответа (метрики, источники, стоимость, фидбек).
+
+    Вызывается на КАЖДОМ рендере, а не только в ветке кнопки «Спросить»:
+    иначе клик по 👍/👎 перезапускает скрипт, кнопка «Спросить» уже False,
+    вложенные виджеты не создаются — и их True теряется (фидбек не логируется).
+    """
+    if res["warn"]:
+        st.warning(f"`{res['strategy']}` failed ({res['warn']}) — fell back to **hybrid**.")
+
+    if not streamed:
+        st.markdown(f"### {T['answer']}")
+        st.markdown(res["answer"])
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric(T["total"], f"{(res['t2'] - res['t0']):.1f}s")
+    m2.metric(T["retr"], f"{(res['t1'] - res['t0']):.1f}s")
+    m3.metric(T["gen"], f"{(res['t2'] - res['t_gen0']):.1f}s")
+    m4.metric("TTFT", f"{res['ttft']:.1f}s" if res["ttft"] else "—")
+
+    from common import describe_llm
+    info = describe_llm(res["llm"])
+    st.caption(f"**{T['llm']}:** `{info['provider']}` · served `{info['served']}`")
+
+    with st.expander(f"{T['sources']} ({len(res['docs'])})", expanded=True):
+        st.caption(f"{T['conf']}: `{res.get('top_conf', 0.0):.2f}`")
+        for i, d in enumerate(res["docs"], 1):
+            mark = f"  {T['cited']}" if str(d[0]) in res["cited"] else ""
+            st.markdown(f"**[{i}]** `{res.get('source', 'msmarco')}#{d[0]}` · score `{round(float(d[2]), 3)}`{mark}")
+            st.text(d[1][:400])
+    if res.get("refused"):
+        st.error(T["refuse"])
+        with st.expander(T["draft"], expanded=False):
+            st.markdown(res.get("draft") or "—")
+    elif res["issues"]:
+        st.caption(f"⚠️ citation issues: {res['issues']}")
+
+    st.caption(f"~{res['tok_in']} in / ~{res['tok_out']} out tokens · est. **${res['cost']:.6f}** per query")
+
+    fa, fb, _sp = st.columns([1, 1, 4])
+    if fa.button(T["helpful"], key="fb_up"):
+        _log_feedback(res["q"], res["answer"], res["strategy"], "up")
+        st.toast(T["fb_log"])
+    if fb.button(T["not_helpful"], key="fb_down"):
+        _log_feedback(res["q"], res["answer"], res["strategy"], "down")
+        st.toast(T["fb_log"])
+
+
+asked = st.button(T["ask"], type="primary", disabled=not question.strip())
+
+if asked:
+    st.session_state.pop("rag_res", None)
     q = question.strip()
     langs = tuple(lang_filter)
     sources = tuple(source_filter)
@@ -273,83 +586,90 @@ if st.button(T["ask"], type="primary", disabled=not question.strip()):
     t0 = time.time()
     try:
         with st.spinner(T["retrieving"]):
-            docs, warn = _run_retrieval(strategy, q, top_k, rerank_top, langs, sources)
+            docs, warn = _run_retrieval(strategy, q, top_k, rerank_top, langs, sources,
+                                        corpus["collection"])
     except Exception as e:  # noqa: BLE001
         st.error(f"**{type(e).__name__}:** {e}")
         docs, warn = None, None
     t1 = time.time()
 
     if docs is not None:
-        if warn:
-            st.warning(f"`{strategy}` failed ({warn}) — fell back to **hybrid**.")
-
-        top_score = max((float(d[2]) for d in docs), default=0.0)
-        too_weak = (not docs) or (min_score > 0 and top_score < min_score)
+        top_raw, top_conf = _normalized_top_score(strategy, docs)
+        too_weak = (not docs) or (min_score > 0 and top_conf < min_score)
         if too_weak:
-            st.warning(T["weak"])
+            st.warning(f"{T['weak']} · top confidence `{top_conf:.2f}` < `{min_score:.2f}`")
         else:
             from module_7_generation import (
                 format_context, generate_citations_stream, sanitize_context,
                 extract_citations, verify_grounding, count_tokens,
+                apply_strict_grounding, normalize_citations,
             )
 
             llm = get_llm()
-            context = sanitize_context(format_context(docs))
+            context = sanitize_context(format_context(docs, source=corpus["source"]))
 
+            if warn:
+                st.warning(f"`{strategy}` failed ({warn}) — fell back to **hybrid**.")
             st.markdown(f"### {T['answer']}")
             t_gen0 = time.time()
             ttft = {"v": None}
+            answer_ph = st.empty()
 
             def _gen():
-                for chunk in generate_citations_stream(q, context, llm):
+                for chunk in generate_citations_stream(q, context, llm, source=corpus["source"]):
                     if ttft["v"] is None:
                         ttft["v"] = time.time() - t_gen0
                     yield chunk
 
             try:
-                answer = st.write_stream(_gen())
+                buf = []
+                for chunk in _gen():
+                    buf.append(chunk)
+                    answer_ph.markdown("".join(buf))
+                answer = "".join(buf)
             except Exception:
                 from module_7_generation import generate_citations
-                answer = generate_citations(q, context, llm)
-                st.write(answer)
+                answer = generate_citations(q, context, llm, source=corpus["source"])
+                answer_ph.markdown(answer)
             t2 = time.time()
 
             answer = answer or ""
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric(T["total"], f"{(t2 - t0):.1f}s")
-            m2.metric(T["retr"], f"{(t1 - t0):.1f}s")
-            m3.metric(T["gen"], f"{(t2 - t_gen0):.1f}s")
-            m4.metric("TTFT", f"{ttft['v']:.1f}s" if ttft["v"] else "—")
-
-            from common import describe_llm
-            info = describe_llm(llm)
-            st.caption(f"**{T['llm']}:** `{info['provider']}` · served `{info['served']}`")
-
+            retrieved_ids = [str(d[0]) for d in docs]
+            repaired = normalize_citations(answer, retrieved_ids, corpus["source"])
+            if repaired != answer:
+                answer = repaired
+                answer_ph.markdown(answer)
             cited = {str(did) for _, did in extract_citations(answer)}
             issues, _cited, _has_issues = verify_grounding(
-                answer, [str(d[0]) for d in docs], len(docs))
-            with st.expander(f"{T['sources']} ({len(docs)})", expanded=True):
-                for i, d in enumerate(docs, 1):
-                    mark = f"  {T['cited']}" if str(d[0]) in cited else ""
-                    st.markdown(f"**[{i}]** `msmarco#{d[0]}` · score `{round(float(d[2]), 3)}`{mark}")
-                    st.text(d[1][:400])
-            if strict_grounding and not cited:
-                st.warning(T["strict"])
-            elif issues:
-                st.caption(f"⚠️ citation issues: {issues}")
+                answer, retrieved_ids, len(docs))
+
+            refused, draft = False, ""
+            if strict_grounding:
+                gate = apply_strict_grounding(answer, retrieved_ids, refusal=T["refuse"])
+                refused, draft = gate["refused"], gate["draft"]
+                if refused:
+                    answer = gate["answer"]
+                    answer_ph.empty()
 
             tok_in = count_tokens(context + q)
             tok_out = count_tokens(answer)
             cost = tok_in * (0.004 / 1_000_000) + tok_out * (0.0162 / 1_000_000)
-            st.caption(f"~{tok_in} in / ~{tok_out} out tokens · est. **${cost:.6f}** per query")
 
-            fa, fb, _sp = st.columns([1, 1, 4])
-            if fa.button(T["helpful"], key="fb_up"):
-                _log_feedback(q, answer, strategy, "up")
-                st.toast(T["fb_log"])
-            if fb.button(T["not_helpful"], key="fb_down"):
-                _log_feedback(q, answer, strategy, "down")
-                st.toast(T["fb_log"])
+            res = {
+                "q": q, "strategy": strategy, "answer": answer, "docs": docs,
+                "cited": cited, "issues": issues, "warn": warn,
+                "source": corpus["source"], "refused": refused, "draft": draft,
+                "t0": t0, "t1": t1, "t_gen0": t_gen0, "t2": t2,
+                "ttft": ttft["v"], "llm": llm, "top_conf": top_conf,
+                "tok_in": tok_in, "tok_out": tok_out, "cost": cost,
+            }
+            st.session_state["rag_res"] = res
+            render_result(res, streamed=True)
+
+# Persisted answer block: keeps the result (and the 👍/👎 buttons) alive on
+# reruns triggered by feedback clicks.
+if not asked and st.session_state.get("rag_res") is not None:
+    render_result(st.session_state["rag_res"], streamed=False)
 
 if question.strip():
     with st.expander(T["ab"]):
@@ -358,7 +678,8 @@ if question.strip():
             for name in STRATEGIES:
                 t0 = time.time()
                 try:
-                    ds, _w = _run_retrieval(name, question.strip(), top_k, rerank_top, (), ())
+                    ds, _w = _run_retrieval(name, question.strip(), top_k, rerank_top, (), (),
+                                            corpus["collection"])
                     rows.append({"strategy": name, "docs": len(ds), "s": round(time.time() - t0, 2),
                                  "top score": round(max((float(d[2]) for d in ds), default=0.0), 3),
                                  "top doc": (ds[0][0] if ds else "—")})
@@ -370,7 +691,8 @@ if question.strip():
     with st.expander(T["trace"]):
         if st.button(T["trace_btn"], key="trace_btn"):
             try:
-                from module_5_retrieval import trace_hybrid
+                from module_5_retrieval import set_collection, trace_hybrid
+                set_collection(corpus["collection"])
                 tr = trace_hybrid(question.strip(), k=top_k)
                 c1, c2, c3 = st.columns(3)
                 for col, key, title in ((c1, "dense", "Dense"), (c2, "sparse", "Sparse"), (c3, "fused", "Fused (RRF)")):
@@ -410,6 +732,64 @@ def load_generation_benchmarks() -> dict:
         return {}
 
 
+def bench_provenance() -> str:
+    """Where the static tables come from — so nobody mistakes them for live runs."""
+    parts = []
+    rpath = os.path.join(EVAL_DIR, "results_retrieval.json")
+    if os.path.exists(rpath):
+        try:
+            with open(rpath, encoding="utf-8") as f:
+                hist = json.load(f)
+            tags = sorted({r.get("tag", "") for r in hist if r.get("tag")})
+            parts.append(f"retrieval `results_retrieval.json` · {len(hist)} runs · tags: {', '.join(tags)}")
+        except Exception:
+            pass
+    g = load_generation_benchmarks()
+    if g:
+        parts.append(f"generation `results_generation.json` · ts {str(g.get('ts', ''))[:10]} "
+                     f"· tag `{g.get('tag', '')}` · n={g.get('n')}")
+    parts.append("snapshot from a previous offline run — not computed on this page")
+    return " · ".join(parts)
+
+
+LIVE_BENCH_STRATEGIES = ["dense_only", "sparse_only", "hybrid", "hybrid_diverse",
+                         "hybrid_hyde", "dense_hyde", "hybrid_ce", "multi_query"]
+
+
+def run_live_benchmark(names, limit, collection=None, eval_file="eval_set.json"):
+    """Aggregate Hit@K / MRR@10 / NDCG@10 over the eval set, live on this machine."""
+    from eval_retrieval import build_strategies, hit_rate_at_k, mrr_at_k, ndcg_at_k
+    from module_5_retrieval import set_collection
+
+    if collection:
+        set_collection(collection)
+    with open(os.path.join(EVAL_DIR, eval_file), encoding="utf-8") as f:
+        items = json.load(f)["items"][:limit]
+
+    rows = []
+    for name, fn in build_strategies(names):
+        h5 = h10 = mrr = ndcg = 0.0
+        lat = []
+        for it in items:
+            t0 = time.time()
+            ranked = fn(it["query"], 10)
+            lat.append(time.time() - t0)
+            h5 += hit_rate_at_k(ranked, it["relevant"], 5)
+            h10 += hit_rate_at_k(ranked, it["relevant"], 10)
+            mrr += mrr_at_k(ranked, it["relevant"], 10)
+            ndcg += ndcg_at_k(ranked, it["relevant"], 10)
+        n = len(items)
+        lat.sort()
+        rows.append({
+            "strategy": name, "n": n,
+            "Hit@5": round(h5 / n, 3), "Hit@10": round(h10 / n, 3),
+            "MRR@10": round(mrr / n, 3), "NDCG@10": round(ndcg / n, 3),
+            "avg s": round(sum(lat) / n, 2),
+            "p95 s": round(lat[int(n * 0.95) - 1], 2),
+        })
+    return rows
+
+
 BENCH_T = {
     "ru": {"sub": "Retrieval benchmarks",
            "cap": "Оффлайн-оценка на 100 вопросах MS MARCO (qrels train.tsv).",
@@ -426,36 +806,59 @@ BENCH_T = {
 }[lang]
 
 st.divider()
-st.subheader(T["bench_r"])
-st.caption(BENCH_T["cap"])
-bench = load_benchmarks()
-if not bench:
-    st.info(BENCH_T["none"])
-else:
-    order = ["dense_only", "sparse_only", "hybrid", "hybrid_diverse", "dense_hyde",
-             "hybrid_hyde", "hybrid_ce", "w0.0", "w0.25"]
-    labels = {"hybrid_ce": "Hybrid + CrossEncoder (best)", "w0.0": "Weighted RRF (w_sparse=0.0)"}
-    rows = [{
-        BENCH_T["strategy"]: labels.get(k, k),
-        "Hit@5": bench[k].get("hit@5"), "Hit@10": bench[k].get("hit@10"),
-        "MRR@10": bench[k].get("mrr@10"), "NDCG@10": bench[k].get("ndcg@10"),
-        "avg s": bench[k].get("avg_latency_s"),
-    } for k in order if k in bench]
-    st.dataframe(rows, use_container_width=True, hide_index=True)
 
-st.subheader(T["bench_g"])
-st.caption(BENCH_T["gen_cap"])
+bench = load_benchmarks()
 gen = load_generation_benchmarks()
-if not gen:
-    st.info(BENCH_T["none"])
-else:
-    judge = gen.get("judge", {})
-    ans = gen.get("answerer", {})
-    s = gen.get("summary", {})
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Faithfulness", f"{s.get('faithfulness', 0):.3f}")
-    c2.metric("Answer relevancy", f"{s.get('answer_relevancy', 0):.3f}")
-    c3.metric("Citations valid", f"{s.get('citation_valid_rate', 0):.3f}")
-    c4.metric("avg", f"{s.get('avg_latency_s', 0):.1f}s")
-    st.caption(f"judge `{judge.get('served', '?')}` · answerer `{ans.get('served', '?')}` · n={gen.get('n')}")
-    st.dataframe(gen.get("rows", []), use_container_width=True, hide_index=True)
+
+with st.expander(T["bench_static"], expanded=False):
+    st.caption(bench_provenance())
+
+    st.markdown(f"**{T['bench_r']}**")
+    st.caption(BENCH_T["cap"])
+    if not bench:
+        st.info(BENCH_T["none"])
+    else:
+        order = ["dense_only", "sparse_only", "hybrid", "hybrid_diverse", "dense_hyde",
+                 "hybrid_hyde", "hybrid_ce", "w0.0", "w0.25"]
+        labels = {"hybrid_ce": "Hybrid + CrossEncoder (best)", "w0.0": "Weighted RRF (w_sparse=0.0)"}
+        rows = [{
+            BENCH_T["strategy"]: labels.get(k, k),
+            "Hit@5": bench[k].get("hit@5"), "Hit@10": bench[k].get("hit@10"),
+            "MRR@10": bench[k].get("mrr@10"), "NDCG@10": bench[k].get("ndcg@10"),
+            "avg s": bench[k].get("avg_latency_s"),
+        } for k in order if k in bench]
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+
+    st.markdown(f"**{T['bench_g']}**")
+    st.caption(BENCH_T["gen_cap"])
+    if not gen:
+        st.info(BENCH_T["none"])
+    else:
+        judge = gen.get("judge", {})
+        ans = gen.get("answerer", {})
+        s = gen.get("summary", {})
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Faithfulness", f"{s.get('faithfulness', 0):.3f}")
+        c2.metric("Answer relevancy", f"{s.get('answer_relevancy', 0):.3f}")
+        c3.metric("Citations valid", f"{s.get('citation_valid_rate', 0):.3f}")
+        c4.metric("avg", f"{s.get('avg_latency_s', 0):.1f}s")
+        st.caption(f"judge `{judge.get('served', '?')}` · answerer `{ans.get('served', '?')}` · n={gen.get('n')}")
+        st.dataframe(gen.get("rows", []), use_container_width=True, hide_index=True)
+
+with st.expander(T["live_sub"], expanded=False):
+    st.caption(f"{T['live_cap']} · `{corpus['eval_set']}` · {corpus_key}")
+    live_strats = st.multiselect(T["live_strats"], LIVE_BENCH_STRATEGIES,
+                                 default=["dense_only", "sparse_only", "hybrid"])
+    live_limit = st.slider(T["live_limit"], 5, 100, 10, 5)
+    st.caption(T["live_note"])
+    if st.button(T["live_run"], type="primary", key="live_run"):
+        if not live_strats:
+            st.warning("—")
+        else:
+            with st.spinner("..."):
+                try:
+                    live_rows = run_live_benchmark(live_strats, live_limit,
+                                                   corpus["collection"], corpus["eval_set"])
+                    st.dataframe(live_rows, use_container_width=True, hide_index=True)
+                except Exception as e:  # noqa: BLE001
+                    st.error(f"{type(e).__name__}: {e}")
