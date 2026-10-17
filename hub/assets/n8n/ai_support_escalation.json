@@ -1,5 +1,5 @@
 {
-  "name": "Support Flow V2 copy",
+  "name": "AI Support & Escalation",
   "active": false,
   "nodes": [
     {
@@ -317,8 +317,8 @@
               "rightValue": "operator",
               "operator": {
                 "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
+                "operation": "contains",
+                "name": "filter.operator.contains"
               }
             }
           ],
@@ -476,7 +476,7 @@
         1056
       ],
       "id": "090001f1-a5aa-441a-a38b-daef5ca8cc78",
-      "name": "Execute a SQL query",
+      "name": "Register User",
       "credentials": {
         "postgres": {
           "id": "KxmwIIM9tjVU936P",
@@ -486,7 +486,7 @@
     },
     {
       "id": "a3b2dd59-4069-4379-bd1d-b867767e760c",
-      "name": "If",
+      "name": "RAG Answered?",
       "type": "n8n-nodes-base.if",
       "position": [
         544,
@@ -542,7 +542,7 @@
         ],
         [
           {
-            "node": "Execute a SQL query",
+            "node": "Register User",
             "type": "main",
             "index": 0
           }
@@ -673,25 +673,14 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "RAG Answered?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Execute a SQL query": {
-      "main": [
-        [
-          {
-            "node": "In Operator Mode",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If": {
+    "RAG Answered?": {
       "main": [
         [
           {
@@ -703,6 +692,17 @@
         [
           {
             "node": "Forward to Operator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Register User": {
+      "main": [
+        [
+          {
+            "node": "In Operator Mode",
             "type": "main",
             "index": 0
           }

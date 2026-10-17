@@ -1,6 +1,6 @@
 {
   "name": "AI & Crypto News Analytics (Advanced) v2",
-  "active": false,
+  "active": true,
   "nodes": [
     {
       "parameters": {
@@ -136,15 +136,15 @@
         2640
       ],
       "webhookId": "18eda5b1-5bcb-483f-9762-79cc1aa6a80c",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
       "credentials": {
         "telegramApi": {
           "id": "7PplDwm237hUK507",
           "name": "Telegram account"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000
+      }
     },
     {
       "parameters": {
@@ -166,15 +166,15 @@
         2256
       ],
       "webhookId": "081600b8-e608-4651-8f79-f69ad17c4418",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
       "credentials": {
         "telegramApi": {
           "id": "7PplDwm237hUK507",
           "name": "Telegram account"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000
+      }
     },
     {
       "parameters": {
@@ -283,21 +283,21 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = ($json.sourceText || '').toLowerCase();\n\nconst cryptoWords = ['bitcoin', 'ethereum', 'crypto', 'btc', 'eth', 'defi', 'nft', 'blockchain',\n  'token', 'web3', 'solana', 'altcoin', 'mining', 'wallet', 'exchange', 'binance', 'coin',\n  'tokenomics', 'metaverse', 'layer2', 'smart contract', 'dapp'];\n\nconst aiWords = ['ai', 'artificial intelligence', 'gpt', 'openai', 'llm', 'neural', 'machine learning',\n  'deep learning', 'robot', 'automation', 'chatbot', 'gpt-4', 'claude', 'bard', 'gemini',\n  'langchain', 'rag', 'transformer', 'diffusion', 'stable diffusion', 'copilot', 'llama'];\n\nlet topic = 'general';\nlet cryptoScore = cryptoWords.filter(w => text.includes(w)).length;\nlet aiScore = aiWords.filter(w => text.includes(w)).length;\n\nif (cryptoScore > aiScore) topic = 'crypto';\nelse if (aiScore > cryptoScore) topic = 'ai';\nelse if (aiScore > 0) topic = 'ai'; // ???? ??????? - AI (???? ??????? ??? AI)\nelse if (cryptoScore > 0) topic = 'crypto';\n\nreturn { ...$json, topic };"
+        "jsCode": "const text = ($json.sourceText || '').toLowerCase();\n\nconst cryptoWords = ['bitcoin', 'ethereum', 'crypto', 'btc', 'eth', 'defi', 'nft', 'blockchain',\n  'token', 'web3', 'solana', 'altcoin', 'mining', 'wallet', 'exchange', 'binance', 'coin',\n  'tokenomics', 'metaverse', 'layer2', 'smart contract', 'dapp'];\n\nconst aiWords = ['ai', 'artificial intelligence', 'gpt', 'openai', 'llm', 'neural', 'machine learning',\n  'deep learning', 'robot', 'automation', 'chatbot', 'gpt-4', 'claude', 'bard', 'gemini',\n  'langchain', 'rag', 'transformer', 'diffusion', 'stable diffusion', 'copilot', 'llama'];\n\nlet topic = 'general';\nlet cryptoScore = cryptoWords.filter(w => text.includes(w)).length;\nlet aiScore = aiWords.filter(w => text.includes(w)).length;\n\nif (cryptoScore > aiScore) topic = 'crypto';\nelse if (aiScore > cryptoScore) topic = 'ai';\nelse if (aiScore > 0) topic = 'ai'; // tie: prefer AI when both topics matched\nelse if (cryptoScore > 0) topic = 'crypto';\n\nreturn { ...$json, topic };"
       },
       "id": "90542ea0-5fe3-4323-ba1d-c1ebb507ea7d",
       "name": "Topic Detector",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4656,
+        4608,
         2000
       ],
       "alwaysOutputData": true
     },
     {
       "parameters": {
-        "jsCode": "// Регистрируем публикуемое в истории (для дедупа будущих прогонов).\nconst sd = $getWorkflowStaticData('global');\nconst list = Array.isArray(sd.published) ? sd.published : [];\nif ($json.link) {\n  list.push({ l: String($json.link), t: String($json.title || '').slice(0, 160), at: new Date().toISOString().slice(0, 10) });\n}\nsd.published = list.slice(-300);\n\nif ($json.imageUrl) return $json;\n\nconst query = encodeURIComponent(($json.title || '').substring(0, 100));\nif (!query) return $json;\n\nconst apiKey = 'YOUR_HEX_KEY';\nconst url = 'https://serpapi.com/search.json?engine=google_images&q=' + query + '&api_key=' + apiKey;\n\ntry {\n  const ctrl = new AbortController();\n  const timeoutId = setTimeout(() => ctrl.abort(), 5000);\n  const res = await fetch(url, { signal: ctrl.signal });\n  clearTimeout(timeoutId);\n  const data = await res.json();\n  if (data.images_results && data.images_results.length > 0) {\n    const imgUrl = data.images_results[0].original || data.images_results[0].thumbnail;\n    if (imgUrl) return { ...$json, imageUrl: imgUrl };\n  }\n} catch (e) {}\n\nreturn $json;"
+        "jsCode": "// Регистрируем публикуемое в истории (для дедупа будущих прогонов).\nconst sd = $getWorkflowStaticData('global');\nconst list = Array.isArray(sd.published) ? sd.published : [];\nif ($json.link) {\n  list.push({ l: String($json.link), t: String($json.title || '').slice(0, 160), at: new Date().toISOString().slice(0, 10) });\n}\nsd.published = list.slice(-300);\n\n// Готовим поисковый запрос для SerpAPI (сам запрос делает нода 'SerpAPI Image Search').\nif ($json.imageUrl) {\n  return { ...$json, serpQuery: '' };\n}\nconst q = String($json.title || '').trim().substring(0, 100);\nreturn { ...$json, serpQuery: q ? encodeURIComponent(q) : '' };\n"
       },
       "id": "f9a7b941-7e93-4105-b81d-b4452f726e03",
       "name": "SERP Image Fallback",
@@ -352,7 +352,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4816,
+        4752,
         2000
       ],
       "alwaysOutputData": false
@@ -407,35 +407,31 @@
     },
     {
       "parameters": {
-        "jsCode": "// Дедуп по истории: сравниваем ссылку и заголовок с уже опубликованным (workflow static data).\nconst sd = $getWorkflowStaticData('global');\nconst history = Array.isArray(sd.published) ? sd.published : [];\n\nconst STOP = new Set(['the', 'a', 'an', 'of', 'in', 'on', 'to', 'for', 'and', 'or', 'at', 'by', 'with', 'from',\n  'is', 'are', 'was', 'were', 'be', 'been', 'it', 'its', 'this', 'that', 'these', 'those', 'as', 'after',\n  'before', 'over', 'under', 'new', 'says', 'said', 'will', 'has', 'have', 'had', 'not', 'but', 'you', 'your',\n  'how', 'why', 'what', 'when', 'where', 'who', 'vs', 'via', 'into', 'out', 'up', 'down', 'more', 'most']);\n\nfunction norm(s) {\n  return String(s || '').toLowerCase()\n    .replace(/https?:\\/\\/\\S+/g, ' ')\n    .replace(/[^0-9a-zа-яіїєґ\\s]/gi, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction tokens(s) {\n  const out = new Set();\n  for (const w of norm(s).split(' ')) {\n    if (w.length > 2 && !STOP.has(w)) out.add(w);\n  }\n  return out;\n}\n\nfunction jaccard(a, b) {\n  if (!a.size || !b.size) return 0;\n  let inter = 0;\n  for (const w of a) if (b.has(w)) inter++;\n  return inter / (a.size + b.size - inter);\n}\n\nconst out = [];\nconst passed = [];\nfor (const item of $input.all()) {\n  const link = String(item.json.link || '');\n  const t = tokens(item.json.title || '');\n  let dup = false;\n  for (const h of history.concat(passed)) {\n    if (link && h && h.l === link) { dup = true; break; }\n    if (h && jaccard(t, tokens(h.t || '')) >= 0.6) { dup = true; break; }\n  }\n  if (!dup) {\n    out.push(item);\n    passed.push({ l: link, t: String(item.json.title || '') });\n  }\n}\nreturn out;",
-        "mode": "runOnceForAllItems",
-        "jsMode": "runOnceForAllItems"
+        "jsCode": "// Дедуп по истории: сравниваем ссылку и заголовок с уже опубликованным (workflow static data).\nconst sd = $getWorkflowStaticData('global');\nconst history = Array.isArray(sd.published) ? sd.published : [];\n\nconst STOP = new Set(['the', 'a', 'an', 'of', 'in', 'on', 'to', 'for', 'and', 'or', 'at', 'by', 'with', 'from',\n  'is', 'are', 'was', 'were', 'be', 'been', 'it', 'its', 'this', 'that', 'these', 'those', 'as', 'after',\n  'before', 'over', 'under', 'new', 'says', 'said', 'will', 'has', 'have', 'had', 'not', 'but', 'you', 'your',\n  'how', 'why', 'what', 'when', 'where', 'who', 'vs', 'via', 'into', 'out', 'up', 'down', 'more', 'most']);\n\nfunction norm(s) {\n  return String(s || '').toLowerCase()\n    .replace(/https?:\\/\\/\\S+/g, ' ')\n    .replace(/[^0-9a-zа-яіїєґ\\s]/gi, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction tokens(s) {\n  const out = new Set();\n  for (const w of norm(s).split(' ')) {\n    if (w.length > 2 && !STOP.has(w)) out.add(w);\n  }\n  return out;\n}\n\nfunction jaccard(a, b) {\n  if (!a.size || !b.size) return 0;\n  let inter = 0;\n  for (const w of a) if (b.has(w)) inter++;\n  return inter / (a.size + b.size - inter);\n}\n\nconst out = [];\nconst passed = [];\nfor (const item of $input.all()) {\n  const link = String(item.json.link || '');\n  const t = tokens(item.json.title || '');\n  let dup = false;\n  for (const h of history.concat(passed)) {\n    if (link && h && h.l === link) { dup = true; break; }\n    if (h && jaccard(t, tokens(h.t || '')) >= 0.6) { dup = true; break; }\n  }\n  if (!dup) {\n    out.push(item);\n    passed.push({ l: link, t: String(item.json.title || '') });\n  }\n}\nreturn out;"
       },
       "id": "883a0c5e-e810-4304-a567-4c27d2375b22",
       "name": "Duplicate Filter",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4912,
+        4896,
         2000
       ],
       "alwaysOutputData": false
     },
     {
       "parameters": {
-        "jsMode": "runOnceForAllItems",
-        "jsCode": "const M = 'qwen3-32b';\nconst sys = 'You are a crypto analyst. Translate news to Ukrainian. Reply ONLY with valid JSON. Fields: importance (one of 4 levels), title_uk, content_uk (3-4 sentences max), analysis_uk (one key consequence, max 200 chars), tags (array). No markdown, no reasoning, only JSON object.';\nreturn $input.all().map(item => {\n  const src = item.json?.sourceText || '';\n  const msg = sys + String.fromCharCode(10, 10) + 'News: ' + src;\n  return { json: { ...item.json, _body: { model: M, messages: [{ role: 'user', content: msg }], max_tokens: 2000 } } };\n});",
-        "mode": "runOnceForAllItems"
+        "jsCode": "const M = 'qwen3-32b';\nconst sys = 'You are a crypto analyst. Translate news to Ukrainian. Reply ONLY with valid JSON. Fields: importance (one of 4 levels), title_uk, content_uk (3-4 sentences max), analysis_uk (one key consequence, max 200 chars), tags (array). No markdown, no reasoning, only JSON object.';\nreturn $input.all().map(item => {\n  const src = item.json?.sourceText || '';\n  const msg = sys + String.fromCharCode(10, 10) + 'News: ' + src;\n  return { json: { ...item.json, _body: { model: M, messages: [{ role: 'user', content: msg }], max_tokens: 2000 } } };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5008,
+        5024,
         2000
       ],
       "name": "AI Translate",
-      "onError": "continueRegularOutput",
-      "id": "34fc78dc-9ad7-4c1b-8772-a772c0b59c4c"
+      "id": "34fc78dc-9ad7-4c1b-8772-a772c0b59c4c",
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -453,19 +449,106 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        5120,
+        5152,
         2000
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "httpHeaderAuth": {
           "id": "GGcWGyo9YiJcgCqj",
           "name": "Qubax AI"
         }
       },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "checkSerpQuery",
+              "leftValue": "={{ $json.serpQuery }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c0000000-0000-4000-8000-000000000001",
+      "name": "Needs SERP Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5660,
+        2528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google_images"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.serpQuery }}"
+            }
+          ]
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "id": "c0000000-0000-4000-8000-000000000002",
+      "name": "SerpAPI Image Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5760,
+        2608
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "xzrYdOCMHGLLNiuU",
+          "name": "SerpAPI (Query Auth)"
+        }
+      },
       "retryOnFail": true,
-      "maxTries": 3,
+      "maxTries": 2,
       "waitBetweenTries": 5000,
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Склеиваем ответ SerpAPI с исходным item; берём первое изображение.\nlet base = {};\ntry {\n  base = $('SERP Image Fallback').item.json || {};\n} catch (e) {\n  base = { ...($json || {}) };\n}\ndelete base.serpQuery;\ndelete base.error;\nconst arr = $json.images_results;\nconst found = Array.isArray(arr) && arr.length ? (arr[0].original || arr[0].thumbnail || '') : '';\nbase.imageUrl = found || base.imageUrl || '';\nreturn [{ json: base }];\n"
+      },
+      "id": "c0000000-0000-4000-8000-000000000003",
+      "name": "SERP Image Merge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5860,
+        2608
+      ]
     }
   ],
   "connections": {
@@ -652,7 +735,7 @@
       "main": [
         [
           {
-            "node": "SERP Image Fallback",
+            "node": "Needs SERP Image?",
             "type": "main",
             "index": 0
           }
@@ -663,7 +746,7 @@
       "main": [
         [
           {
-            "node": "SERP Image Fallback",
+            "node": "Needs SERP Image?",
             "type": "main",
             "index": 0
           }
@@ -697,6 +780,46 @@
         [
           {
             "node": "AI Translate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs SERP Image?": {
+      "main": [
+        [
+          {
+            "node": "SerpAPI Image Search",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI Image Search": {
+      "main": [
+        [
+          {
+            "node": "SERP Image Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP Image Merge": {
+      "main": [
+        [
+          {
+            "node": "Has Image?",
             "type": "main",
             "index": 0
           }
