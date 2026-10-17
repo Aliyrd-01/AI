@@ -68,17 +68,18 @@ FLOWS = [
                   "(enclosure / media:content / og:image, при промахе — SERP fallback) → детектор "
                   "темы (crypto / AI) и предфильтр по интересам → LLM переводит и сжимает материал "
                   "в строгий JSON (важность, заголовок, 3–4 предложения, вывод, теги) → фильтр "
-                  "дублей через ту же LLM → форматирование поста (HTML) → порог релевантности → "
-                  "публикация в Telegram (фото или текст). Человека в цикле нет.",
+                  "дублей по истории публикаций (similarity, реестр в staticData) → форматирование "
+                  "поста (HTML) → порог релевантности → публикация в Telegram (фото или текст). "
+                  "Человека в цикле нет.",
             "en": "7 RSS feeds (Forklog, Habr, Habr AI, TechCrunch AI, Ars Technica, MIT Tech Review, "
                   "DailyAI) → link-level dedup → text cleaning and cover extraction (enclosure / "
                   "media:content / og:image, SERP fallback on miss) → topic detector (crypto / AI) "
                   "and interest pre-filter → an LLM translates and condenses the piece into strict "
-                  "JSON (importance, title, 3–4 sentences, takeaway, tags) → duplicate filter via the "
-                  "same LLM → post formatting (HTML) → relevance gate → publish to Telegram "
-                  "(photo or text post). No human in the loop.",
+                  "JSON (importance, title, 3–4 sentences, takeaway, tags) → history-based duplicate "
+                  "filter (similarity, registry in staticData) → post formatting (HTML) → relevance "
+                  "gate → publish to Telegram (photo or text post). No human in the loop.",
         },
-        "tech_base": "n8n · 7 × RSS · Code (JS) · og:image + SERP fallback · Telegram",
+        "tech_base": "n8n · 7 × RSS · Code (JS) · og:image + SerpAPI fallback · Telegram",
         "video": "news_demo.mp4",
         "images": [],
         "diagram_h": 170,
@@ -90,14 +91,16 @@ FLOWS = [
         "short": {"ru": "B2B-квалификация лидов с A/B-тестом промптов",
                   "en": "B2B lead qualification with A/B prompt testing"},
         "desc": {
-            "ru": "Лид приходит с веб-формы (webhook) → валидация email/телефона → обогащение через "
-                  "MCP-сервер (Postgres CRM: контакт/компания) → A/B два промпта скорринга "
+            "ru": "Лид приходит с веб-формы (webhook, Basic Auth) → валидация email/телефона → обогащение "
+                  "через MCP-сервер (Postgres CRM: контакт/компания) → A/B два промпта скорринга "
                   "(conservative vs aggressive) → JSON-score (0–100, tier, next action) → "
-                  "ветка «hot > 70» → Telegram-алерт + upsert лида в CRM.",
-            "en": "A lead arrives from a web form (webhook) → email/phone validation → enrichment "
+                  "ветка «hot > 70» → Telegram-алерт + upsert лида в CRM → в ответ вебхука идёт "
+                  "живая сводка A/B (n и средний скор каждой руки, текущий победитель).",
+            "en": "A lead arrives from a web form (webhook, Basic Auth) → email/phone validation → enrichment "
                   "via an MCP server (Postgres CRM: contact/company) → A/B testing of two scoring "
                   "prompts (conservative vs aggressive) → JSON score (0–100, tier, next action) → "
-                  "hot > 70 branch → Telegram alert + lead upsert into the CRM.",
+                  "hot > 70 branch → Telegram alert + lead upsert into the CRM → the webhook response "
+                  "returns a live A/B summary (n and avg score per arm, current winner).",
         },
         "tech_base": "n8n · Webhook · MCP (Postgres CRM) · A/B prompt testing · Telegram",
         "video": "leadqual_demo.mp4",

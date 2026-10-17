@@ -314,7 +314,7 @@
         "jsCode": "return [$input.first().json];"
       },
       "id": "node-merge",
-      "name": "Merge Scorers",
+      "name": "A/B Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -386,7 +386,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\nd.status = d.leadScore > 70 ? 'hot_emailed' : (d.leadScore > 0 ? 'nurture' : 'invalid');\nconst lead = {\n  lead_id: d.leadId, name: d.name, email: d.email, phone: d.phone,\n  company: d.enrichedCompany || d.company || '',\n  company_industry: d.enrichedIndustry || '',\n  company_size: d.enrichedSize || '',\n  role: d.position || d.enrichedRole || (d.companyFound ? 'Executive' : 'UNKNOWN EXECUTIVE'),\n  source: d.source, message: d.message,\n  lead_score: d.leadScore, lead_tier: d.leadTier, priority: d.priority,\n  prompt_version: d.promptVersion, status: d.status, next_action: d.nextAction\n};\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\nconst cols = Object.keys(lead);\nconst vals = cols.map(c => esc(lead[c]));\nconst updates = cols.filter(c => c !== 'lead_id').map(c => c + ' = EXCLUDED.' + c);\nconst crm_sql = 'INSERT INTO leads_leads (' + cols.join(', ') + ') VALUES (' + vals.join(', ') + ') ON CONFLICT (lead_id) DO UPDATE SET ' + updates.join(', ') + ', updated_at = NOW();';\nreturn [{ ...lead, crm_sql }];"
+        "jsCode": "const d = $input.first().json;\nd.status = d.leadScore > 70 ? 'hot_emailed' : (d.leadScore > 0 ? 'nurture' : 'invalid');\nconst lead = {\n  lead_id: d.leadId, name: d.name, email: d.email, phone: d.phone,\n  company: d.enrichedCompany || d.company || '',\n  company_industry: d.enrichedIndustry || '',\n  company_size: d.enrichedSize || '',\n  role: d.position || d.enrichedRole || (d.companyFound ? 'Executive' : ''),\n  source: d.source, message: d.message,\n  lead_score: d.leadScore, lead_tier: d.leadTier, priority: d.priority,\n  prompt_version: d.promptVersion, status: d.status, next_action: d.nextAction\n};\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\nconst cols = Object.keys(lead);\nconst vals = cols.map(c => esc(lead[c]));\nconst updates = cols.filter(c => c !== 'lead_id').map(c => c + ' = EXCLUDED.' + c);\nconst crm_sql = 'INSERT INTO leads_leads (' + cols.join(', ') + ') VALUES (' + vals.join(', ') + ') ON CONFLICT (lead_id) DO UPDATE SET ' + updates.join(', ') + ', updated_at = NOW();';\nreturn [{ ...lead, crm_sql }];"
       },
       "id": "node-crm-prep",
       "name": "CRM Prep",
@@ -405,10 +405,6 @@
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "Bearer YOUR_TOKEN"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
             },
@@ -421,7 +417,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.crm_sql } } } }}",
-        "options": {}
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth"
       },
       "id": "node-pg-mcp",
       "name": "PostgreSQL (CRM)",
@@ -433,18 +431,24 @@
       ],
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "DSiz14VIMgWi9Cmb",
+          "name": "Postgres MCP (Bearer)"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const d = $('CRM Prep').first().json;\nreturn [{ summary: 'Lead processed', leadId: d.lead_id, status: d.status, score: d.lead_score, prompt: d.prompt_version }];"
+        "jsCode": "// Финальный ответ воркфлоу: лид + текущая сводка A/B из CRM (рука, n, средний скор, победитель).\nconst d = $('CRM Prep').first().json;\n\nlet rows = [];\ntry {\n  const r = $input.first().json;\n  let text = typeof r === 'string' ? r : (r.body || r.data || JSON.stringify(r));\n  const m = String(text).match(/data:\\s*({.*})/);\n  const payload = m ? JSON.parse(m[1]) : r;\n  const content = payload && payload.result && payload.result.content && payload.result.content[0] && payload.result.content[0].text;\n  if (content) rows = JSON.parse(content);\n} catch (e) {\n  rows = [];\n}\n\nconst ab = {};\nfor (const row of Array.isArray(rows) ? rows : []) {\n  ab[row.arm] = { n: row.n, avg: row.avg_score };\n}\nlet winner = null;\nif (ab.A && ab.B) winner = ab.A.avg >= ab.B.avg ? 'A' : 'B';\n\nreturn [{\n  summary: 'Lead processed',\n  leadId: d.lead_id,\n  score: d.lead_score,\n  tier: d.lead_tier,\n  prompt: d.prompt_version,\n  status: d.status,\n  ab_stats: ab,\n  ab_winner: winner\n}];\n"
       },
       "id": "node-done",
       "name": "Done",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4000,
+        4160,
         208
       ]
     },
@@ -469,10 +473,6 @@
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "Bearer YOUR_TOKEN"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
             },
@@ -485,7 +485,9 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.mcp_sql } } } }}",
-        "options": {}
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth"
       },
       "id": "node-enrich-http",
       "name": "MCP Enrich HTTP",
@@ -497,7 +499,13 @@
       ],
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "DSiz14VIMgWi9Cmb",
+          "name": "Postgres MCP (Bearer)"
+        }
+      }
     },
     {
       "parameters": {
@@ -517,7 +525,8 @@
         "httpMethod": "POST",
         "path": "lead-received",
         "responseMode": "lastNode",
-        "options": {}
+        "options": {},
+        "authentication": "basicAuth"
       },
       "id": "node-webhook",
       "name": "Webhook",
@@ -527,7 +536,69 @@
         0,
         400
       ],
-      "webhookId": "lead-received"
+      "webhookId": "lead-received",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "5gdOYfOIZfyw0OUC",
+          "name": "Lead Webhook (Basic)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Собираем JSON-RPC вызов MCP-инструмента 'select' со сводкой A/B по CRM.\nconst sql = \"SELECT prompt_version AS arm, COUNT(*)::int AS n, \" +\n  \"ROUND(AVG(lead_score)::numeric, 1)::float AS avg_score \" +\n  \"FROM leads_leads WHERE prompt_version IN ('A','B') GROUP BY prompt_version ORDER BY 1\";\nreturn [{ json: { _rpc: { jsonrpc: '2.0', method: 'tools/call', id: 1, params: { name: 'select', arguments: { sql } } } } }];\n"
+      },
+      "id": "c0000000-0000-4000-8000-000000000011",
+      "name": "A/B Stats Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3960,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:9002/mcp",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/event-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json._rpc }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "id": "c0000000-0000-4000-8000-000000000012",
+      "name": "A/B Stats (MCP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        4060,
+        208
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "DSiz14VIMgWi9Cmb",
+          "name": "Postgres MCP (Bearer)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -626,7 +697,7 @@
       "main": [
         [
           {
-            "node": "Merge Scorers",
+            "node": "A/B Result",
             "type": "main",
             "index": 0
           }
@@ -648,18 +719,7 @@
       "main": [
         [
           {
-            "node": "Merge Scorers",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge Scorers": {
-      "main": [
-        [
-          {
-            "node": "Score > 70?",
+            "node": "A/B Result",
             "type": "main",
             "index": 0
           }
@@ -704,7 +764,7 @@
       "main": [
         [
           {
-            "node": "Done",
+            "node": "A/B Stats Prep",
             "type": "main",
             "index": 0
           }
@@ -760,6 +820,39 @@
         [
           {
             "node": "Parse Scorer B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A/B Result": {
+      "main": [
+        [
+          {
+            "node": "Score > 70?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A/B Stats Prep": {
+      "main": [
+        [
+          {
+            "node": "A/B Stats (MCP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A/B Stats (MCP)": {
+      "main": [
+        [
+          {
+            "node": "Done",
             "type": "main",
             "index": 0
           }
