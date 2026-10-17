@@ -67,19 +67,21 @@ FLOWS = [
                   "DailyAI) → дедупликация по ссылке → очистка текста и извлечение обложки "
                   "(enclosure / media:content / og:image, при промахе — SERP fallback) → детектор "
                   "темы (crypto / AI) и предфильтр по интересам → LLM переводит и сжимает материал "
-                  "в строгий JSON (важность, заголовок, 3–4 предложения, вывод, теги) → фильтр "
-                  "дублей по истории публикаций (similarity, реестр в staticData) → форматирование "
-                  "поста (HTML) → порог релевантности → публикация в Telegram (фото или текст). "
+                  "в строгий JSON (важность, заголовок, 3–4 предложения, вывод, теги; temperature 0.2 "
+                  "для стабильного JSON) → фильтр дублей по истории публикаций (similarity, реестр "
+                  "в staticData) → форматирование поста (HTML) → порог релевантности → публикация "
+                  "в Telegram (фото или текст); стоимость LLM-шага (usage → $) пишется в llm_usage. "
                   "Человека в цикле нет.",
             "en": "7 RSS feeds (Forklog, Habr, Habr AI, TechCrunch AI, Ars Technica, MIT Tech Review, "
                   "DailyAI) → link-level dedup → text cleaning and cover extraction (enclosure / "
                   "media:content / og:image, SERP fallback on miss) → topic detector (crypto / AI) "
                   "and interest pre-filter → an LLM translates and condenses the piece into strict "
-                  "JSON (importance, title, 3–4 sentences, takeaway, tags) → history-based duplicate "
-                  "filter (similarity, registry in staticData) → post formatting (HTML) → relevance "
-                  "gate → publish to Telegram (photo or text post). No human in the loop.",
+                  "JSON (importance, title, 3–4 sentences, takeaway, tags; temperature 0.2 for stable "
+                  "JSON) → history-based duplicate filter (similarity, registry in staticData) → post "
+                  "formatting (HTML) → relevance gate → publish to Telegram (photo or text post); the "
+                  "LLM step's cost (usage → $) is logged to llm_usage. No human in the loop.",
         },
-        "tech_base": "n8n · 7 × RSS · Code (JS) · og:image + SerpAPI fallback · Telegram",
+        "tech_base": "n8n · 7 × RSS · Code (JS) · Qubax · og:image + SerpAPI fallback · cost tracking · Telegram",
         "video": "news_demo.mp4",
         "images": [],
         "diagram_h": 170,
@@ -92,17 +94,23 @@ FLOWS = [
                   "en": "B2B lead qualification with A/B prompt testing"},
         "desc": {
             "ru": "Лид приходит с веб-формы (webhook, Basic Auth) → валидация email/телефона → обогащение "
-                  "через MCP-сервер (Postgres CRM: контакт/компания) → A/B два промпта скорринга "
+                  "из Postgres-CRM нативной нодой (контакт/компания, параметризованный SQL $1..$9) → "
+                  "A/B два промпта скорринга "
                   "(conservative vs aggressive) → JSON-score (0–100, tier, next action) → "
-                  "ветка «hot > 70» → Telegram-алерт + upsert лида в CRM → в ответ вебхука идёт "
-                  "живая сводка A/B (n и средний скор каждой руки, текущий победитель).",
+                  "ветка «hot > 70» → Telegram-алерт + upsert лида в CRM (нативная Postgres-нода, "
+                  "INSERT … ON CONFLICT, параметры $1..$16) → стоимость скоринга (usage → $ через "
+                  "прайс-таблицу) в llm_usage → в ответ вебхука идёт "
+                  "живая сводка A/B (n и средний скор каждой руки, текущий победитель) и cost_usd.",
             "en": "A lead arrives from a web form (webhook, Basic Auth) → email/phone validation → enrichment "
-                  "via an MCP server (Postgres CRM: contact/company) → A/B testing of two scoring "
+                  "via native Postgres nodes against the CRM (contact/company, parameterized $1..$9 SQL) → "
+                  "A/B testing of two scoring "
                   "prompts (conservative vs aggressive) → JSON score (0–100, tier, next action) → "
-                  "hot > 70 branch → Telegram alert + lead upsert into the CRM → the webhook response "
-                  "returns a live A/B summary (n and avg score per arm, current winner).",
+                  "hot > 70 branch → Telegram alert + lead upsert into the CRM (native Postgres node, "
+                  "INSERT … ON CONFLICT, $1..$16 params) → scoring cost (usage → $ via a pricing "
+                  "table) logged to llm_usage → the webhook response "
+                  "returns a live A/B summary (n and avg score per arm, current winner) plus cost_usd.",
         },
-        "tech_base": "n8n · Webhook · MCP (Postgres CRM) · A/B prompt testing · Telegram",
+        "tech_base": "n8n · Webhook (Basic Auth) · Postgres CRM (native nodes, params) · A/B prompt testing · cost tracking · Telegram",
         "video": "leadqual_demo.mp4",
         "images": [],
         "diagram_h": 210,
@@ -116,18 +124,20 @@ FLOWS = [
         "desc": {
             "ru": "Telegram-триггер → сообщение и состояние пользователя пишутся в Postgres "
                   "(user_states) → в режиме оператора диалог сразу пересылается оператору → "
-                  "классификатор (LLM) решает simple / operator → простые вопросы закрывает "
+                  "нативный Text Classifier (AI-нода n8n + Qubax Chat Model) решает simple / operator, "
+                  "с fallback «other» → простые вопросы закрывает "
                   "локальный RAG-сервис (FastAPI + Qdrant), сложные (оплаты, жалобы, недовольный "
                   "клиент) переводят пользователя в режим оператора с алертом и полной историей; "
                   "есть закрытие диалога и сброс в режим бота.",
             "en": "Telegram trigger → the message and the user state are written to Postgres "
                   "(user_states) → in operator mode the dialog is forwarded straight to the human → "
-                  "an LLM classifier decides simple / operator → simple questions are answered by a "
+                  "a native Text Classifier node (n8n AI node + Qubax Chat Model) decides simple / "
+                  "operator with an 'other' fallback → simple questions are answered by a "
                   "local RAG service (FastAPI + Qdrant), complex ones (payments, complaints, angry "
                   "customer) switch the user to operator mode with an alert and the full history; "
                   "dialog close and reset-to-bot are supported.",
         },
-        "tech_base": "n8n · Telegram API · Postgres (user_states) · dialog state · human handoff",
+        "tech_base": "n8n · Telegram API · Postgres (user_states) · AI nodes (Text Classifier) · RAG (FastAPI + Qdrant) · human handoff",
         "video": "support_demo.mp4",
         "images": [],
         "diagram_h": 310,
@@ -160,6 +170,8 @@ def detect_llm_stack(wf: dict):
 def _short(name: str, limit: int = 20) -> str:
     """Компактная подпись ноды: убираем служебные хвосты и обрезаем."""
     s = str(name).strip()
+    if " (Postgres)" in s:
+        s = s.replace(" (Postgres)", " (PG)")
     for junk in (" (prep)", " (CRM)", " account", " Trigger"):
         s = s.replace(junk, "")
     s = s.replace("/", "/ ").strip()

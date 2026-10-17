@@ -421,7 +421,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const M = 'qwen3-32b';\nconst sys = 'You are a crypto analyst. Translate news to Ukrainian. Reply ONLY with valid JSON. Fields: importance (one of 4 levels), title_uk, content_uk (3-4 sentences max), analysis_uk (one key consequence, max 200 chars), tags (array). No markdown, no reasoning, only JSON object.';\nreturn $input.all().map(item => {\n  const src = item.json?.sourceText || '';\n  const msg = sys + String.fromCharCode(10, 10) + 'News: ' + src;\n  return { json: { ...item.json, _body: { model: M, messages: [{ role: 'user', content: msg }], max_tokens: 2000 } } };\n});"
+        "jsCode": "const M = 'qwen3-32b';\nconst sys = 'You are a tech-news editor covering AI and crypto. Translate news to Ukrainian. Reply ONLY with valid JSON. Fields: importance (one of 4 levels), title_uk, content_uk (3-4 sentences max), analysis_uk (one key consequence, max 200 chars), tags (array). No markdown, no reasoning, only JSON object.';\nreturn $input.all().map(item => {\n  const src = item.json?.sourceText || '';\n  const msg = sys + String.fromCharCode(10, 10) + 'News: ' + src;\n  return { json: { ...item.json, _body: { model: M, messages: [{ role: 'user', content: msg }], temperature: 0.2, max_tokens: 2000 } } };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -549,6 +549,34 @@
         5860,
         2608
       ]
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO llm_usage (workflow, call_node, model, prompt_tokens, completion_tokens, total_tokens, cost_usd, ref)\nSELECT $1, $2, $3, $4, $5, COALESCE($4, 0) + COALESCE($5, 0),\n       ROUND((COALESCE($4, 0) / 1000000.0) * COALESCE(p.in_per_1m, 0)\n           + (COALESCE($5, 0) / 1000000.0) * COALESCE(p.out_per_1m, 0), 6),\n       $6\nFROM (SELECT 1 AS one) s\nLEFT JOIN llm_pricing p ON p.model = $3\nRETURNING id, cost_usd;",
+        "options": {
+          "queryReplacement": "={{ ['news', 'translate', $json.model || 'qwen3-32b', $json.usage?.prompt_tokens ?? null, $json.usage?.completion_tokens ?? null, $('Preprocessing').item.json.link || ''] }}"
+        }
+      },
+      "id": "6f78c667-43e2-48fe-b353-8c1e17f1678d",
+      "name": "Log LLM Cost (Postgres)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        5412,
+        2000
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "KxmwIIM9tjVU936P",
+          "name": "Postgres account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -769,6 +797,11 @@
         [
           {
             "node": "AI Success?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log LLM Cost (Postgres)",
             "type": "main",
             "index": 0
           }
