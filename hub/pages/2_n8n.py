@@ -23,9 +23,11 @@ T = {
                    "Редактор наружу не публикуется — диаграмма воркфлоу + JSON + демо-запись.",
         "nodes": "Узлов",
         "conns": "Связей",
-        "status": "Статус",
-        "active": "● активен",
-        "paused": "○ на паузе",
+        "status": "Статус в n8n",
+        "active": "● включён в n8n",
+        "paused": "○ выключен в n8n",
+        "paused_note": "Флаг включения взят из живого n8n: воркфлоу выключен в самом n8n "
+                       "(диаграмма и JSON при этом актуальны).",
         "workflow": "Воркфлоу",
         "feeds": "Источники (RSS)",
         "diagram": "Диаграмма воркфлоу",
@@ -44,9 +46,11 @@ T = {
                    "No live editor exposed — workflow diagram + JSON + demo recording.",
         "nodes": "Nodes",
         "conns": "Connections",
-        "status": "Status",
-        "active": "● active",
-        "paused": "○ paused",
+        "status": "Status in n8n",
+        "active": "● enabled in n8n",
+        "paused": "○ disabled in n8n",
+        "paused_note": "Status flag is taken from the live n8n: the workflow is switched off in n8n "
+                       "(the diagram and JSON here are still up to date).",
         "workflow": "Workflow",
         "feeds": "Feeds (RSS)",
         "diagram": "Workflow diagram",
@@ -87,6 +91,7 @@ FLOWS = [
         "tech_base": "n8n · 7 × RSS · Code (JS) · og:image + SERP fallback · Telegram",
         "video": "news_demo.mp4",
         "images": [],
+        "diagram_h": 170,
     },
     {
         "key": "lead_qualification",
@@ -107,6 +112,7 @@ FLOWS = [
         "tech_base": "n8n · Webhook · MCP (Postgres CRM) · A/B prompt testing · Telegram",
         "video": "leadqual_demo.mp4",
         "images": [],
+        "diagram_h": 210,
     },
     {
         "key": "ai_support_escalation",
@@ -131,6 +137,7 @@ FLOWS = [
         "tech_base": "n8n · Telegram API · Postgres (user_states) · dialog state · human handoff",
         "video": "support_demo.mp4",
         "images": [],
+        "diagram_h": 310,
     },
 ]
 
@@ -157,9 +164,18 @@ def detect_llm_stack(wf: dict):
     return found
 
 
+def _short(name: str, limit: int = 20) -> str:
+    """Компактная подпись ноды: убираем служебные хвосты и обрезаем."""
+    s = str(name).strip()
+    for junk in (" (prep)", " (CRM)", " account", " Trigger"):
+        s = s.replace(junk, "")
+    s = s.replace("/", "/ ").strip()
+    return s if len(s) <= limit else s[: limit - 1].rstrip(" -→") + "…"
+
+
 def to_mermaid(wf: dict) -> str:
     """Реальный граф воркфлоу: ветки сохраняются, линейные цепочки схлопываются в один узел
-    (label — «шаг → шаг → шаг»), RSS-триггеры — один узел."""
+    (label — «шаг → шаг → шаг»), RSS-триггеры — один узел. LR + короткие подписи, чтобы влезало целиком."""
     from collections import Counter, defaultdict
 
     nodes = wf.get("nodes", [])
@@ -171,11 +187,11 @@ def to_mermaid(wf: dict) -> str:
         name = n.get("name", f"node{i}")
         if rss and "rssFeedReadTrigger" in n.get("type", ""):
             alias[name] = "rss"
-            name_of["rss"] = f"RSS triggers ({len(rss)})"
+            name_of["rss"] = f"RSS × {len(rss)}"
             continue
         nid = f"n{i}"
         alias[name] = nid
-        name_of[nid] = str(name)
+        name_of[nid] = _short(name)
 
     edges, seen = [], set()
     for src, outs in conns.items():
@@ -193,7 +209,7 @@ def to_mermaid(wf: dict) -> str:
                     seen.add(key)
                     edges.append(key)
     if not edges:
-        return "flowchart TD\n  empty[\"no connections\"]"
+        return "flowchart LR\n  empty[\"no connections\"]"
 
     succ = defaultdict(list)
     pred = Counter()
@@ -224,10 +240,10 @@ def to_mermaid(wf: dict) -> str:
             seg_of[i] = start
         segments.append(chain)
 
-    lines = ["flowchart TD"]
+    lines = ["flowchart LR"]
     for seg in segments:
         names = [name_of[i] for i in seg]
-        chunks = [" → ".join(names[k:k + 2]) for k in range(0, len(names), 2)]
+        chunks = [" → ".join(names[k:k + 3]) for k in range(0, len(names), 3)]
         label = "<br/>".join(chunks).replace(chr(34), chr(39))
         lines.append(f'  {seg[0]}["{label}"]')
     for a, b, l in edges:
@@ -282,6 +298,8 @@ else:
     c1.metric(T["nodes"], n_nodes)
     c2.metric(T["conns"], n_conns)
     c3.metric(T["status"], T["active"] if wf.get("active") else T["paused"])
+    if not wf.get("active"):
+        st.caption(T["paused_note"])
     st.caption(f"{T['workflow']}: **{wf.get('name', '—')}**")
 
     feeds = [n.get("name") for n in wf.get("nodes", []) if "rssFeedReadTrigger" in n.get("type", "")]
@@ -295,7 +313,7 @@ else:
             st.video(vpath)
 
     st.markdown(f"**{T['diagram']}**")
-    render_mermaid(to_mermaid(wf), height=820)
+    render_mermaid(to_mermaid(wf), height=meta.get("diagram_h", 420), font_size=16)
 
     for img in meta.get("images", []):
         ipath = os.path.join(ASSETS, img)
