@@ -1,9 +1,9 @@
 {
-  "id": "R6TUfWY5jcGwZupm",
   "name": "Lead Qualification Flow",
   "active": true,
   "nodes": [
     {
+      "parameters": {},
       "id": "node-manual",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
@@ -11,18 +11,9 @@
       "position": [
         0,
         0
-      ],
-      "parameters": {}
+      ]
     },
     {
-      "id": "node-testdata",
-      "name": "Test Data (Google CEO)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 2,
-      "position": [
-        250,
-        0
-      ],
       "parameters": {
         "values": {
           "string": [
@@ -83,7 +74,15 @@
           ]
         },
         "options": {}
-      }
+      },
+      "id": "node-testdata",
+      "name": "Test Data (Google CEO)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        256,
+        0
+      ]
     },
     {
       "parameters": {
@@ -94,14 +93,19 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        400,
-        0
+        528,
+        -16
       ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": {},
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "combinator": "and",
           "conditions": [
             {
@@ -115,7 +119,8 @@
               }
             }
           ]
-        }
+        },
+        "options": {}
       },
       "id": "node-if-valid",
       "name": "Is Valid?",
@@ -127,28 +132,39 @@
       ]
     },
     {
+      "parameters": {
+        "chatId": "YOUR_OPERATOR_CHAT_ID",
+        "text": "=INVALID LEAD\nName: {{ $json.name }}\nEmail: {{ $json.email }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
       "id": "node-tg-inv-http",
       "name": "Telegram Invalid",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1100,
-        250
+        1104,
+        256
       ],
-      "parameters": {
-        "operation": "sendMessage",
-        "chatId": "@your_channel",
-        "text": "=INVALID LEAD\nName: {{ $json.name }}\nEmail: {{ $json.email }}",
-        "additionalFields": {
-          "appendAttribution": false,
-          "parse_mode": "HTML"
+      "webhookId": "09f822f8-2760-4742-8c2e-326e39a3dfdf",
+      "credentials": {
+        "telegramApi": {
+          "id": "trI2xZYaRRzTeT9L",
+          "name": "Telegram account 3"
         }
       }
     },
     {
       "parameters": {
         "conditions": {
-          "options": {},
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "combinator": "and",
           "conditions": [
             {
@@ -170,13 +186,13 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1600,
+        1744,
         0
       ]
     },
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\n\nconst systemPrompt = 'You are a B2B Lead Scoring AI. Analyze the lead data and return ONLY a JSON object with fields: leadScore (0-100), leadTier (\"hot\"|\"warm\"|\"cold\"), priority (\"high\"|\"medium\"|\"low\"), nextAction (string), notes (string).\\n\\nSCORING WEIGHTS (Conservative):\\n- Role is CEO/CTO/VP/Director: +25\\n- Role is Manager/Team Lead: +10\\n- Role is Intern/Junior/Trainee: -10\\n- Company name is known: +15\\n- Industry is known: +10\\n- Company size > 100 employees: +15\\n- Company size > 10: +10\\n- Message > 50 characters: +10\\n- Message < 10 characters: -5\\n- Email is provided and valid: +10\\n- Position/role is filled in: +10\\n\\nRULES:\\n- Score > 70: hot tier, high priority\\n- Score 40-70: warm tier, medium priority\\n- Score < 40: cold tier, low priority\\n- BE STRICT. Not every lead is hot.';\n\nconst leadData = {\n  name: d.name,\n  email: d.email,\n  company: d.enrichedCompany || d.company,\n  role: d.position || d.enrichedRole || '',\n  industry: d.enrichedIndustry || '',\n  companySize: d.enrichedSize || '',\n  message: d.message || '',\n  source: d.source\n};\n\nd._body = JSON.stringify({\n  model: 'openrouter/free',\n  messages: [\n    { role: 'system', content: systemPrompt },\n    { role: 'user', content: 'Score this lead:\\n' + JSON.stringify(leadData, null, 2) }\n  ],\n  temperature: 0.1\n});\nreturn [d];"
+        "jsCode": "const d = $input.first().json;\n\nconst systemPrompt = 'You are a B2B Lead Scoring AI. Analyze the lead data and return ONLY a JSON object with fields: leadScore (0-100), leadTier (\"hot\"|\"warm\"|\"cold\"), priority (\"high\"|\"medium\"|\"low\"), nextAction (string), notes (string).\\n\\nSCORING WEIGHTS (Conservative):\\n- Role is CEO/CTO/VP/Director: +25\\n- Role is Manager/Team Lead: +10\\n- Role is Intern/Junior/Trainee: -10\\n- Company name is known: +15\\n- Industry is known: +10\\n- Company size > 100 employees: +15\\n- Company size > 10: +10\\n- Message > 50 characters: +10\\n- Message < 10 characters: -5\\n- Email is provided and valid: +10\\n- Position/role is filled in: +10\\n\\nRULES:\\n- Score > 70: hot tier, high priority\\n- Score 40-70: warm tier, medium priority\\n- Score < 40: cold tier, low priority\\n- BE STRICT. Not every lead is hot.';\n\nconst leadData = {\n  name: d.name,\n  email: d.email,\n  company: d.enrichedCompany || d.company,\n  role: d.position || d.enrichedRole || '',\n  industry: d.enrichedIndustry || '',\n  companySize: d.enrichedSize || '',\n  message: d.message || '',\n  source: d.source\n};\n\nd._body = JSON.stringify({\n  model: 'qwen3-32b',\n  messages: [\n    { role: 'system', content: systemPrompt },\n    { role: 'user', content: 'Score this lead:\\n' + JSON.stringify(leadData, null, 2) }\n  ],\n  temperature: 0.1\n});\nreturn [d];"
       },
       "id": "node-prep-a",
       "name": "Prep Scorer A",
@@ -184,44 +200,37 @@
       "typeVersion": 2,
       "position": [
         2000,
-        -200
+        -208
       ]
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://api.qubax.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "sendHeaders": false,
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ $json._body }}",
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "predefinedCredentialType",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "HTTP-Referer",
-              "value": "http://localhost:5678"
-            },
-            {
-              "name": "X-Title",
-              "value": "LeadScorerA"
-            }
-          ]
-        },
-        "nodeCredentialType": "openRouterApi",
-        "continueOnFail": true,
         "options": {
           "timeout": 30000
-        }
+        },
+        "genericAuthType": "httpHeaderAuth"
       },
       "id": "node-http-a",
-      "name": "OpenRouter API A",
+      "name": "Qubax API A",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        2200,
-        -200
-      ]
+        2208,
+        -208
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GGcWGyo9YiJcgCqj",
+          "name": "Qubax AI"
+        }
+      }
     },
     {
       "parameters": {
@@ -233,12 +242,12 @@
       "typeVersion": 2,
       "position": [
         2400,
-        -200
+        -208
       ]
     },
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\n\nconst systemPrompt = 'You are an aggressive B2B Lead Scoring AI. Return ONLY a JSON object with fields: leadScore (0-100), leadTier (\"hot\"|\"warm\"|\"cold\"), priority (\"high\"|\"medium\"|\"low\"), nextAction (string), notes (string).\\n\\nSCORING WEIGHTS (Aggressive / Generous):\\n- Role is CEO/CTO/VP/Director: +30\\n- Role is any managerial position: +15\\n- Company name is known: +10\\n- Message has > 30 characters of detail: +20\\n- Email is provided: +5\\n- Position is filled in: +10\\n\\nRULES:\\n- Score > 60: hot tier, high priority\\n- Score 30-60: warm tier, medium priority\\n- Score < 30: cold tier, low priority\\n- BE GENEROUS. Give leads the benefit of the doubt.\\n- If message seems genuine, score higher.';\n\nconst leadData = {\n  name: d.name,\n  email: d.email,\n  company: d.enrichedCompany || d.company,\n  role: d.position || d.enrichedRole || '',\n  industry: d.enrichedIndustry || '',\n  companySize: d.enrichedSize || '',\n  message: d.message || '',\n  source: d.source\n};\n\nd._body = JSON.stringify({\n  model: 'openrouter/free',\n  messages: [\n    { role: 'system', content: systemPrompt },\n    { role: 'user', content: 'Score this lead:\\n' + JSON.stringify(leadData, null, 2) }\n  ],\n  temperature: 0.1\n});\nreturn [d];"
+        "jsCode": "const d = $input.first().json;\n\nconst systemPrompt = 'You are an aggressive B2B Lead Scoring AI. Return ONLY a JSON object with fields: leadScore (0-100), leadTier (\"hot\"|\"warm\"|\"cold\"), priority (\"high\"|\"medium\"|\"low\"), nextAction (string), notes (string).\\n\\nSCORING WEIGHTS (Aggressive / Generous):\\n- Role is CEO/CTO/VP/Director: +30\\n- Role is any managerial position: +15\\n- Company name is known: +10\\n- Message has > 30 characters of detail: +20\\n- Email is provided: +5\\n- Position is filled in: +10\\n\\nRULES:\\n- Score > 60: hot tier, high priority\\n- Score 30-60: warm tier, medium priority\\n- Score < 30: cold tier, low priority\\n- BE GENEROUS. Give leads the benefit of the doubt.\\n- If message seems genuine, score higher.';\n\nconst leadData = {\n  name: d.name,\n  email: d.email,\n  company: d.enrichedCompany || d.company,\n  role: d.position || d.enrichedRole || '',\n  industry: d.enrichedIndustry || '',\n  companySize: d.enrichedSize || '',\n  message: d.message || '',\n  source: d.source\n};\n\nd._body = JSON.stringify({\n  model: 'qwen3-32b',\n  messages: [\n    { role: 'system', content: systemPrompt },\n    { role: 'user', content: 'Score this lead:\\n' + JSON.stringify(leadData, null, 2) }\n  ],\n  temperature: 0.1\n});\nreturn [d];"
       },
       "id": "node-prep-b",
       "name": "Prep Scorer B",
@@ -246,44 +255,37 @@
       "typeVersion": 2,
       "position": [
         2000,
-        200
+        208
       ]
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://api.qubax.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "sendHeaders": false,
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ $json._body }}",
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "authentication": "predefinedCredentialType",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "HTTP-Referer",
-              "value": "http://localhost:5678"
-            },
-            {
-              "name": "X-Title",
-              "value": "LeadScorerB"
-            }
-          ]
-        },
-        "nodeCredentialType": "openRouterApi",
-        "continueOnFail": true,
         "options": {
           "timeout": 30000
-        }
+        },
+        "genericAuthType": "httpHeaderAuth"
       },
       "id": "node-http-b",
-      "name": "OpenRouter API B",
+      "name": "Qubax API B",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        2200,
-        200
-      ]
+        2208,
+        208
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GGcWGyo9YiJcgCqj",
+          "name": "Qubax AI"
+        }
+      }
     },
     {
       "parameters": {
@@ -295,7 +297,7 @@
       "typeVersion": 2,
       "position": [
         2400,
-        200
+        208
       ]
     },
     {
@@ -314,7 +316,12 @@
     {
       "parameters": {
         "conditions": {
-          "options": {},
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "combinator": "and",
           "conditions": [
             {
@@ -328,33 +335,40 @@
               }
             }
           ]
-        }
+        },
+        "options": {}
       },
       "id": "node-if-hot",
       "name": "Score > 70?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3200,
-        0
+        3152,
+        -224
       ]
     },
     {
+      "parameters": {
+        "chatId": "YOUR_OPERATOR_CHAT_ID",
+        "text": "=HOT LEAD\nName: {{ $json.name }}\nEmail: {{ $json.email }}\nCompany: {{ $json.enrichedCompany || $json.company }}\nRole: {{ $json.position || $json.enrichedRole || ($json.companyFound ? 'Executive' : 'UNKNOWN EXECUTIVE') }}\nScore: {{ $json.leadScore }}/100",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
       "id": "node-tg-hot-http",
       "name": "Telegram Hot Alert",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        4400,
-        -200
+        4048,
+        -208
       ],
-      "parameters": {
-        "operation": "sendMessage",
-        "chatId": "@your_channel",
-        "text": "=HOT LEAD\nName: {{ $json.name }}\nCompany: {{ $json.enrichedCompany || $json.company }}\nRole: {{ $json.position || $json.enrichedRole || ($json.companyFound ? 'Executive' : 'UNKNOWN EXECUTIVE') }}\nScore: {{ $json.leadScore }}/100",
-        "additionalFields": {
-          "appendAttribution": false,
-          "parse_mode": "HTML"
+      "webhookId": "9c4fdee0-c26d-4f54-855f-ffc6d586d7d1",
+      "credentials": {
+        "telegramApi": {
+          "id": "trI2xZYaRRzTeT9L",
+          "name": "Telegram account 3"
         }
       }
     },
@@ -368,31 +382,19 @@
       "typeVersion": 2,
       "position": [
         3600,
-        200
+        208
       ]
     },
     {
-      "id": "node-pg-mcp",
-      "name": "PostgreSQL (CRM)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        3800,
-        200
-      ],
       "parameters": {
         "method": "POST",
         "url": "http://localhost:9002/mcp",
-        "authentication": "none",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.crm_sql } } } }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer YOUR_MCP_TOKEN"
+              "value": "Bearer YOUR_TOKEN"
             },
             {
               "name": "Content-Type",
@@ -404,8 +406,19 @@
             }
           ]
         },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.crm_sql } } } }}",
         "options": {}
-      }
+      },
+      "id": "node-pg-mcp",
+      "name": "PostgreSQL (CRM)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3808,
+        208
+      ]
     },
     {
       "parameters": {
@@ -417,7 +430,7 @@
       "typeVersion": 2,
       "position": [
         4000,
-        200
+        208
       ]
     },
     {
@@ -429,23 +442,20 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
-        -100
+        1104,
+        -96
       ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "http://localhost:9002/mcp",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.mcp_sql } } } }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer YOUR_MCP_TOKEN"
+              "value": "Bearer YOUR_TOKEN"
             },
             {
               "name": "Content-Type",
@@ -457,6 +467,9 @@
             }
           ]
         },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.mcp_sql } } } }}",
         "options": {}
       },
       "id": "node-enrich-http",
@@ -464,8 +477,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        1300,
-        -100
+        1312,
+        -96
       ]
     },
     {
@@ -477,11 +490,17 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1500,
-        -100
+        1504,
+        -96
       ]
     },
     {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-received",
+        "responseMode": "lastNode",
+        "options": {}
+      },
       "id": "node-webhook",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
@@ -490,12 +509,6 @@
         0,
         400
       ],
-      "parameters": {
-        "path": "lead-received",
-        "httpMethod": "POST",
-        "responseMode": "lastNode",
-        "options": {}
-      },
       "webhookId": "lead-received"
     }
   ],
@@ -584,18 +597,7 @@
       "main": [
         [
           {
-            "node": "OpenRouter API A",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter API A": {
-      "main": [
-        [
-          {
-            "node": "Parse Scorer A",
+            "node": "Qubax API A",
             "type": "main",
             "index": 0
           }
@@ -617,18 +619,7 @@
       "main": [
         [
           {
-            "node": "OpenRouter API B",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter API B": {
-      "main": [
-        [
-          {
-            "node": "Parse Scorer B",
+            "node": "Qubax API B",
             "type": "main",
             "index": 0
           }
@@ -734,10 +725,38 @@
           }
         ]
       ]
+    },
+    "Qubax API A": {
+      "main": [
+        [
+          {
+            "node": "Parse Scorer A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qubax API B": {
+      "main": [
+        [
+          {
+            "node": "Parse Scorer B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "pinData": {},
   "settings": {
-    "executionOrder": "v1"
-  }
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "R6TUfWY5jcGwZupm",
+  "tags": []
 }

@@ -1,5 +1,6 @@
 {
   "name": "AI & Crypto News Analytics (Advanced) v2",
+  "active": false,
   "nodes": [
     {
       "parameters": {
@@ -18,8 +19,8 @@
       "type": "n8n-nodes-base.rssFeedReadTrigger",
       "typeVersion": 1,
       "position": [
-        3840,
-        1760
+        3824,
+        1600
       ]
     },
     {
@@ -39,13 +40,13 @@
       "type": "n8n-nodes-base.rssFeedReadTrigger",
       "typeVersion": 1,
       "position": [
-        3840,
-        1936
+        3824,
+        1776
       ]
     },
     {
       "parameters": {
-        "jsCode": "var staticData = $getWorkflowStaticData('global');\nvar now = Date.now();\n\nif (!staticData.pubLinks) staticData.pubLinks = [];\nif (!staticData.lastReset) staticData.lastReset = now;\n\nif ((now - staticData.lastReset) > 86400000) {\n    staticData.pubLinks = [];\n    staticData.lastReset = now;\n}\n\nvar items = $input.all();\nvar fresh = [];\n\nfor (var i = 0; i < items.length; i++) {\n    var link = items[i].json.link;\n    if (staticData.pubLinks.indexOf(link) === -1) {\n        staticData.pubLinks.push(link);\n        fresh.push(items[i]);\n    }\n}\n\nif (staticData.pubLinks.length > 500) {\n    staticData.pubLinks = staticData.pubLinks.slice(-500);\n}\n\nreturn fresh;"
+        "jsCode": "const items = $input.all();\nconst seen = new Set();\nconst unique = [];\nfor (const item of items) {\n  const link = (item.json?.link || item.json?.guid || item.json?.title || '').toLowerCase().replace(/\\/+$/, '').split('?')[0];\n  if (!link || seen.has(link)) continue;\n  seen.add(link);\n  unique.push(item);\n}\nreturn unique;"
       },
       "id": "805f5552-211d-4126-9329-333ea18be825",
       "name": "Deduplication",
@@ -59,7 +60,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const item = $input.item.json;\nconst cleanText = (item.contentSnippet || item.title || '').replace(/<[^>]*>/g, '').replace(/\\s+/g, ' ').trim().substring(0, 4000);\n\nlet imageUrl = '';\n\n// 1. RSS enclosure / media:content\ntry {\n  if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url;\n  else if (item['media:content'] && item['media:content'].url) imageUrl = item['media:content'].url;\n} catch (e) {}\n\n// 2. <img> from content HTML\nif (!imageUrl && item.content) {\n  try {\n    const m = item.content.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 3. og:image via fetch with timeout\nif (!imageUrl && item.link) {\n  try {\n    const ctrl = new AbortController();\n    setTimeout(() => ctrl.abort(), 3000);\n    const res = await fetch(item.link, { signal: ctrl.signal });\n    const html = await res.text();\n    const m = html.match(/<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i)\n           || html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 4. Normalize relative URLs\nif (imageUrl && imageUrl.startsWith('/') && item.link) {\n  try {\n    const u = new URL(item.link);\n    imageUrl = u.origin + imageUrl;\n  } catch (e) {}\n}\n\nreturn {\n  title: item.title,\n  link: item.link,\n  sourceText: cleanText,\n  imageUrl: imageUrl\n};"
+        "jsCode": "const item = $input.item.json;\nconst cleanText = (item.contentSnippet || item.title || '').replace(/<[^>]*>/g, '').replace(/\\s+/g, ' ').trim().substring(0, 4000);\n\nlet imageUrl = '';\n\n// 1. RSS enclosure / media:content\ntry {\n  if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url;\n  else if (item['media:content'] && item['media:content'].url) imageUrl = item['media:content'].url;\n} catch (e) {}\n\n// 2. <img> from content HTML\nif (!imageUrl && item.content) {\n  try {\n    const m = item.content.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 3. og:image via fetch with timeout\nif (!imageUrl && item.link) {\n  try {\n    const ctrl = new AbortController();\n    setTimeout(() => ctrl.abort(), 3000);\n    const res = await fetch(item.link, { signal: ctrl.signal });\n    const html = await res.text();\n    const m = html.match(/<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i)\n           || html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 4. Normalize relative URLs\nif (imageUrl && imageUrl.startsWith('/') && item.link) {\n  try {\n    const u = new URL(item.link);\n    imageUrl = u.origin + imageUrl;\n  } catch (e) {}\n}\n\n// URL Normalization: strip tracking params\nlet cleanLink = item.link || '';\ntry {\n  const parsed = new URL(cleanLink);\n  const paramsToKeep = new URLSearchParams();\n  for (const [key, val] of parsed.searchParams.entries()) {\n    if (!key.startsWith('utm_') && !['ref', 'fbclid', 'gclid', 'mc_cid', 'mc_eid'].includes(key.toLowerCase())) {\n      paramsToKeep.append(key, val);\n    }\n  }\n  const searchStr = paramsToKeep.toString();\n  cleanLink = parsed.origin + parsed.pathname + (searchStr ? '?' + searchStr : '');\n} catch (e) {\n  cleanLink = (item.link || '').split('?')[0];\n}\ncleanLink = cleanLink.toLowerCase().replace(/\\/+$/, '');\n\nreturn {\n  title: item.title,\n  link: cleanLink,\n  sourceText: cleanText,\n  imageUrl: imageUrl\n};"
       },
       "id": "f26ae429-4089-421b-97c0-6af3f68b146e",
       "name": "Preprocessing",
@@ -72,22 +73,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const item = $input.first().json;\nconst apiKey = 'YOUR_OPENCODE_API_KEY';\n\nconst systemPrompt = 'Ти - український AI/аналітик. Переклади і стисни, тонь + аналіз. Відповідай строго в JSON.\\n\\nФормат відповіді:\\n1. content_uk: Змістовний переказ, українською (3-4 речення).\\n2. analysis_uk: Короткий, українською 1 підсумковий абзац про головне (до 200 символів).\\n3. relevance_score: Число від 0 до 100 — наскільки ця новина цікава для AI/ML та крипто аудиторії.\\n   0-15: не цікаво (мемкоїни, airdrops, реклама, загальні новини).\\n   15-35: малоцікаво (побічні теми, повтори).\\n   35-70: цікаво (важливі оновлення, продукти, ринок).\\n   70-100: дуже важливо (запуски, злами, регуляції, breakthrough).\\n\\nСтруктура:\\n{\\n  \"importance\": \"Висока/Середня/Низька/Інфо\",\\n  \"title_uk\": \"Заголовок\",\\n  \"content_uk\": \"Текст\",\\n  \"analysis_uk\": \"Підсумок\",\\n  \"tags\": [\"Категорія1\", \"Категорія2\"],\\n  \"relevance_score\": 75\\n}';\n\nconst userPrompt = 'Стаття: ' + (item.sourceText || 'Без тексту');\n\nconst response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://opencode.ai/zen/v1/chat/completions',\n    headers: {\n        'Content-Type': 'application/json',\n        'Authorization': 'Bearer ' + apiKey,\n        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'\n    },\n    body: {\n        model: 'deepseek-v4-flash-free',\n        messages: [\n            { role: 'system', content: systemPrompt },\n            { role: 'user', content: userPrompt }\n        ]\n    },\n    json: true\n});\n\nreturn response;"
-      },
-      "id": "3ce72544-c810-4989-9979-9cba96e97132",
-      "name": "OpenRouter AI",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        5008,
-        2000
-      ],
-      "alwaysOutputData": true,
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "jsCode": "const aiContent = $json.output || $json.text || ($json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content);\nlet aiResponse = {};\n\ntry {\n    if (typeof aiContent === 'string') {\n        const cleanJson = aiContent.replace(/```json/gi, '').replace(/```/gi, '').trim();\n        aiResponse = JSON.parse(cleanJson);\n    } else {\n        aiResponse = aiContent || {};\n    }\n} catch (e) {\n    const jsonMatch = String(aiContent).match(/\\{[\\s\\S]*\\}/);\n    aiResponse = jsonMatch ? JSON.parse(jsonMatch[0]) : {};\n}\n\nlet link = $json.link || $('Preprocessing').item.json.link || '#';\nconst imageUrl = $json.imageUrl || $('Preprocessing').item.json.imageUrl || '';\n\nif (!aiResponse.title_uk && !aiResponse.content_uk) {\n    return {\n        fullText: '🔴 <b>ПОМИЛКА</b>\\n\\n' + (aiContent || 'АІ не відповів') + '\\n\\nДжерело:\\n🔗 <b><a href=\"' + link + '\">Читати</a></b>',\n        imageUrl: imageUrl,\n        importance: 'Низька',\n        reaction: '',\n        link: link,\n        relevance_score: aiResponse.relevance_score || 50\n    };\n}\n\nconst title = aiResponse.title_uk || 'Новина';\nconst content = aiResponse.content_uk || '';\nconst analysis = aiResponse.analysis_uk || '';\nconst tags = Array.isArray(aiResponse.tags) ? aiResponse.tags : [];\nconst importance = aiResponse.importance || 'Низька';\n\nconst emojiMap = {\n    'Висока': '🔴',\n    'Середня': '🟡',\n    'Низька': '🟢',\n    'Інфо': '⚪'\n};\nconst emoji = emojiMap[importance] || '⚪';\n\nlet html = emoji + ' <b>' + title.toUpperCase() + '</b>\\n\\n';\n\nhtml += content + '\\n\\n';\n\nif (analysis && analysis.length > 10) {\n    html += '<b>💡 Аналіз:</b>\\n<i>' + analysis + '</i>\\n\\n';\n}\n\nif (tags.length > 0) {\n    const cleanTags = tags.map(function(t) { return t.replace(/[#\\s]/g, '').trim(); }).filter(function(t) { return t.length > 0; });\n    if (cleanTags.length > 0) {\n        html += '<b>🏷 Теги:</b>\\n' + cleanTags.map(function(t) { return '#' + t; }).join(' ') + '\\n\\n';\n    }\n}\n\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n    fullText: html,\n    imageUrl: imageUrl,\n    importance: importance,\n    reaction: '',\n    link: link,\n    relevance_score: aiResponse.relevance_score || 50\n};"
+        "jsCode": "const aiContent = $json.output || $json.text || ($json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content);\nlet aiResponse = {};\n\ntry {\n    if (typeof aiContent === 'string') {\n        const cleanJson = aiContent.replace(/```json/gi, '').replace(/```/gi, '').trim();\n        aiResponse = JSON.parse(cleanJson);\n    } else {\n        aiResponse = aiContent || {};\n    }\n} catch (e) {\n    const jsonMatch = String(aiContent).match(/\\{[\\s\\S]*\\}/);\n    aiResponse = jsonMatch ? JSON.parse(jsonMatch[0]) : {};\n}\n\nlet link = $json.link || $('Preprocessing').item.json.link || '#';\nconst imageUrl = $json.imageUrl || $('Preprocessing').item.json.imageUrl || '';\n\n// --- shortener: cut text but keep a \"...…\" ellipse so it is not abrupt ---\nfunction clip(s, max) {\n    s = String(s || '');\n    if (s.length <= max) return s;\n    return s.substring(0, max - 1) + '…';\n}\n\nif (!aiResponse.title_uk && !aiResponse.content_uk) {\n    return {\n        fullText: '🔴 <b>ПОМИЛКА</b>\\n\\n' + clip(aiContent, 400) + '\\n\\nДжерело:\\n🔗 <b><a href=\"' + link + '\">Читати</a></b>',\n        imageUrl: imageUrl,\n        importance: 'Низька',\n        reaction: '',\n        link: link,\n        relevance_score: aiResponse.relevance_score || 50\n    };\n}\n\nconst title = clip(aiResponse.title_uk || 'Новина', 120);\nconst content = clip(aiResponse.content_uk || '', 420);\nconst analysis = clip(aiResponse.analysis_uk || '', 200);\nconst tags = Array.isArray(aiResponse.tags) ? aiResponse.tags : [];\nconst importance = aiResponse.importance || 'Низька';\n\nconst emojiMap = {\n    'Висока': '🔴',\n    'Середня': '🟡',\n    'Низька': '🟢',\n    'Інфо': '⚪'\n};\nconst emoji = emojiMap[importance] || '⚪';\n\nlet html = emoji + ' <b>' + title.toUpperCase() + '</b>\\n\\n';\n\nhtml += content + '\\n\\n';\n\nif (analysis && analysis.length > 10) {\n    html += '<b>💡 Аналіз:</b>\\n<i>' + analysis + '</i>\\n\\n';\n}\n\nif (tags.length > 0) {\n    const cleanTags = tags.map(function(t) { return String(t).replace(/[#\\s]/g, '').trim(); }).filter(function(t) { return t.length > 0; });\n    if (cleanTags.length > 0) {\n        html += '<b>🏷 Теги:</b>\\n' + cleanTags.map(function(t) { return '#' + t; }).join(' ') + '\\n\\n';\n    }\n}\n\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n    fullText: html,\n    imageUrl: imageUrl,\n    importance: importance,\n    reaction: '',\n    link: link,\n    relevance_score: aiResponse.relevance_score || 50\n};"
       },
       "id": "78ea4487-9751-460c-8f8d-76795393cd12",
       "name": "Final Formatting",
@@ -128,13 +114,13 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        5696,
+        5872,
         2544
       ]
     },
     {
       "parameters": {
-        "chatId": "@your_channel",
+        "chatId": "@aliyrd_my_news",
         "text": "={{ $json.fullText }}",
         "additionalFields": {
           "appendAttribution": false,
@@ -146,7 +132,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        5952,
+        6192,
         2640
       ],
       "webhookId": "18eda5b1-5bcb-483f-9762-79cc1aa6a80c",
@@ -160,7 +146,7 @@
     {
       "parameters": {
         "operation": "sendPhoto",
-        "chatId": "@your_channel",
+        "chatId": "@aliyrd_my_news",
         "file": "={{ $json.imageUrl }}",
         "additionalFields": {
           "caption": "={{ $json.fullText.substring(0, 1024) }}",
@@ -173,8 +159,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        5952,
-        2448
+        6192,
+        2256
       ],
       "webhookId": "081600b8-e608-4651-8f79-f69ad17c4418",
       "credentials": {
@@ -200,7 +186,7 @@
       "typeVersion": 1,
       "position": [
         3824,
-        2336
+        2128
       ],
       "id": "12d2c89d-681f-475f-8e0c-51dae9924063",
       "name": "RSS Feed technologyreview"
@@ -219,8 +205,8 @@
       "type": "n8n-nodes-base.rssFeedReadTrigger",
       "typeVersion": 1,
       "position": [
-        3840,
-        1552
+        3824,
+        1440
       ],
       "id": "cef6ee46-ad51-4743-b3c3-98fd89edb107",
       "name": "RSS Feed Decoder"
@@ -240,8 +226,8 @@
       "type": "n8n-nodes-base.rssFeedReadTrigger",
       "typeVersion": 1,
       "position": [
-        3808,
-        2544
+        3824,
+        2336
       ],
       "id": "da179947-f82d-45c0-8c67-19377dea664a",
       "name": "RSS Feed habr/artificial_intelligence"
@@ -261,8 +247,8 @@
       "type": "n8n-nodes-base.rssFeedReadTrigger",
       "typeVersion": 1,
       "position": [
-        3808,
-        2752
+        3824,
+        2544
       ],
       "id": "d66df373-c667-4842-bee9-e9e0d14b1f93",
       "name": "RSS Feed DailyAI"
@@ -272,20 +258,22 @@
         "pollTimes": {
           "item": [
             {
-              "mode": "everyHour"
+              "mode": "everyX",
+              "value": 75,
+              "unit": "minutes"
             }
           ]
         },
-        "feedUrl": "https://news.google.com/rss/search?q=AI+technology&hl=en-US&gl=US&ceid=US:en"
+        "feedUrl": "https://techcrunch.com/category/artificial-intelligence/feed/"
       },
       "type": "n8n-nodes-base.rssFeedReadTrigger",
       "typeVersion": 1,
       "position": [
-        3840,
-        2128
+        3824,
+        1952
       ],
       "id": "d592dde4-c969-4937-99f0-af38ca947711",
-      "name": "RSS Feed Google"
+      "name": "RSS TechCrunch AI"
     },
     {
       "parameters": {
@@ -303,15 +291,15 @@
     },
     {
       "parameters": {
-        "jsCode": "if ($json.imageUrl) return $json;\n\nconst query = encodeURIComponent(($json.title || '').substring(0, 100));\nif (!query) return $json;\n\nconst apiKey = '3f53ed24bc944237e78901e0b34dc3284d28dc03357a5eb872184bd93ba846e1';\nconst url = 'https://serpapi.com/search.json?engine=google_images&q=' + query + '&api_key=' + apiKey;\n\ntry {\n  const ctrl = new AbortController();\n  const timeoutId = setTimeout(() => ctrl.abort(), 5000);\n  const res = await fetch(url, { signal: ctrl.signal });\n  clearTimeout(timeoutId);\n  const data = await res.json();\n  if (data.images_results && data.images_results.length > 0) {\n    const imgUrl = data.images_results[0].original || data.images_results[0].thumbnail;\n    if (imgUrl) return { ...$json, imageUrl: imgUrl };\n  }\n} catch (e) {}\n\nreturn $json;"
+        "jsCode": "if ($json.imageUrl) return $json;\n\nconst query = encodeURIComponent(($json.title || '').substring(0, 100));\nif (!query) return $json;\n\nconst apiKey = 'YOUR_HEX_KEY';\nconst url = 'https://serpapi.com/search.json?engine=google_images&q=' + query + '&api_key=' + apiKey;\n\ntry {\n  const ctrl = new AbortController();\n  const timeoutId = setTimeout(() => ctrl.abort(), 5000);\n  const res = await fetch(url, { signal: ctrl.signal });\n  clearTimeout(timeoutId);\n  const data = await res.json();\n  if (data.images_results && data.images_results.length > 0) {\n    const imgUrl = data.images_results[0].original || data.images_results[0].thumbnail;\n    if (imgUrl) return { ...$json, imageUrl: imgUrl };\n  }\n} catch (e) {}\n\nreturn $json;"
       },
       "id": "f9a7b941-7e93-4105-b81d-b4452f726e03",
       "name": "SERP Image Fallback",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6016,
-        1680
+        5648,
+        2528
       ],
       "alwaysOutputData": true
     },
@@ -326,7 +314,7 @@
           },
           "conditions": [
             {
-              "id": "checkOpenRouter",
+              "id": "checkAiResponse",
               "leftValue": "={{ $json.choices }}",
               "rightValue": "",
               "operator": {
@@ -341,7 +329,7 @@
         "options": {}
       },
       "id": "ee05f3a1-d46b-47bd-b34e-4a6a5cefe49d",
-      "name": "OpenRouter Success?",
+      "name": "AI Success?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
@@ -398,7 +386,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const preprocessing = $('Preprocessing').item.json;\nconst link = preprocessing.link || '#';\nconst title = preprocessing.title || 'Новина';\nconst imageUrl = preprocessing.imageUrl || '';\nconst sourceText = (preprocessing.sourceText || '').substring(0, 500);\n\nlet html = '⚠️ <b>' + title.toUpperCase() + '</b>\\n\\n';\nhtml += sourceText + '\\n\\n';\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n  fullText: html,\n  imageUrl: imageUrl,\n  importance: 'Інфо',\n  link: link,\n  relevance_score: 50\n};"
+        "jsCode": "const preprocessing = $('Preprocessing').item.json;\nconst link = preprocessing.link || '#';\nconst title = preprocessing.title || 'Новина';\nconst imageUrl = preprocessing.imageUrl || '';\n\nfunction clip(s, max) {\n    s = String(s || '');\n    if (s.length <= max) return s;\n    return s.substring(0, max - 1) + '…';\n}\n\nconst sourceText = clip(preprocessing.sourceText || '', 400);\n\nlet html = '⚠️ <b>' + clip(title, 120).toUpperCase() + '</b>\\n\\n';\nhtml += sourceText + '\\n\\n';\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n  fullText: html,\n  imageUrl: imageUrl,\n  importance: 'Інфо',\n  link: link,\n  relevance_score: 50\n};"
       },
       "id": "4048b331-47eb-4119-93e7-50d7da032559",
       "name": "Fallback Formatting",
@@ -410,9 +398,64 @@
       ],
       "alwaysOutputData": true,
       "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst pass = [];\n\nfor (const item of items) {\n  let dup = false;\n  try {\n    const raw = item.json.choices && item.json.choices[0] && item.json.choices[0].message\n      ? item.json.choices[0].message.content : (item.json.output || item.json.text || \"\");\n    const clean = String(raw).replace(/```json/gi, \"\").replace(/```/gi, \"\").trim();\n    const parsed = JSON.parse(clean);\n    if (parsed && parsed.duplicate === true) dup = true;\n  } catch(e) {\n    const probe = JSON.stringify(item.json).substring(0, 600);\n    if (/[\"']?duplicate[\"']?\\s*[:=]\\s*true/i.test(probe)) dup = true;\n  }\n  if (!dup) pass.push(item);\n}\n\nreturn pass;\n"
+      },
+      "id": "883a0c5e-e810-4304-a567-4c27d2375b22",
+      "name": "AI Duplicate Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5228,
+        2000
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsMode": "runOnceForAllItems",
+        "jsCode": "const M = 'qwen3-32b';\nconst sys = 'You are a crypto analyst. Translate news to Ukrainian. Reply ONLY with valid JSON. Fields: importance (one of 4 levels), title_uk, content_uk (3-4 sentences max), analysis_uk (one key consequence, max 200 chars), tags (array). No markdown, no reasoning, only JSON object.';\nreturn $input.all().map(item => {\n  const src = item.json?.sourceText || '';\n  const msg = sys + String.fromCharCode(10, 10) + 'News: ' + src;\n  return { json: { ...item.json, _body: { model: M, messages: [{ role: 'user', content: msg }], max_tokens: 2000 } } };\n});",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5008,
+        2000
+      ],
+      "name": "AI Translate",
+      "onError": "continueRegularOutput",
+      "id": "34fc78dc-9ad7-4c1b-8772-a772c0b59c4c"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.qubax.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json._body }}",
+        "options": {}
+      },
+      "id": "b7c1f0aa-5c2e-4d3e-9f1a-1a2b3c4d5e6f",
+      "name": "Qubax Translate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5120,
+        2000
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GGcWGyo9YiJcgCqj",
+          "name": "Qubax AI"
+        }
+      }
     }
   ],
-  "pinData": {},
   "connections": {
     "RSS Forklog": {
       "main": [
@@ -452,17 +495,6 @@
         [
           {
             "node": "Topic Detector",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenRouter AI": {
-      "main": [
-        [
-          {
-            "node": "OpenRouter Success?",
             "type": "main",
             "index": 0
           }
@@ -542,7 +574,7 @@
         ]
       ]
     },
-    "RSS Feed Google": {
+    "RSS TechCrunch AI": {
       "main": [
         [
           {
@@ -575,7 +607,7 @@
         ]
       ]
     },
-    "OpenRouter Success?": {
+    "AI Success?": {
       "main": [
         [
           {
@@ -597,7 +629,7 @@
       "main": [
         [
           {
-            "node": "OpenRouter AI",
+            "node": "AI Translate",
             "type": "main",
             "index": 0
           }
@@ -625,17 +657,47 @@
           }
         ]
       ]
+    },
+    "AI Duplicate Filter": {
+      "main": [
+        [
+          {
+            "node": "AI Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Translate": {
+      "main": [
+        [
+          {
+            "node": "Qubax Translate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qubax Translate": {
+      "main": [
+        [
+          {
+            "node": "AI Duplicate Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "ba546eb1-5d80-4b37-a3cf-c1891b3e71f8",
-  "meta": {
-    "instanceId": "fd9a85cb5fad5f7e754e8f04be7f2ed4c198062572fab2e912fefc2d50bd00a3"
-  },
+  "pinData": {},
+  "meta": null,
   "id": "YAyuG9GA2jUeICG2",
   "tags": []
 }
