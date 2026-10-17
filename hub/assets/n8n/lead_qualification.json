@@ -154,7 +154,10 @@
           "id": "trI2xZYaRRzTeT9L",
           "name": "Telegram account 3"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -230,7 +233,10 @@
           "id": "GGcWGyo9YiJcgCqj",
           "name": "Qubax AI"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -285,7 +291,10 @@
           "id": "GGcWGyo9YiJcgCqj",
           "name": "Qubax AI"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -370,7 +379,10 @@
           "id": "trI2xZYaRRzTeT9L",
           "name": "Telegram account 3"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -418,7 +430,10 @@
       "position": [
         3808,
         208
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -479,7 +494,10 @@
       "position": [
         1312,
         -96
-      ]
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -751,7 +769,8 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "errorWorkflow": "UPFhcOFdKize38h9"
   },
   "pinData": {},
   "meta": {

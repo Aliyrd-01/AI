@@ -141,7 +141,10 @@
           "id": "7PplDwm237hUK507",
           "name": "Telegram account"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -168,7 +171,10 @@
           "id": "7PplDwm237hUK507",
           "name": "Telegram account"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -291,7 +297,7 @@
     },
     {
       "parameters": {
-        "jsCode": "if ($json.imageUrl) return $json;\n\nconst query = encodeURIComponent(($json.title || '').substring(0, 100));\nif (!query) return $json;\n\nconst apiKey = 'YOUR_HEX_KEY';\nconst url = 'https://serpapi.com/search.json?engine=google_images&q=' + query + '&api_key=' + apiKey;\n\ntry {\n  const ctrl = new AbortController();\n  const timeoutId = setTimeout(() => ctrl.abort(), 5000);\n  const res = await fetch(url, { signal: ctrl.signal });\n  clearTimeout(timeoutId);\n  const data = await res.json();\n  if (data.images_results && data.images_results.length > 0) {\n    const imgUrl = data.images_results[0].original || data.images_results[0].thumbnail;\n    if (imgUrl) return { ...$json, imageUrl: imgUrl };\n  }\n} catch (e) {}\n\nreturn $json;"
+        "jsCode": "// Регистрируем публикуемое в истории (для дедупа будущих прогонов).\nconst sd = $getWorkflowStaticData('global');\nconst list = Array.isArray(sd.published) ? sd.published : [];\nif ($json.link) {\n  list.push({ l: String($json.link), t: String($json.title || '').slice(0, 160), at: new Date().toISOString().slice(0, 10) });\n}\nsd.published = list.slice(-300);\n\nif ($json.imageUrl) return $json;\n\nconst query = encodeURIComponent(($json.title || '').substring(0, 100));\nif (!query) return $json;\n\nconst apiKey = 'YOUR_HEX_KEY';\nconst url = 'https://serpapi.com/search.json?engine=google_images&q=' + query + '&api_key=' + apiKey;\n\ntry {\n  const ctrl = new AbortController();\n  const timeoutId = setTimeout(() => ctrl.abort(), 5000);\n  const res = await fetch(url, { signal: ctrl.signal });\n  clearTimeout(timeoutId);\n  const data = await res.json();\n  if (data.images_results && data.images_results.length > 0) {\n    const imgUrl = data.images_results[0].original || data.images_results[0].thumbnail;\n    if (imgUrl) return { ...$json, imageUrl: imgUrl };\n  }\n} catch (e) {}\n\nreturn $json;"
       },
       "id": "f9a7b941-7e93-4105-b81d-b4452f726e03",
       "name": "SERP Image Fallback",
@@ -401,14 +407,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst pass = [];\n\nfor (const item of items) {\n  let dup = false;\n  try {\n    const raw = item.json.choices && item.json.choices[0] && item.json.choices[0].message\n      ? item.json.choices[0].message.content : (item.json.output || item.json.text || \"\");\n    const clean = String(raw).replace(/```json/gi, \"\").replace(/```/gi, \"\").trim();\n    const parsed = JSON.parse(clean);\n    if (parsed && parsed.duplicate === true) dup = true;\n  } catch(e) {\n    const probe = JSON.stringify(item.json).substring(0, 600);\n    if (/[\"']?duplicate[\"']?\\s*[:=]\\s*true/i.test(probe)) dup = true;\n  }\n  if (!dup) pass.push(item);\n}\n\nreturn pass;\n"
+        "jsCode": "// Дедуп по истории: сравниваем ссылку и заголовок с уже опубликованным (workflow static data).\nconst sd = $getWorkflowStaticData('global');\nconst history = Array.isArray(sd.published) ? sd.published : [];\n\nconst STOP = new Set(['the', 'a', 'an', 'of', 'in', 'on', 'to', 'for', 'and', 'or', 'at', 'by', 'with', 'from',\n  'is', 'are', 'was', 'were', 'be', 'been', 'it', 'its', 'this', 'that', 'these', 'those', 'as', 'after',\n  'before', 'over', 'under', 'new', 'says', 'said', 'will', 'has', 'have', 'had', 'not', 'but', 'you', 'your',\n  'how', 'why', 'what', 'when', 'where', 'who', 'vs', 'via', 'into', 'out', 'up', 'down', 'more', 'most']);\n\nfunction norm(s) {\n  return String(s || '').toLowerCase()\n    .replace(/https?:\\/\\/\\S+/g, ' ')\n    .replace(/[^0-9a-zа-яіїєґ\\s]/gi, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction tokens(s) {\n  const out = new Set();\n  for (const w of norm(s).split(' ')) {\n    if (w.length > 2 && !STOP.has(w)) out.add(w);\n  }\n  return out;\n}\n\nfunction jaccard(a, b) {\n  if (!a.size || !b.size) return 0;\n  let inter = 0;\n  for (const w of a) if (b.has(w)) inter++;\n  return inter / (a.size + b.size - inter);\n}\n\nconst out = [];\nconst passed = [];\nfor (const item of $input.all()) {\n  const link = String(item.json.link || '');\n  const t = tokens(item.json.title || '');\n  let dup = false;\n  for (const h of history.concat(passed)) {\n    if (link && h && h.l === link) { dup = true; break; }\n    if (h && jaccard(t, tokens(h.t || '')) >= 0.6) { dup = true; break; }\n  }\n  if (!dup) {\n    out.push(item);\n    passed.push({ l: link, t: String(item.json.title || '') });\n  }\n}\nreturn out;",
+        "mode": "runOnceForAllItems",
+        "jsMode": "runOnceForAllItems"
       },
       "id": "883a0c5e-e810-4304-a567-4c27d2375b22",
-      "name": "AI Duplicate Filter",
+      "name": "Duplicate Filter",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5228,
+        4912,
         2000
       ],
       "alwaysOutputData": false
@@ -453,7 +461,11 @@
           "id": "GGcWGyo9YiJcgCqj",
           "name": "Qubax AI"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -629,7 +641,7 @@
       "main": [
         [
           {
-            "node": "AI Translate",
+            "node": "Duplicate Filter",
             "type": "main",
             "index": 0
           }
@@ -658,17 +670,6 @@
         ]
       ]
     },
-    "AI Duplicate Filter": {
-      "main": [
-        [
-          {
-            "node": "AI Success?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "AI Translate": {
       "main": [
         [
@@ -684,7 +685,18 @@
       "main": [
         [
           {
-            "node": "AI Duplicate Filter",
+            "node": "AI Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate Filter": {
+      "main": [
+        [
+          {
+            "node": "AI Translate",
             "type": "main",
             "index": 0
           }
@@ -694,7 +706,8 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "errorWorkflow": "UPFhcOFdKize38h9"
   },
   "pinData": {},
   "meta": null,
