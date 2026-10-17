@@ -23,11 +23,6 @@ T = {
                    "Редактор наружу не публикуется — диаграмма воркфлоу + JSON + демо-запись.",
         "nodes": "Узлов",
         "conns": "Связей",
-        "status": "Статус в n8n",
-        "active": "● включён в n8n",
-        "paused": "○ выключен в n8n",
-        "paused_note": "Флаг включения взят из живого n8n: воркфлоу выключен в самом n8n "
-                       "(диаграмма и JSON при этом актуальны).",
         "workflow": "Воркфлоу",
         "feeds": "Источники (RSS)",
         "diagram": "Диаграмма воркфлоу",
@@ -46,11 +41,6 @@ T = {
                    "No live editor exposed — workflow diagram + JSON + demo recording.",
         "nodes": "Nodes",
         "conns": "Connections",
-        "status": "Status in n8n",
-        "active": "● enabled in n8n",
-        "paused": "○ disabled in n8n",
-        "paused_note": "Status flag is taken from the live n8n: the workflow is switched off in n8n "
-                       "(the diagram and JSON here are still up to date).",
         "workflow": "Workflow",
         "feeds": "Feeds (RSS)",
         "diagram": "Workflow diagram",
@@ -294,12 +284,9 @@ else:
         len([t for b in outs.get("main", []) or [] for t in (b or [])])
         for outs in (wf.get("connections", {}) or {}).values()
     )
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
     c1.metric(T["nodes"], n_nodes)
     c2.metric(T["conns"], n_conns)
-    c3.metric(T["status"], T["active"] if wf.get("active") else T["paused"])
-    if not wf.get("active"):
-        st.caption(T["paused_note"])
     st.caption(f"{T['workflow']}: **{wf.get('name', '—')}**")
 
     feeds = [n.get("name") for n in wf.get("nodes", []) if "rssFeedReadTrigger" in n.get("type", "")]
