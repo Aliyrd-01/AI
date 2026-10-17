@@ -20,7 +20,7 @@ def _is_dark_theme() -> bool:
     return (st.get_option("theme.base") or "light").lower() == "dark"
 
 
-def render_mermaid(code: str, height: int = 420):
+def render_mermaid(code: str, height: int = 420, font_size: int = 13):
     dark = _is_dark_theme()
     theme = "dark" if dark else "default"
     line = "#38bdf8" if dark else "#0284c7"
@@ -29,7 +29,7 @@ def render_mermaid(code: str, height: int = 420):
     node_border = "#0284c7" if dark else "#94a3b8"
     
     variables = {
-        "fontSize": "13px",
+        "fontSize": f"{font_size}px",
         "fontFamily": "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif",
         "primaryColor": node_bkg,
         "primaryTextColor": text,
