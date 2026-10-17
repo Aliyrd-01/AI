@@ -323,10 +323,12 @@ def _cache_stats():
     return st.session_state["cache_stats"]
 
 
+@st.cache_resource(show_spinner=False)
 def _seen_nonces():
-    if "seen_nonces" not in st.session_state:
-        st.session_state["seen_nonces"] = []
-    return st.session_state["seen_nonces"]
+    """Nonce set is process-wide: st.cache_data is process-wide too, so hit/miss attribution
+    must be as well (session-scoped state would call the first hit after a page reload a miss).
+    """
+    return []
 
 
 def cached_retrieve(strategy, question, top_k, rerank_top, langs=(), sources=(), collection=None):
@@ -732,8 +734,6 @@ if dialog_mode:
     render_usage_bar("chat")
     st.stop()
 
-question = st.text_input(T["q"], key="q", placeholder="e.g. what color is amber urine")
-
 def render_result(res, streamed=False):
     """Отрисовка сохранённого ответа (метрики, источники, стоимость, фидбек).
 
@@ -804,7 +804,11 @@ def render_result(res, streamed=False):
     render_usage_bar("qa")
 
 
-asked = st.button(T["ask"], type="primary", disabled=not question.strip())
+with st.form("qa_form"):
+    question = st.text_input(T["q"], key="q", placeholder="e.g. what color is amber urine")
+    submitted = st.form_submit_button(T["ask"], type="primary")
+
+asked = submitted and bool((question or "").strip())
 
 if asked:
     st.session_state.pop("rag_res", None)
