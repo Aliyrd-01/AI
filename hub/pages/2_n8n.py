@@ -21,30 +21,44 @@ T = {
     "ru": {
         "caption": "Три production-пайплайна: контент, продажи, поддержка. "
                    "Редактор наружу не публикуется — диаграмма воркфлоу + JSON + демо-запись.",
-        "nodes": "Nodes",
-        "conns": "Connections",
+        "nodes": "Узлов",
+        "conns": "Связей",
+        "status": "Статус",
+        "active": "● активен",
+        "paused": "○ на паузе",
+        "workflow": "Воркфлоу",
+        "feeds": "Источники (RSS)",
         "diagram": "Диаграмма воркфлоу",
         "json": "Показать / скачать JSON",
         "download": "⬇️ Download workflow JSON",
         "demo": "Демо-запись",
-        "foot": "Диаграммы генерируются из экспортированных JSON во время запуска. "
-                "Живой n8n-редактор и креды наружу не публикуются.",
+        "foot": "Диаграмма строится из реального графа воркфлоу (JSON, экспортированный из n8n): "
+                "узлы и связи — как в редакторе. Живой n8n-редактор и креды наружу не публикуются, "
+                "секреты в JSON заменены плейсхолдерами.",
         "notfound": "Файл не найден: assets/n8n/{f}",
         "tech": "Технологии",
+        "llm": "LLM",
     },
     "en": {
         "caption": "Three production pipelines: content, sales, support. "
                    "No live editor exposed — workflow diagram + JSON + demo recording.",
         "nodes": "Nodes",
         "conns": "Connections",
+        "status": "Status",
+        "active": "● active",
+        "paused": "○ paused",
+        "workflow": "Workflow",
+        "feeds": "Feeds (RSS)",
         "diagram": "Workflow diagram",
         "json": "Show / download JSON",
         "download": "⬇️ Download workflow JSON",
         "demo": "Demo recording",
-        "foot": "Diagrams are generated from the exported JSON at runtime. "
-                "The live n8n editor and credentials are never exposed.",
+        "foot": "The diagram is generated from the real workflow graph (JSON exported from n8n): "
+                "nodes and edges as in the editor. The live n8n editor and credentials are never "
+                "exposed; secrets in the JSON are replaced with placeholders.",
         "notfound": "File not found: assets/n8n/{f}",
         "tech": "Tech",
+        "llm": "LLM",
     },
 }[lang]
 
@@ -55,15 +69,22 @@ FLOWS = [
         "title": "Automated AI Content Publisher",
         "short": {"ru": "Автономная новостная редакция", "en": "Autonomous news desk"},
         "desc": {
-            "ru": "Собирает свежие статьи из десятков RSS (Forklog, Habr, …), извлекает полный "
-                  "текст и обложку (og:image), затем LLM переводит, сокращает и стилизует материал "
-                  "и автоматически публикует готовый пост в Telegram-канал — без участия человека.",
-            "en": "Pulls fresh articles from dozens of RSS feeds (Forklog, Habr, …), extracts the "
-                  "full text and og:image cover, then an LLM translates, condenses and styles the "
-                  "piece and automatically publishes the finished post to a Telegram channel — "
-                  "with no human in the loop.",
+            "ru": "7 RSS-лент (Forklog, Habr, Habr AI, TechCrunch AI, Ars Technica, MIT Tech Review, "
+                  "DailyAI) → дедупликация по ссылке → очистка текста и извлечение обложки "
+                  "(enclosure / media:content / og:image, при промахе — SERP fallback) → детектор "
+                  "темы (crypto / AI) и предфильтр по интересам → LLM переводит и сжимает материал "
+                  "в строгий JSON (важность, заголовок, 3–4 предложения, вывод, теги) → фильтр "
+                  "дублей через ту же LLM → форматирование поста (HTML) → порог релевантности → "
+                  "публикация в Telegram (фото или текст). Человека в цикле нет.",
+            "en": "7 RSS feeds (Forklog, Habr, Habr AI, TechCrunch AI, Ars Technica, MIT Tech Review, "
+                  "DailyAI) → link-level dedup → text cleaning and cover extraction (enclosure / "
+                  "media:content / og:image, SERP fallback on miss) → topic detector (crypto / AI) "
+                  "and interest pre-filter → an LLM translates and condenses the piece into strict "
+                  "JSON (importance, title, 3–4 sentences, takeaway, tags) → duplicate filter via the "
+                  "same LLM → post formatting (HTML) → relevance gate → publish to Telegram "
+                  "(photo or text post). No human in the loop.",
         },
-        "tech": "n8n · RSS/HTTP · HTML Parsing · LLM (OpenRouter) · Telegram",
+        "tech_base": "n8n · 7 × RSS · Code (JS) · og:image + SERP fallback · Telegram",
         "video": "news_demo.mp4",
         "images": [],
     },
@@ -83,7 +104,7 @@ FLOWS = [
                   "prompts (conservative vs aggressive) → JSON score (0–100, tier, next action) → "
                   "hot > 70 branch → Telegram alert + lead upsert into the CRM.",
         },
-        "tech": "n8n · Webhook · MCP (Postgres CRM) · A/B prompt testing · OpenRouter · Telegram",
+        "tech_base": "n8n · Webhook · MCP (Postgres CRM) · A/B prompt testing · Telegram",
         "video": "leadqual_demo.mp4",
         "images": [],
     },
@@ -94,61 +115,127 @@ FLOWS = [
         "short": {"ru": "Интеллектуальная техподдержка с передачей оператору",
                   "en": "Smart support desk with human handoff"},
         "desc": {
-            "ru": "Принимает сообщения в Telegram, LLM-классификатором определяет тип обращения. "
-                  "Типовые вопросы закрывает AI-агент с сохранением контекста диалога; сложные "
-                  "тикеты (оплаты, жалобы) маршрутизирует на живого оператора с полной историей.",
-            "en": "Accepts Telegram messages and classifies each one with an LLM. Common questions "
-                  "are answered by an AI agent that keeps conversation context; complex tickets "
-                  "(payments, complaints) are routed to a human operator with the full history.",
+            "ru": "Telegram-триггер → сообщение и состояние пользователя пишутся в Postgres "
+                  "(user_states) → в режиме оператора диалог сразу пересылается оператору → "
+                  "классификатор (LLM) решает simple / operator → простые вопросы закрывает "
+                  "локальный RAG-сервис (FastAPI + Qdrant), сложные (оплаты, жалобы, недовольный "
+                  "клиент) переводят пользователя в режим оператора с алертом и полной историей; "
+                  "есть закрытие диалога и сброс в режим бота.",
+            "en": "Telegram trigger → the message and the user state are written to Postgres "
+                  "(user_states) → in operator mode the dialog is forwarded straight to the human → "
+                  "an LLM classifier decides simple / operator → simple questions are answered by a "
+                  "local RAG service (FastAPI + Qdrant), complex ones (payments, complaints, angry "
+                  "customer) switch the user to operator mode with an alert and the full history; "
+                  "dialog close and reset-to-bot are supported.",
         },
-        "tech": "n8n · Telegram API · LLM classification · dialog memory · human handoff",
+        "tech_base": "n8n · Telegram API · Postgres (user_states) · dialog state · human handoff",
         "video": "support_demo.mp4",
         "images": [],
     },
 ]
 
+# Провайдеры, которые ищем в JSON воркфлоу: (подстрока в ноде, человекочитаемая метка)
+PROVIDERS = [
+    ("api.qubax.ai", "Qubax"),
+    ("openrouter.ai", "OpenRouter"),
+    ("opencode.ai", "OpenCode Zen"),
+    ("generativelanguage.googleapis.com", "Google Gemini"),
+    ("127.0.0.1:8000", "local RAG (FastAPI)"),
+    ("127.0.0.1:9001", "MCP MySQL"),
+    ("127.0.0.1:9002", "MCP Postgres"),
+]
 
-def to_mermaid(wf: dict, keep=None) -> str:
-    """Компактная блок-схема: только ключевые узлы (keep) как последовательный путь.
-    Если keep=None — полный граф (для небольших схем)."""
-    if keep:
-        lines = ["flowchart LR"]
-        for i, name in enumerate(keep):
-            safe = name.replace('"', "'")
-            lines.append(f'  k{i}["{safe}"]')
-            if i:
-                lines.append(f'  k{i - 1} --> k{i}')
-        return "\n".join(lines)
+
+def detect_llm_stack(wf: dict):
+    """Какие провайдеры реально используются — по содержимому нод (а не по хардкоду на странице)."""
+    found = []
+    for n in wf.get("nodes", []):
+        blob = json.dumps(n, ensure_ascii=False)
+        for needle, label in PROVIDERS:
+            if needle in blob and label not in found:
+                found.append(label)
+    return found
+
+
+def to_mermaid(wf: dict) -> str:
+    """Реальный граф воркфлоу: ветки сохраняются, линейные цепочки схлопываются в один узел
+    (label — «шаг → шаг → шаг»), RSS-триггеры — один узел."""
+    from collections import Counter, defaultdict
 
     nodes = wf.get("nodes", [])
-    conns = wf.get("connections", {})
-    ids, lines = {}, ["flowchart TD"]
+    conns = wf.get("connections", {}) or {}
+    types = {n.get("name"): n.get("type", "") for n in nodes}
+    alias, name_of = {}, {}
+    rss = [n for n in nodes if "rssFeedReadTrigger" in n.get("type", "")]
     for i, n in enumerate(nodes):
-        nid = f"n{i}"
-        ids[n.get("name", f"node{i}")] = nid
-        label = str(n.get("name", f"node{i}")).replace('"', "'")
-        lines.append(f'  {nid}["{label}"]')
-    for src, outs in conns.items():
-        if src not in ids:
+        name = n.get("name", f"node{i}")
+        if rss and "rssFeedReadTrigger" in n.get("type", ""):
+            alias[name] = "rss"
+            name_of["rss"] = f"RSS triggers ({len(rss)})"
             continue
-        for branch in outs.get("main", []) or []:
+        nid = f"n{i}"
+        alias[name] = nid
+        name_of[nid] = str(name)
+
+    edges, seen = [], set()
+    for src, outs in conns.items():
+        if src not in alias:
+            continue
+        for bi, branch in enumerate(outs.get("main", []) or []):
             for tgt in (branch or []):
                 t = tgt.get("node") if isinstance(tgt, dict) else None
-                if t in ids:
-                    lines.append(f"  {ids[src]} --> {ids[t]}")
+                if t not in alias:
+                    continue
+                lbl = "true" if ("n8n-nodes-base.if" in types.get(src, "") and bi == 0) else (
+                    "false" if "n8n-nodes-base.if" in types.get(src, "") else "")
+                key = (alias[src], alias[t], lbl)
+                if key not in seen:
+                    seen.add(key)
+                    edges.append(key)
+    if not edges:
+        return "flowchart TD\n  empty[\"no connections\"]"
+
+    succ = defaultdict(list)
+    pred = Counter()
+    for a, b, l in edges:
+        succ[a].append((b, l))
+        pred[b] += 1
+    branch_ids = {alias[n.get("name")] for n in nodes if "n8n-nodes-base.if" in n.get("type", "")}
+
+    ids = list(name_of)
+    ids.sort(key=lambda i: (pred[i] != 0, int(i[1:]) if i[1:].isdigit() else -1))  # источники раньше
+    seg_of, segments, used = {}, [], set()
+    for start in ids:
+        if start in used:
+            continue
+        chain, cur = [start], start
+        used.add(start)
+        while True:
+            outs = succ[cur]
+            if len(outs) != 1:
+                break
+            nxt, lbl = outs[0]
+            if lbl or pred[nxt] != 1 or nxt in branch_ids or nxt in used:
+                break
+            chain.append(nxt)
+            used.add(nxt)
+            cur = nxt
+        for i in chain:
+            seg_of[i] = start
+        segments.append(chain)
+
+    lines = ["flowchart TD"]
+    for seg in segments:
+        names = [name_of[i] for i in seg]
+        chunks = [" → ".join(names[k:k + 2]) for k in range(0, len(names), 2)]
+        label = "<br/>".join(chunks).replace(chr(34), chr(39))
+        lines.append(f'  {seg[0]}["{label}"]')
+    for a, b, l in edges:
+        if seg_of[a] == seg_of[b]:
+            continue
+        arrow = f"-->|{l}|" if l else "-->"
+        lines.append(f"  {seg_of[a]} {arrow} {seg_of[b]}")
     return "\n".join(lines)
-
-
-# Ключевые шаги для компактных диаграмм (чтобы не было огромных схем со скроллом)
-CURATED = {
-    "news_content_publisher": ["RSS Forklog", "Deduplication", "Preprocessing",
-                               "OpenRouter AI", "Final Formatting", "Telegram (Photo)"],
-    "lead_qualification": ["Webhook", "Validate Lead", "MCP Enrich HTTP",
-                           "OpenRouter API A", "Score > 70?", "Telegram Hot Alert",
-                           "PostgreSQL (CRM)"],
-    "ai_support_escalation": ["Telegram Trigger", "Is Operator", "Classify",
-                              "Needs Operator", "Forward to Operator", "AI Response"],
-}
 
 
 def load_flow(fname: str):
@@ -178,11 +265,14 @@ wf = load_flow(meta["file"])
 
 st.subheader(meta["short"][lang])
 st.write(meta["desc"][lang])
-st.caption(f"**{T['tech']}:** {meta['tech']}")
 
 if not wf:
     st.warning(T["notfound"].format(f=meta["file"]))
 else:
+    llm_stack = detect_llm_stack(wf)
+    tech = meta["tech_base"] + (f" · {T['llm']}: " + ", ".join(llm_stack) if llm_stack else "")
+    st.caption(f"**{T['tech']}:** {tech}")
+
     n_nodes = len(wf.get("nodes", []))
     n_conns = sum(
         len([t for b in outs.get("main", []) or [] for t in (b or [])])
@@ -191,7 +281,12 @@ else:
     c1, c2, c3 = st.columns(3)
     c1.metric(T["nodes"], n_nodes)
     c2.metric(T["conns"], n_conns)
-    c3.metric("Workflow", wf.get("name", "—"))
+    c3.metric(T["status"], T["active"] if wf.get("active") else T["paused"])
+    st.caption(f"{T['workflow']}: **{wf.get('name', '—')}**")
+
+    feeds = [n.get("name") for n in wf.get("nodes", []) if "rssFeedReadTrigger" in n.get("type", "")]
+    if feeds:
+        st.caption(f"{T['feeds']}: " + ", ".join(str(x) for x in feeds))
 
     if meta.get("video"):
         vpath = os.path.join(ASSETS, meta["video"])
@@ -200,8 +295,7 @@ else:
             st.video(vpath)
 
     st.markdown(f"**{T['diagram']}**")
-    keep = CURATED.get(meta["key"])
-    render_mermaid(to_mermaid(wf, keep=keep), height=240 if keep else 460)
+    render_mermaid(to_mermaid(wf), height=820)
 
     for img in meta.get("images", []):
         ipath = os.path.join(ASSETS, img)
