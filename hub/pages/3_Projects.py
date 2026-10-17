@@ -48,13 +48,13 @@ PROJECTS = [
     {
         "title": "n8n automations (3 воркфлоу / 3 workflows)",
         "badge": "🔗 Automation",
-        "tech": "n8n · PostgreSQL · MCP · LLM",
+        "tech": "n8n · PostgreSQL · LLM · cost tracking",
         "url": f"{REPO}/tree/main/hub/assets/n8n",
         "desc": {
-            "ru": "Content Publisher (RSS→LLM→Telegram), Lead Qualification (MCP + A/B промптов "
-                  "+ Postgres CRM), AI Support & Escalation. Разобраны на странице n8n.",
-            "en": "Content Publisher (RSS→LLM→Telegram), Lead Qualification (MCP + A/B prompt "
-                  "testing + Postgres CRM), AI Support & Escalation. Broken down on the n8n page.",
+            "ru": "Content Publisher (RSS→LLM→Telegram), Lead Qualification (A/B промптов "
+                  "+ Postgres CRM + учёт стоимости), AI Support & Escalation. Разобраны на странице n8n.",
+            "en": "Content Publisher (RSS→LLM→Telegram), Lead Qualification (A/B prompt "
+                  "testing + Postgres CRM + cost tracking), AI Support & Escalation. Broken down on the n8n page.",
         },
     },
     {

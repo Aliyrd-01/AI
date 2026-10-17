@@ -151,8 +151,8 @@
       "webhookId": "09f822f8-2760-4742-8c2e-326e39a3dfdf",
       "credentials": {
         "telegramApi": {
-          "id": "trI2xZYaRRzTeT9L",
-          "name": "Telegram account 3"
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
         }
       },
       "retryOnFail": true,
@@ -240,7 +240,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const resp = $input.first().json;\nconst input = $('Prep Scorer A').first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.output || resp.text || '{}';\nconst clean = String(content).replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet parsed = {};\ntry { parsed = JSON.parse(clean); } catch(e) {\n  const m = clean.match(/\\{[\\s\\S]*\\}/);\n  if (m) try { parsed = JSON.parse(m[0]); } catch(e2) {}\n}\ninput.leadScore = parsed.leadScore || 0;\ninput.leadTier = parsed.leadTier || 'cold';\ninput.priority = parsed.priority || 'low';\ninput.nextAction = parsed.nextAction || 'Nurture';\ninput.scorerNotes = parsed.notes || '';\ninput.promptVersion = 'A';\ndelete input._body;\nreturn [input];"
+        "jsCode": "const resp = $input.first().json;\nconst input = $('Prep Scorer A').first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.output || resp.text || '{}';\nconst clean = String(content).replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet parsed = {};\ntry { parsed = JSON.parse(clean); } catch(e) {\n  const m = clean.match(/\\{[\\s\\S]*\\}/);\n  if (m) try { parsed = JSON.parse(m[0]); } catch(e2) {}\n}\ninput.leadScore = parsed.leadScore || 0;\ninput.leadTier = parsed.leadTier || 'cold';\ninput.priority = parsed.priority || 'low';\ninput.nextAction = parsed.nextAction || 'Nurture';\ninput.scorerNotes = parsed.notes || '';\ninput.promptVersion = 'A';\ninput._usage = resp.usage || null;\ninput._model = resp.model || 'qwen3-32b';\ndelete input._body;\nreturn [input];"
       },
       "id": "node-parse-a",
       "name": "Parse Scorer A",
@@ -298,7 +298,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const resp = $input.first().json;\nconst input = $('Prep Scorer B').first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.output || resp.text || '{}';\nconst clean = String(content).replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet parsed = {};\ntry { parsed = JSON.parse(clean); } catch(e) {\n  const m = clean.match(/\\{[\\s\\S]*\\}/);\n  if (m) try { parsed = JSON.parse(m[0]); } catch(e2) {}\n}\ninput.leadScore = parsed.leadScore || 0;\ninput.leadTier = parsed.leadTier || 'cold';\ninput.priority = parsed.priority || 'low';\ninput.nextAction = parsed.nextAction || 'Nurture';\ninput.scorerNotes = parsed.notes || '';\ninput.promptVersion = 'B';\ndelete input._body;\nreturn [input];"
+        "jsCode": "const resp = $input.first().json;\nconst input = $('Prep Scorer B').first().json;\nconst content = resp.choices?.[0]?.message?.content || resp.output || resp.text || '{}';\nconst clean = String(content).replace(/```json?/gi, '').replace(/```/g, '').trim();\nlet parsed = {};\ntry { parsed = JSON.parse(clean); } catch(e) {\n  const m = clean.match(/\\{[\\s\\S]*\\}/);\n  if (m) try { parsed = JSON.parse(m[0]); } catch(e2) {}\n}\ninput.leadScore = parsed.leadScore || 0;\ninput.leadTier = parsed.leadTier || 'cold';\ninput.priority = parsed.priority || 'low';\ninput.nextAction = parsed.nextAction || 'Nurture';\ninput.scorerNotes = parsed.notes || '';\ninput.promptVersion = 'B';\ninput._usage = resp.usage || null;\ninput._model = resp.model || 'qwen3-32b';\ndelete input._body;\nreturn [input];"
       },
       "id": "node-parse-b",
       "name": "Parse Scorer B",
@@ -376,8 +376,8 @@
       "webhookId": "9c4fdee0-c26d-4f54-855f-ffc6d586d7d1",
       "credentials": {
         "telegramApi": {
-          "id": "trI2xZYaRRzTeT9L",
-          "name": "Telegram account 3"
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
         }
       },
       "retryOnFail": true,
@@ -386,7 +386,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\nd.status = d.leadScore > 70 ? 'hot_emailed' : (d.leadScore > 0 ? 'nurture' : 'invalid');\nconst lead = {\n  lead_id: d.leadId, name: d.name, email: d.email, phone: d.phone,\n  company: d.enrichedCompany || d.company || '',\n  company_industry: d.enrichedIndustry || '',\n  company_size: d.enrichedSize || '',\n  role: d.position || d.enrichedRole || (d.companyFound ? 'Executive' : ''),\n  source: d.source, message: d.message,\n  lead_score: d.leadScore, lead_tier: d.leadTier, priority: d.priority,\n  prompt_version: d.promptVersion, status: d.status, next_action: d.nextAction\n};\nconst esc = (v) => v === null || v === undefined ? 'NULL' : \"'\" + String(v).replace(/'/g, \"''\") + \"'\";\nconst cols = Object.keys(lead);\nconst vals = cols.map(c => esc(lead[c]));\nconst updates = cols.filter(c => c !== 'lead_id').map(c => c + ' = EXCLUDED.' + c);\nconst crm_sql = 'INSERT INTO leads_leads (' + cols.join(', ') + ') VALUES (' + vals.join(', ') + ') ON CONFLICT (lead_id) DO UPDATE SET ' + updates.join(', ') + ', updated_at = NOW();';\nreturn [{ ...lead, crm_sql }];"
+        "jsCode": "// Нормализация полей лида для записи в CRM (сама запись — нода 'Save Lead (Postgres)', параметры $1..$16).\nconst d = $input.first().json;\nd.status = d.leadScore > 70 ? 'hot_emailed' : (d.leadScore > 0 ? 'nurture' : 'invalid');\nreturn [{ json: {\n  lead_id: d.leadId, name: d.name, email: d.email, phone: d.phone,\n  company: d.enrichedCompany || d.company || '',\n  company_industry: d.enrichedIndustry || '',\n  company_size: d.enrichedSize || '',\n  role: d.position || d.enrichedRole || (d.companyFound ? 'Executive' : ''),\n  source: d.source, message: d.message,\n  lead_score: d.leadScore, lead_tier: d.leadTier, priority: d.priority,\n  prompt_version: d.promptVersion, status: d.status, next_action: d.nextAction\n} }];\n"
       },
       "id": "node-crm-prep",
       "name": "CRM Prep",
@@ -399,49 +399,7 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://localhost:9002/mcp",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json, text/event-stream"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.crm_sql } } } }}",
-        "options": {},
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth"
-      },
-      "id": "node-pg-mcp",
-      "name": "PostgreSQL (CRM)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        3808,
-        208
-      ],
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "DSiz14VIMgWi9Cmb",
-          "name": "Postgres MCP (Bearer)"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "// Финальный ответ воркфлоу: лид + текущая сводка A/B из CRM (рука, n, средний скор, победитель).\nconst d = $('CRM Prep').first().json;\n\nlet rows = [];\ntry {\n  const r = $input.first().json;\n  let text = typeof r === 'string' ? r : (r.body || r.data || JSON.stringify(r));\n  const m = String(text).match(/data:\\s*({.*})/);\n  const payload = m ? JSON.parse(m[1]) : r;\n  const content = payload && payload.result && payload.result.content && payload.result.content[0] && payload.result.content[0].text;\n  if (content) rows = JSON.parse(content);\n} catch (e) {\n  rows = [];\n}\n\nconst ab = {};\nfor (const row of Array.isArray(rows) ? rows : []) {\n  ab[row.arm] = { n: row.n, avg: row.avg_score };\n}\nlet winner = null;\nif (ab.A && ab.B) winner = ab.A.avg >= ab.B.avg ? 'A' : 'B';\n\nreturn [{\n  summary: 'Lead processed',\n  leadId: d.lead_id,\n  score: d.lead_score,\n  tier: d.lead_tier,\n  prompt: d.prompt_version,\n  status: d.status,\n  ab_stats: ab,\n  ab_winner: winner\n}];\n"
+        "jsCode": "// Финальный ответ воркфлоу: лид + сводка A/B (нативная Postgres-нода) + стоимость скоринга.\nconst saved = $('Save Lead (Postgres)').first().json;\nlet costRow = null;\ntry { costRow = $('Log LLM Cost (Postgres)').first().json; } catch (e) {}\nconst rows = $input.all().map(i => i.json);\nconst ab = {};\nfor (const row of rows) ab[row.arm] = { n: row.n, avg: row.avg_score };\nlet winner = null;\nif (ab.A && ab.B) winner = ab.A.avg >= ab.B.avg ? 'A' : 'B';\n\nreturn [{\n  summary: 'Lead processed',\n  leadId: saved.lead_id,\n  score: saved.lead_score,\n  tier: saved.lead_tier,\n  prompt: saved.prompt_version,\n  status: saved.status,\n  ab_stats: ab,\n  ab_winner: winner,\n  cost_usd: costRow ? costRow.cost_usd : null\n}];\n"
       },
       "id": "node-done",
       "name": "Done",
@@ -450,74 +408,6 @@
       "position": [
         4160,
         208
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const item = $input.first().json;\nconst email = (item.email || '').trim().toLowerCase();\nconst emailDomain = email.split('@')[1] || '';\nconst company = (item.company || '').trim();\n\n// Escaping helper for SQL\nconst esc = (str) => (str || '').replace(/'/g, \"''\");\n\nconst sql = `\n  WITH contact_lookup AS (\n    SELECT \n      c.name as contact_name, \n      c.role as contact_role, \n      c.phone as contact_phone, \n      co.name as company_name, \n      co.industry as company_industry, \n      co.size as company_size, \n      co.domain as company_domain,\n      TRUE as contact_found,\n      TRUE as company_found\n    FROM leads_contacts c \n    LEFT JOIN leads_companies co ON c.company_id = co.id \n    WHERE c.email = '${esc(email)}'\n    LIMIT 1\n  ),\n  company_lookup AS (\n    SELECT \n      NULL as contact_name, \n      NULL as contact_role, \n      NULL as contact_phone, \n      name as company_name, \n      industry as company_industry, \n      size as company_size, \n      domain as company_domain,\n      FALSE as contact_found,\n      TRUE as company_found\n    FROM leads_companies \n    WHERE (domain = '${esc(emailDomain)}' OR LOWER(name) = LOWER('${esc(company)}'))\n      AND NOT EXISTS (\n        SELECT 1 FROM leads_contacts WHERE email = '${esc(email)}'\n      )\n    LIMIT 1\n  )\n  SELECT * FROM contact_lookup\n  UNION ALL\n  SELECT * FROM company_lookup\n  LIMIT 1;\n`;\n\nreturn [{\n  ...item,\n  mcp_sql: sql\n}];"
-      },
-      "id": "node-enrich-prep",
-      "name": "Prep MCP Enrich",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1104,
-        -96
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://localhost:9002/mcp",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json, text/event-stream"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { \"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 1, \"params\": { \"name\": \"select\", \"arguments\": { \"sql\": $json.mcp_sql } } } }}",
-        "options": {},
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth"
-      },
-      "id": "node-enrich-http",
-      "name": "MCP Enrich HTTP",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        1312,
-        -96
-      ],
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "DSiz14VIMgWi9Cmb",
-          "name": "Postgres MCP (Bearer)"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst lead = $('Prep MCP Enrich').first().json;\n\nlet text = '';\nif (typeof response === 'string') {\n  text = response;\n} else if (response.body && typeof response.body === 'string') {\n  text = response.body;\n} else if (response.data && typeof response.data === 'string') {\n  text = response.data;\n} else {\n  text = JSON.stringify(response);\n}\n\nlet mcpResult = null;\nconst dataMatch = text.match(/data:\\s*({.*})/);\nif (dataMatch) {\n  try {\n    mcpResult = JSON.parse(dataMatch[1]);\n  } catch (e) {}\n} else {\n  mcpResult = response;\n}\n\nconst contentText = mcpResult?.result?.content?.[0]?.text;\nlet rows = [];\nif (contentText) {\n  try {\n    rows = JSON.parse(contentText);\n  } catch (e) {}\n}\n\nconst d = { ...lead };\nif (rows && rows.length > 0) {\n  const row = rows[0];\n  d.enrichedName = row.contact_name || undefined;\n  d.enrichedRole = row.contact_role || undefined;\n  d.enrichedCompany = row.company_name || undefined;\n  d.enrichedIndustry = row.company_industry || undefined;\n  d.enrichedSize = row.company_size || undefined;\n  d.enrichedDomain = row.company_domain || undefined;\n  d.contactFound = !!row.contact_found;\n  d.companyFound = !!row.company_found;\n} else {\n  d.contactFound = false;\n  d.companyFound = false;\n}\n\nif (!d.enrichedCompany) {\n  d.enrichedCompany = d.company;\n}\n\ndelete d.mcp_sql;\nreturn [d];"
-      },
-      "id": "node-enrich-parse",
-      "name": "Parse MCP Enrich",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1504,
-        -96
       ]
     },
     {
@@ -546,53 +436,101 @@
     },
     {
       "parameters": {
-        "jsCode": "// Собираем JSON-RPC вызов MCP-инструмента 'select' со сводкой A/B по CRM.\nconst sql = \"SELECT prompt_version AS arm, COUNT(*)::int AS n, \" +\n  \"ROUND(AVG(lead_score)::numeric, 1)::float AS avg_score \" +\n  \"FROM leads_leads WHERE prompt_version IN ('A','B') GROUP BY prompt_version ORDER BY 1\";\nreturn [{ json: { _rpc: { jsonrpc: '2.0', method: 'tools/call', id: 1, params: { name: 'select', arguments: { sql } } } } }];\n"
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH input AS (\n  SELECT $1::text AS email, $2::text AS email_domain, $3::text AS company, $4::text AS name,\n         $5::text AS phone, $6::text AS position, $7::text AS message, $8::text AS source, $9::text AS lead_id\n),\ncontact_lookup AS (\n  SELECT c.name AS contact_name, c.role AS contact_role, c.phone AS contact_phone,\n         co.name AS company_name, co.industry AS company_industry, co.size AS company_size,\n         co.domain AS company_domain, TRUE AS contact_found, TRUE AS company_found\n  FROM input i\n  JOIN leads_contacts c ON c.email = i.email\n  LEFT JOIN leads_companies co ON co.id = c.company_id\n  LIMIT 1\n),\ncompany_lookup AS (\n  SELECT NULL::text AS contact_name, NULL::text AS contact_role, NULL::text AS contact_phone,\n         co.name AS company_name, co.industry AS company_industry, co.size AS company_size,\n         co.domain AS company_domain, FALSE AS contact_found, TRUE AS company_found\n  FROM input i\n  JOIN leads_companies co ON (co.domain = i.email_domain OR LOWER(co.name) = LOWER(i.company))\n  WHERE NOT EXISTS (SELECT 1 FROM leads_contacts c2 WHERE c2.email = i.email)\n  LIMIT 1\n),\npick AS (\n  SELECT * FROM contact_lookup\n  UNION ALL\n  SELECT * FROM company_lookup\n  LIMIT 1\n)\nSELECT i.name, i.email, i.phone, i.position, i.message, i.source, i.lead_id AS \"leadId\",\n       NULLIF(p.contact_name, '') AS \"enrichedName\",\n       NULLIF(p.contact_role, '') AS \"enrichedRole\",\n       COALESCE(NULLIF(p.company_name, ''), i.company, '') AS \"enrichedCompany\",\n       NULLIF(p.company_industry, '') AS \"enrichedIndustry\",\n       NULLIF(p.company_size, '') AS \"enrichedSize\",\n       NULLIF(p.company_domain, '') AS \"enrichedDomain\",\n       COALESCE(p.contact_found, FALSE) AS \"contactFound\",\n       COALESCE(p.company_found, FALSE) AS \"companyFound\"\nFROM input i\nLEFT JOIN pick p ON TRUE;",
+        "options": {
+          "queryReplacement": "={{ [$json.email || '', ($json.email || '').split('@')[1] || '', $json.company || '', $json.name || '', $json.phone || '', $json.position || '', $json.message || '', $json.source || '', $json.leadId || ''] }}"
+        }
       },
-      "id": "c0000000-0000-4000-8000-000000000011",
-      "name": "A/B Stats Prep",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "d7a52f1f-fa5f-4f70-b691-0872b9d069d1",
+      "name": "Enrich Contact (Postgres)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
       "position": [
-        3960,
-        208
-      ]
+        1104,
+        -96
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "KxmwIIM9tjVU936P",
+          "name": "Postgres account 2"
+        }
+      }
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "http://localhost:9002/mcp",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Accept",
-              "value": "application/json, text/event-stream"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json._rpc }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "options": {}
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO leads_leads (lead_id, name, email, phone, company, company_industry, company_size,\n  role, source, message, lead_score, lead_tier, priority, prompt_version, status, next_action)\nVALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)\nON CONFLICT (lead_id) DO UPDATE SET\n  name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone, company = EXCLUDED.company,\n  company_industry = EXCLUDED.company_industry, company_size = EXCLUDED.company_size, role = EXCLUDED.role,\n  source = EXCLUDED.source, message = EXCLUDED.message, lead_score = EXCLUDED.lead_score,\n  lead_tier = EXCLUDED.lead_tier, priority = EXCLUDED.priority, prompt_version = EXCLUDED.prompt_version,\n  status = EXCLUDED.status, next_action = EXCLUDED.next_action, updated_at = NOW()\nRETURNING lead_id, lead_score, lead_tier, prompt_version, status;",
+        "options": {
+          "queryReplacement": "={{ [$json.lead_id, $json.name, $json.email, $json.phone, $json.company, $json.company_industry, $json.company_size, $json.role, $json.source, $json.message, $json.lead_score, $json.lead_tier, $json.priority, $json.prompt_version, $json.status, $json.next_action] }}"
+        }
       },
-      "id": "c0000000-0000-4000-8000-000000000012",
-      "name": "A/B Stats (MCP)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
+      "id": "657808cf-a9c8-4c2b-ba59-a7adc131bf5d",
+      "name": "Save Lead (Postgres)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3808,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "KxmwIIM9tjVU936P",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "INSERT INTO llm_usage (workflow, call_node, model, prompt_tokens, completion_tokens, total_tokens, cost_usd, ref)\nSELECT $1, $2, $3, $4, $5, COALESCE($4, 0) + COALESCE($5, 0),\n       ROUND((COALESCE($4, 0) / 1000000.0) * COALESCE(p.in_per_1m, 0)\n           + (COALESCE($5, 0) / 1000000.0) * COALESCE(p.out_per_1m, 0), 6),\n       $6\nFROM (SELECT 1 AS one) s\nLEFT JOIN llm_pricing p ON p.model = $3\nRETURNING id, cost_usd;",
+        "options": {
+          "queryReplacement": "={{ ['lead', 'scorer_' + ($('A/B Result').first().json.promptVersion || '?'), $('A/B Result').first().json._model || 'qwen3-32b', $('A/B Result').first().json._usage?.prompt_tokens ?? null, $('A/B Result').first().json._usage?.completion_tokens ?? null, $json.lead_id || null] }}"
+        }
+      },
+      "id": "ba127703-9647-4763-98dc-bbc03b3c519a",
+      "name": "Log LLM Cost (Postgres)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3960,
+        208
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "KxmwIIM9tjVU936P",
+          "name": "Postgres account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT prompt_version AS arm, COUNT(*)::int AS n, ROUND(AVG(lead_score)::numeric, 1)::float AS avg_score\nFROM leads_leads\nWHERE prompt_version IN ('A', 'B')\nGROUP BY prompt_version\nORDER BY prompt_version;",
+        "options": {
+          "queryReplacement": ""
+        }
+      },
+      "id": "2f36c410-0698-491c-849a-b3c95f956938",
+      "name": "A/B Stats (Postgres)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
       "position": [
         4060,
         208
       ],
       "credentials": {
-        "httpBearerAuth": {
-          "id": "DSiz14VIMgWi9Cmb",
-          "name": "Postgres MCP (Bearer)"
+        "postgres": {
+          "id": "KxmwIIM9tjVU936P",
+          "name": "Postgres account 2"
         }
       },
       "retryOnFail": true,
@@ -650,7 +588,7 @@
       "main": [
         [
           {
-            "node": "Prep MCP Enrich",
+            "node": "Enrich Contact (Postgres)",
             "type": "main",
             "index": 0
           }
@@ -753,51 +691,7 @@
       "main": [
         [
           {
-            "node": "PostgreSQL (CRM)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "PostgreSQL (CRM)": {
-      "main": [
-        [
-          {
-            "node": "A/B Stats Prep",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prep MCP Enrich": {
-      "main": [
-        [
-          {
-            "node": "MCP Enrich HTTP",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "MCP Enrich HTTP": {
-      "main": [
-        [
-          {
-            "node": "Parse MCP Enrich",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse MCP Enrich": {
-      "main": [
-        [
-          {
-            "node": "A/B IF (even/odd)",
+            "node": "Save Lead (Postgres)",
             "type": "main",
             "index": 0
           }
@@ -837,18 +731,40 @@
         ]
       ]
     },
-    "A/B Stats Prep": {
+    "Enrich Contact (Postgres)": {
       "main": [
         [
           {
-            "node": "A/B Stats (MCP)",
+            "node": "A/B IF (even/odd)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "A/B Stats (MCP)": {
+    "Save Lead (Postgres)": {
+      "main": [
+        [
+          {
+            "node": "Log LLM Cost (Postgres)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log LLM Cost (Postgres)": {
+      "main": [
+        [
+          {
+            "node": "A/B Stats (Postgres)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A/B Stats (Postgres)": {
       "main": [
         [
           {
