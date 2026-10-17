@@ -63,22 +63,24 @@ FLOWS = [
         "title": "Automated AI Content Publisher",
         "short": {"ru": "Автономная новостная редакция", "en": "Autonomous news desk"},
         "desc": {
-            "ru": "7 RSS-лент (Forklog, Habr, Habr AI, TechCrunch AI, Ars Technica, MIT Tech Review, "
-                  "DailyAI) → дедупликация по ссылке → очистка текста и извлечение обложки "
-                  "(enclosure / media:content / og:image, при промахе — SERP fallback) → детектор "
-                  "темы (crypto / AI) и предфильтр по интересам → LLM переводит и сжимает материал "
-                  "в строгий JSON (важность, заголовок, 3–4 предложения, вывод, теги; temperature 0.2 "
-                  "для стабильного JSON) → фильтр дублей по истории публикаций (similarity, реестр "
-                  "в staticData) → форматирование поста (HTML) → порог релевантности → публикация "
-                  "в Telegram (фото или текст); стоимость LLM-шага (usage → $) пишется в llm_usage. "
+            "ru": "7 RSS-лент (Forklog, Habr, Habr AI, TechCrunch AI, MIT Tech Review, "
+                  "Decoder, DailyAI) → единый дедуп: ссылки в пачке + история публикаций "
+                  "(similarity по заголовкам, реестр в staticData) → очистка текста и извлечение "
+                  "обложки (enclosure / media:content / og:image, при промахе — SERP fallback) → "
+                  "детектор темы (crypto / AI) и предфильтр по интересам → LLM переводит и сжимает "
+                  "материал в строгий JSON (важность, релевантность, заголовок, 3–4 предложения, "
+                  "вывод, теги; temperature 0.2 для стабильного JSON) → форматирование поста (HTML) → "
+                  "порог релевантности (relevance_score от LLM) → публикация в Telegram "
+                  "(фото или текст); стоимость LLM-шага (usage → $) пишется в llm_usage. "
                   "Человека в цикле нет.",
-            "en": "7 RSS feeds (Forklog, Habr, Habr AI, TechCrunch AI, Ars Technica, MIT Tech Review, "
-                  "DailyAI) → link-level dedup → text cleaning and cover extraction (enclosure / "
-                  "media:content / og:image, SERP fallback on miss) → topic detector (crypto / AI) "
-                  "and interest pre-filter → an LLM translates and condenses the piece into strict "
-                  "JSON (importance, title, 3–4 sentences, takeaway, tags; temperature 0.2 for stable "
-                  "JSON) → history-based duplicate filter (similarity, registry in staticData) → post "
-                  "formatting (HTML) → relevance gate → publish to Telegram (photo or text post); the "
+            "en": "7 RSS feeds (Forklog, Habr, Habr AI, TechCrunch AI, MIT Tech Review, "
+                  "Decoder, DailyAI) → unified dedup: in-batch links + publication history "
+                  "(title similarity, registry in staticData) → text cleaning and cover extraction "
+                  "(enclosure / media:content / og:image, SERP fallback on miss) → topic detector "
+                  "(crypto / AI) and interest pre-filter → an LLM translates and condenses the piece "
+                  "into strict JSON (importance, relevance, title, 3–4 sentences, takeaway, tags; "
+                  "temperature 0.2 for stable JSON) → post formatting (HTML) → relevance gate "
+                  "(relevance_score from the LLM) → publish to Telegram (photo or text post); the "
                   "LLM step's cost (usage → $) is logged to llm_usage. No human in the loop.",
         },
         "tech_base": "n8n · 7 × RSS · Code (JS) · Qubax · og:image + SerpAPI fallback · cost tracking · Telegram",
@@ -174,6 +176,7 @@ def _short(name: str, limit: int = 20) -> str:
         s = s.replace(" (Postgres)", " (PG)")
     for junk in (" (prep)", " (CRM)", " account", " Trigger"):
         s = s.replace(junk, "")
+    s = s.replace(" (Text fallback)", " (Text FB)")
     s = s.replace("/", "/ ").strip()
     return s if len(s) <= limit else s[: limit - 1].rstrip(" -→") + "…"
 

@@ -8,7 +8,7 @@
           "item": [
             {
               "mode": "custom",
-              "cronExpression": "*/55 * * * *"
+              "cronExpression": "5,35 * * * *"
             }
           ]
         },
@@ -29,7 +29,7 @@
           "item": [
             {
               "mode": "custom",
-              "cronExpression": "*/30 * * * *"
+              "cronExpression": "10,40 * * * *"
             }
           ]
         },
@@ -46,7 +46,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst seen = new Set();\nconst unique = [];\nfor (const item of items) {\n  const link = (item.json?.link || item.json?.guid || item.json?.title || '').toLowerCase().replace(/\\/+$/, '').split('?')[0];\n  if (!link || seen.has(link)) continue;\n  seen.add(link);\n  unique.push(item);\n}\nreturn unique;"
+        "jsCode": "// Единый дедуп: внутри пачки (по ссылке) + по истории публикаций (ссылка/заголовок).\n// Сам пополняет историю — ловит повторы и между разными RSS-лентами.\nconst sd = $getWorkflowStaticData('global');\nconst history = Array.isArray(sd.published) ? sd.published : [];\n\nconst STOP = new Set(['the', 'a', 'an', 'of', 'in', 'on', 'to', 'for', 'and', 'or', 'at', 'by', 'with', 'from',\n  'is', 'are', 'was', 'were', 'be', 'been', 'it', 'its', 'this', 'that', 'these', 'those', 'as', 'after',\n  'before', 'over', 'under', 'new', 'says', 'said', 'will', 'has', 'have', 'had', 'not', 'but', 'you', 'your',\n  'how', 'why', 'what', 'when', 'where', 'who', 'vs', 'via', 'into', 'out', 'up', 'down', 'more', 'most']);\n\nfunction norm(s) {\n  return String(s || '').toLowerCase()\n    .replace(/https?:\\/\\/\\S+/g, ' ')\n    .replace(/[^0-9a-zа-яіїєґ\\s]/gi, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\nfunction normLink(u) {\n  return String(u || '').toLowerCase().replace(/\\/+$/, '').split('?')[0];\n}\nfunction tokens(s) {\n  const out = new Set();\n  for (const w of norm(s).split(' ')) {\n    if (w.length > 2 && !STOP.has(w)) out.add(w);\n  }\n  return out;\n}\nfunction jaccard(a, b) {\n  if (!a.size || !b.size) return 0;\n  let inter = 0;\n  for (const w of a) if (b.has(w)) inter++;\n  return inter / (a.size + b.size - inter);\n}\n\nconst out = [];\nconst passed = [];\nfor (const item of $input.all()) {\n  const link = normLink(item.json?.link || item.json?.guid || '');\n  const t = tokens(item.json?.title || '');\n  let dup = false;\n  for (const h of history.concat(passed)) {\n    if (!h) continue;\n    const hl = typeof h === 'string' ? h : h.l;\n    if (link && hl && normLink(hl) === link) { dup = true; break; }\n    if (t.size && h.t && jaccard(t, tokens(h.t)) >= 0.6) { dup = true; break; }\n  }\n  if (!dup) {\n    out.push(item);\n    passed.push({ l: link, t: String(item.json?.title || '').slice(0, 160) });\n  }\n}\nsd.published = history.concat(passed).slice(-300);\nreturn out;\n"
       },
       "id": "805f5552-211d-4126-9329-333ea18be825",
       "name": "Deduplication",
@@ -60,7 +60,8 @@
     },
     {
       "parameters": {
-        "jsCode": "const item = $input.item.json;\nconst cleanText = (item.contentSnippet || item.title || '').replace(/<[^>]*>/g, '').replace(/\\s+/g, ' ').trim().substring(0, 4000);\n\nlet imageUrl = '';\n\n// 1. RSS enclosure / media:content\ntry {\n  if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url;\n  else if (item['media:content'] && item['media:content'].url) imageUrl = item['media:content'].url;\n} catch (e) {}\n\n// 2. <img> from content HTML\nif (!imageUrl && item.content) {\n  try {\n    const m = item.content.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 3. og:image via fetch with timeout\nif (!imageUrl && item.link) {\n  try {\n    const ctrl = new AbortController();\n    setTimeout(() => ctrl.abort(), 3000);\n    const res = await fetch(item.link, { signal: ctrl.signal });\n    const html = await res.text();\n    const m = html.match(/<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i)\n           || html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 4. Normalize relative URLs\nif (imageUrl && imageUrl.startsWith('/') && item.link) {\n  try {\n    const u = new URL(item.link);\n    imageUrl = u.origin + imageUrl;\n  } catch (e) {}\n}\n\n// URL Normalization: strip tracking params\nlet cleanLink = item.link || '';\ntry {\n  const parsed = new URL(cleanLink);\n  const paramsToKeep = new URLSearchParams();\n  for (const [key, val] of parsed.searchParams.entries()) {\n    if (!key.startsWith('utm_') && !['ref', 'fbclid', 'gclid', 'mc_cid', 'mc_eid'].includes(key.toLowerCase())) {\n      paramsToKeep.append(key, val);\n    }\n  }\n  const searchStr = paramsToKeep.toString();\n  cleanLink = parsed.origin + parsed.pathname + (searchStr ? '?' + searchStr : '');\n} catch (e) {\n  cleanLink = (item.link || '').split('?')[0];\n}\ncleanLink = cleanLink.toLowerCase().replace(/\\/+$/, '');\n\nreturn {\n  title: item.title,\n  link: cleanLink,\n  sourceText: cleanText,\n  imageUrl: imageUrl\n};"
+        "jsCode": "const item = $input.item.json;\nconst cleanText = (item.contentSnippet || item.title || '').replace(/<[^>]*>/g, '').replace(/\\s+/g, ' ').trim().substring(0, 4000);\n\nlet imageUrl = '';\n\n// 1. RSS enclosure / media:content\ntry {\n  if (item.enclosure && item.enclosure.url) imageUrl = item.enclosure.url;\n  else if (item['media:content'] && item['media:content'].url) imageUrl = item['media:content'].url;\n} catch (e) {}\n\n// 2. <img> from content HTML\nif (!imageUrl && item.content) {\n  try {\n    const m = item.content.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 3. og:image via fetch with timeout\nif (!imageUrl && item.link) {\n  try {\n    const ctrl = new AbortController();\n    setTimeout(() => ctrl.abort(), 3000);\n    const res = await fetch(item.link, { signal: ctrl.signal });\n    const html = await res.text();\n    const m = html.match(/<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i)\n           || html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']/i);\n    if (m && m[1]) imageUrl = m[1];\n  } catch (e) {}\n}\n\n// 4. Normalize relative URLs\nif (imageUrl && imageUrl.startsWith('/') && item.link) {\n  try {\n    const u = new URL(item.link);\n    imageUrl = u.origin + imageUrl;\n  } catch (e) {}\n}\n\n// URL Normalization: strip tracking params\nlet cleanLink = item.link || '';\ntry {\n  const parsed = new URL(cleanLink);\n  const paramsToKeep = new URLSearchParams();\n  for (const [key, val] of parsed.searchParams.entries()) {\n    if (!key.startsWith('utm_') && !['ref', 'fbclid', 'gclid', 'mc_cid', 'mc_eid'].includes(key.toLowerCase())) {\n      paramsToKeep.append(key, val);\n    }\n  }\n  const searchStr = paramsToKeep.toString();\n  cleanLink = parsed.origin + parsed.pathname + (searchStr ? '?' + searchStr : '');\n} catch (e) {\n  cleanLink = (item.link || '').split('?')[0];\n}\ncleanLink = cleanLink.toLowerCase().replace(/\\/+$/, '');\n\nreturn {\n  title: item.title,\n  link: cleanLink,\n  sourceText: cleanText,\n  imageUrl: imageUrl\n};",
+        "mode": "runOnceForEachItem"
       },
       "id": "f26ae429-4089-421b-97c0-6af3f68b146e",
       "name": "Preprocessing",
@@ -73,7 +74,8 @@
     },
     {
       "parameters": {
-        "jsCode": "const aiContent = $json.output || $json.text || ($json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content);\nlet aiResponse = {};\n\ntry {\n    if (typeof aiContent === 'string') {\n        const cleanJson = aiContent.replace(/```json/gi, '').replace(/```/gi, '').trim();\n        aiResponse = JSON.parse(cleanJson);\n    } else {\n        aiResponse = aiContent || {};\n    }\n} catch (e) {\n    const jsonMatch = String(aiContent).match(/\\{[\\s\\S]*\\}/);\n    aiResponse = jsonMatch ? JSON.parse(jsonMatch[0]) : {};\n}\n\nlet link = $json.link || $('Preprocessing').item.json.link || '#';\nconst imageUrl = $json.imageUrl || $('Preprocessing').item.json.imageUrl || '';\n\n// --- shortener: cut text but keep a \"...…\" ellipse so it is not abrupt ---\nfunction clip(s, max) {\n    s = String(s || '');\n    if (s.length <= max) return s;\n    return s.substring(0, max - 1) + '…';\n}\n\nif (!aiResponse.title_uk && !aiResponse.content_uk) {\n    return {\n        fullText: '🔴 <b>ПОМИЛКА</b>\\n\\n' + clip(aiContent, 400) + '\\n\\nДжерело:\\n🔗 <b><a href=\"' + link + '\">Читати</a></b>',\n        imageUrl: imageUrl,\n        importance: 'Низька',\n        reaction: '',\n        link: link,\n        relevance_score: aiResponse.relevance_score || 50\n    };\n}\n\nconst title = clip(aiResponse.title_uk || 'Новина', 120);\nconst content = clip(aiResponse.content_uk || '', 420);\nconst analysis = clip(aiResponse.analysis_uk || '', 200);\nconst tags = Array.isArray(aiResponse.tags) ? aiResponse.tags : [];\nconst importance = aiResponse.importance || 'Низька';\n\nconst emojiMap = {\n    'Висока': '🔴',\n    'Середня': '🟡',\n    'Низька': '🟢',\n    'Інфо': '⚪'\n};\nconst emoji = emojiMap[importance] || '⚪';\n\nlet html = emoji + ' <b>' + title.toUpperCase() + '</b>\\n\\n';\n\nhtml += content + '\\n\\n';\n\nif (analysis && analysis.length > 10) {\n    html += '<b>💡 Аналіз:</b>\\n<i>' + analysis + '</i>\\n\\n';\n}\n\nif (tags.length > 0) {\n    const cleanTags = tags.map(function(t) { return String(t).replace(/[#\\s]/g, '').trim(); }).filter(function(t) { return t.length > 0; });\n    if (cleanTags.length > 0) {\n        html += '<b>🏷 Теги:</b>\\n' + cleanTags.map(function(t) { return '#' + t; }).join(' ') + '\\n\\n';\n    }\n}\n\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n    fullText: html,\n    imageUrl: imageUrl,\n    importance: importance,\n    reaction: '',\n    link: link,\n    relevance_score: aiResponse.relevance_score || 50\n};"
+        "jsCode": "const aiContent = $json.output || $json.text || ($json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content);\nlet aiResponse = {};\n\ntry {\n    if (typeof aiContent === 'string') {\n        const cleanJson = aiContent.replace(/```json/gi, '').replace(/```/gi, '').trim();\n        aiResponse = JSON.parse(cleanJson);\n    } else {\n        aiResponse = aiContent || {};\n    }\n} catch (e) {\n    const jsonMatch = String(aiContent).match(/\\{[\\s\\S]*\\}/);\n    aiResponse = jsonMatch ? JSON.parse(jsonMatch[0]) : {};\n}\n\nlet link = $json.link || $('Preprocessing').item.json.link || '#';\nconst imageUrl = $json.imageUrl || $('Preprocessing').item.json.imageUrl || '';\n\n// --- shortener: cut text but keep a \"...…\" ellipse so it is not abrupt ---\nfunction clip(s, max) {\n    s = String(s || '');\n    if (s.length <= max) return s;\n    return s.substring(0, max - 1) + '…';\n}\n\nif (!aiResponse.title_uk && !aiResponse.content_uk) {\n    return {\n        fullText: '🔴 <b>ПОМИЛКА</b>\\n\\n' + clip(aiContent, 400) + '\\n\\nДжерело:\\n🔗 <b><a href=\"' + link + '\">Читати</a></b>',\n        imageUrl: imageUrl,\n        importance: 'Низька',\n        reaction: '',\n        link: link,\n        relevance_score: aiResponse.relevance_score || 50\n    };\n}\n\nconst title = clip(aiResponse.title_uk || 'Новина', 120);\nconst content = clip(aiResponse.content_uk || '', 420);\nconst analysis = clip(aiResponse.analysis_uk || '', 200);\nconst tags = Array.isArray(aiResponse.tags) ? aiResponse.tags : [];\nconst importance = aiResponse.importance || 'Низька';\n\nconst emojiMap = {\n    'Висока': '🔴',\n    'Середня': '🟡',\n    'Низька': '🟢',\n    'Інфо': '⚪'\n};\nconst emoji = emojiMap[importance] || '⚪';\n\nlet html = emoji + ' <b>' + title.toUpperCase() + '</b>\\n\\n';\n\nhtml += content + '\\n\\n';\n\nif (analysis && analysis.length > 10) {\n    html += '<b>💡 Аналіз:</b>\\n<i>' + analysis + '</i>\\n\\n';\n}\n\nif (tags.length > 0) {\n    const cleanTags = tags.map(function(t) { return String(t).replace(/[#\\s]/g, '').trim(); }).filter(function(t) { return t.length > 0; });\n    if (cleanTags.length > 0) {\n        html += '<b>🏷 Теги:</b>\\n' + cleanTags.map(function(t) { return '#' + t; }).join(' ') + '\\n\\n';\n    }\n}\n\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n    fullText: html,\n    imageUrl: imageUrl,\n    importance: importance,\n    reaction: '',\n    link: link,\n    relevance_score: aiResponse.relevance_score || 50\n};",
+        "mode": "runOnceForEachItem"
       },
       "id": "78ea4487-9751-460c-8f8d-76795393cd12",
       "name": "Final Formatting",
@@ -114,8 +116,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        5872,
-        2544
+        5920,
+        2160
       ]
     },
     {
@@ -174,7 +176,8 @@
           "id": "7PplDwm237hUK507",
           "name": "Telegram account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -182,7 +185,7 @@
           "item": [
             {
               "mode": "custom",
-              "cronExpression": "*/55 * * * *"
+              "cronExpression": "20,50 * * * *"
             }
           ]
         },
@@ -202,7 +205,8 @@
         "pollTimes": {
           "item": [
             {
-              "mode": "everyHour"
+              "mode": "custom",
+              "cronExpression": "25 * * * *"
             }
           ]
         },
@@ -223,7 +227,7 @@
           "item": [
             {
               "mode": "custom",
-              "cronExpression": "0 */3 * * *"
+              "cronExpression": "15 */3 * * *"
             }
           ]
         },
@@ -244,7 +248,7 @@
           "item": [
             {
               "mode": "custom",
-              "cronExpression": "*/15 * * * *"
+              "cronExpression": "7,22,37,52 * * * *"
             }
           ]
         },
@@ -283,7 +287,8 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = ($json.sourceText || '').toLowerCase();\n\nconst cryptoWords = ['bitcoin', 'ethereum', 'crypto', 'btc', 'eth', 'defi', 'nft', 'blockchain',\n  'token', 'web3', 'solana', 'altcoin', 'mining', 'wallet', 'exchange', 'binance', 'coin',\n  'tokenomics', 'metaverse', 'layer2', 'smart contract', 'dapp'];\n\nconst aiWords = ['ai', 'artificial intelligence', 'gpt', 'openai', 'llm', 'neural', 'machine learning',\n  'deep learning', 'robot', 'automation', 'chatbot', 'gpt-4', 'claude', 'bard', 'gemini',\n  'langchain', 'rag', 'transformer', 'diffusion', 'stable diffusion', 'copilot', 'llama'];\n\nlet topic = 'general';\nlet cryptoScore = cryptoWords.filter(w => text.includes(w)).length;\nlet aiScore = aiWords.filter(w => text.includes(w)).length;\n\nif (cryptoScore > aiScore) topic = 'crypto';\nelse if (aiScore > cryptoScore) topic = 'ai';\nelse if (aiScore > 0) topic = 'ai'; // tie: prefer AI when both topics matched\nelse if (cryptoScore > 0) topic = 'crypto';\n\nreturn { ...$json, topic };"
+        "jsCode": "const text = ($json.sourceText || '').toLowerCase();\n\nconst cryptoWords = ['bitcoin', 'ethereum', 'crypto', 'btc', 'eth', 'defi', 'nft', 'blockchain',\n  'token', 'web3', 'solana', 'altcoin', 'mining', 'wallet', 'exchange', 'binance', 'coin',\n  'tokenomics', 'metaverse', 'layer2', 'smart contract', 'dapp'];\n\nconst aiWords = ['ai', 'artificial intelligence', 'gpt', 'openai', 'llm', 'neural', 'machine learning',\n  'deep learning', 'robot', 'automation', 'chatbot', 'gpt-4', 'claude', 'bard', 'gemini',\n  'langchain', 'rag', 'transformer', 'diffusion', 'stable diffusion', 'copilot', 'llama'];\n\nlet topic = 'general';\nlet cryptoScore = cryptoWords.filter(w => text.includes(w)).length;\nlet aiScore = aiWords.filter(w => text.includes(w)).length;\n\nif (cryptoScore > aiScore) topic = 'crypto';\nelse if (aiScore > cryptoScore) topic = 'ai';\nelse if (aiScore > 0) topic = 'ai'; // tie: prefer AI when both topics matched\nelse if (cryptoScore > 0) topic = 'crypto';\n\nreturn { ...$json, topic };",
+        "mode": "runOnceForEachItem"
       },
       "id": "90542ea0-5fe3-4323-ba1d-c1ebb507ea7d",
       "name": "Topic Detector",
@@ -297,15 +302,16 @@
     },
     {
       "parameters": {
-        "jsCode": "// Регистрируем публикуемое в истории (для дедупа будущих прогонов).\nconst sd = $getWorkflowStaticData('global');\nconst list = Array.isArray(sd.published) ? sd.published : [];\nif ($json.link) {\n  list.push({ l: String($json.link), t: String($json.title || '').slice(0, 160), at: new Date().toISOString().slice(0, 10) });\n}\nsd.published = list.slice(-300);\n\n// Готовим поисковый запрос для SerpAPI (сам запрос делает нода 'SerpAPI Image Search').\nif ($json.imageUrl) {\n  return { ...$json, serpQuery: '' };\n}\nconst q = String($json.title || '').trim().substring(0, 100);\nreturn { ...$json, serpQuery: q ? encodeURIComponent(q) : '' };\n"
+        "jsCode": "// Готовим поисковый запрос для SerpAPI (сам поиск делает нода 'SerpAPI Image Search';\n// кодирование query-параметра делает HTTP-нода, поэтому тут — сырой заголовок).\n// Заголовок берём из Preprocessing: после Qubax Translate поле title потеряно.\nif ($json.imageUrl) {\n  return { ...$json, serpQuery: '' };\n}\nlet title = '';\ntry {\n  title = $('Preprocessing').item.json.title || '';\n} catch (e) {}\nconst q = String(title || '').trim().substring(0, 100);\nreturn { ...$json, serpQuery: q };\n",
+        "mode": "runOnceForEachItem"
       },
       "id": "f9a7b941-7e93-4105-b81d-b4452f726e03",
       "name": "SERP Image Fallback",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5648,
-        2528
+        5872,
+        1824
       ],
       "alwaysOutputData": true
     },
@@ -345,7 +351,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const text = (($json.sourceText || '') + ' ' + ($json.title || '')).toLowerCase();\n\nconst interests = {\n  ai_models: { words: ['gpt', 'gpt-4', 'gpt-5', 'claude', 'llama', 'gemini', 'openai', 'anthropic', 'deepseek', 'mistral', 'llm', 'foundation model'], weight: 4 },\n  ai_tools: { words: ['langchain', 'rag', 'agent', 'copilot', 'cursor', 'chatbot', 'automation', 'n8n', 'api', 'sdk', 'framework', 'fine-tuning', 'prompt'], weight: 3 },\n  ai_research: { words: ['transformer', 'diffusion', 'neural', 'deep learning', 'machine learning', 'training', 'benchmark', 'artificial intelligence'], weight: 2 },\n  crypto_major: { words: ['bitcoin', 'btc', 'ethereum', 'eth', 'solana', 'sol', 'crypto', 'cryptocurrency'], weight: 4 },\n  crypto_defi: { words: ['defi', 'yield', 'staking', 'lending', 'swap', 'liquidity', 'aave', 'uniswap', 'dex'], weight: 3 },\n  crypto_infra: { words: ['blockchain', 'web3', 'layer2', 'l2', 'rollup', 'smart contract', 'dapp', 'token'], weight: 2 },\n  noise: { words: ['airdrop', 'giveaway', 'memecoin', 'shitcoin', 'presale', 'p2e', 'play-to-earn', 'celebrity'], weight: -8 },\n  spam: { words: ['sponsored', 'advertisement', 'paid partnership', 'promo code', 'discount'], weight: -10 }\n};\n\nlet score = 0;\nfor (const category in interests) {\n  const { words, weight } = interests[category];\n  const matches = words.filter(w => text.includes(w)).length;\n  score += matches * weight;\n}\n\nif ($json.topic === 'ai') score += 10;\nif ($json.topic === 'crypto') score += 10;\n\nif (score < 3) return [];\n\nreturn { ...$json, interestScore: score };"
+        "jsCode": "// Отсев неинтересных новостей. All-items режим: фильтруем сами и сохраняем pairedItem,\n// чтобы вниз по цепочке работали $('Preprocessing').item и подобные ссылки.\nconst interests = {\n  ai_models: { words: ['gpt', 'gpt-4', 'gpt-5', 'claude', 'llama', 'gemini', 'openai', 'anthropic', 'deepseek', 'mistral', 'llm', 'foundation model'], weight: 4 },\n  ai_tools: { words: ['langchain', 'rag', 'agent', 'copilot', 'cursor', 'chatbot', 'automation', 'n8n', 'api', 'sdk', 'framework', 'fine-tuning', 'prompt'], weight: 3 },\n  ai_research: { words: ['transformer', 'diffusion', 'neural', 'deep learning', 'machine learning', 'training', 'benchmark', 'artificial intelligence'], weight: 2 },\n  crypto_major: { words: ['bitcoin', 'btc', 'ethereum', 'eth', 'solana', 'sol', 'crypto', 'cryptocurrency'], weight: 4 },\n  crypto_defi: { words: ['defi', 'yield', 'staking', 'lending', 'swap', 'liquidity', 'aave', 'uniswap', 'dex'], weight: 3 },\n  crypto_infra: { words: ['blockchain', 'web3', 'layer2', 'l2', 'rollup', 'smart contract', 'dapp', 'token'], weight: 2 },\n  noise: { words: ['airdrop', 'giveaway', 'memecoin', 'shitcoin', 'presale', 'p2e', 'play-to-earn', 'celebrity'], weight: -8 },\n  spam: { words: ['sponsored', 'advertisement', 'paid partnership', 'promo code', 'discount'], weight: -10 }\n};\n\nconst items = $input.all();\nconst out = [];\nfor (let i = 0; i < items.length; i++) {\n  const j = items[i].json || {};\n  const text = ((j.sourceText || '') + ' ' + (j.title || '')).toLowerCase();\n  let score = 0;\n  for (const category in interests) {\n    const { words, weight } = interests[category];\n    const matches = words.filter(w => text.includes(w)).length;\n    score += matches * weight;\n  }\n  if (j.topic === 'ai') score += 10;\n  if (j.topic === 'crypto') score += 10;\n  if (score >= 3) out.push({ json: { ...j, interestScore: score }, pairedItem: { item: i } });\n}\nreturn out;\n"
       },
       "id": "9ca027c5-c899-4800-ae6b-f127e40aeb8b",
       "name": "Interest Pre-Filter",
@@ -392,7 +398,8 @@
     },
     {
       "parameters": {
-        "jsCode": "const preprocessing = $('Preprocessing').item.json;\nconst link = preprocessing.link || '#';\nconst title = preprocessing.title || 'Новина';\nconst imageUrl = preprocessing.imageUrl || '';\n\nfunction clip(s, max) {\n    s = String(s || '');\n    if (s.length <= max) return s;\n    return s.substring(0, max - 1) + '…';\n}\n\nconst sourceText = clip(preprocessing.sourceText || '', 400);\n\nlet html = '⚠️ <b>' + clip(title, 120).toUpperCase() + '</b>\\n\\n';\nhtml += sourceText + '\\n\\n';\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n  fullText: html,\n  imageUrl: imageUrl,\n  importance: 'Інфо',\n  link: link,\n  relevance_score: 50\n};"
+        "jsCode": "const preprocessing = $('Preprocessing').item.json;\nconst link = preprocessing.link || '#';\nconst title = preprocessing.title || 'Новина';\nconst imageUrl = preprocessing.imageUrl || '';\n\nfunction clip(s, max) {\n    s = String(s || '');\n    if (s.length <= max) return s;\n    return s.substring(0, max - 1) + '…';\n}\n\nconst sourceText = clip(preprocessing.sourceText || '', 400);\n\nlet html = '⚠️ <b>' + clip(title, 120).toUpperCase() + '</b>\\n\\n';\nhtml += sourceText + '\\n\\n';\nhtml += 'Джерело:\\n🔗 <b><a href=\"' + link + '\">Повна новина</a></b>';\n\nreturn {\n  fullText: html,\n  imageUrl: imageUrl,\n  importance: 'Інфо',\n  link: link,\n  relevance_score: 50\n};",
+        "mode": "runOnceForEachItem"
       },
       "id": "4048b331-47eb-4119-93e7-50d7da032559",
       "name": "Fallback Formatting",
@@ -407,27 +414,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Дедуп по истории: сравниваем ссылку и заголовок с уже опубликованным (workflow static data).\nconst sd = $getWorkflowStaticData('global');\nconst history = Array.isArray(sd.published) ? sd.published : [];\n\nconst STOP = new Set(['the', 'a', 'an', 'of', 'in', 'on', 'to', 'for', 'and', 'or', 'at', 'by', 'with', 'from',\n  'is', 'are', 'was', 'were', 'be', 'been', 'it', 'its', 'this', 'that', 'these', 'those', 'as', 'after',\n  'before', 'over', 'under', 'new', 'says', 'said', 'will', 'has', 'have', 'had', 'not', 'but', 'you', 'your',\n  'how', 'why', 'what', 'when', 'where', 'who', 'vs', 'via', 'into', 'out', 'up', 'down', 'more', 'most']);\n\nfunction norm(s) {\n  return String(s || '').toLowerCase()\n    .replace(/https?:\\/\\/\\S+/g, ' ')\n    .replace(/[^0-9a-zа-яіїєґ\\s]/gi, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction tokens(s) {\n  const out = new Set();\n  for (const w of norm(s).split(' ')) {\n    if (w.length > 2 && !STOP.has(w)) out.add(w);\n  }\n  return out;\n}\n\nfunction jaccard(a, b) {\n  if (!a.size || !b.size) return 0;\n  let inter = 0;\n  for (const w of a) if (b.has(w)) inter++;\n  return inter / (a.size + b.size - inter);\n}\n\nconst out = [];\nconst passed = [];\nfor (const item of $input.all()) {\n  const link = String(item.json.link || '');\n  const t = tokens(item.json.title || '');\n  let dup = false;\n  for (const h of history.concat(passed)) {\n    if (link && h && h.l === link) { dup = true; break; }\n    if (h && jaccard(t, tokens(h.t || '')) >= 0.6) { dup = true; break; }\n  }\n  if (!dup) {\n    out.push(item);\n    passed.push({ l: link, t: String(item.json.title || '') });\n  }\n}\nreturn out;"
-      },
-      "id": "883a0c5e-e810-4304-a567-4c27d2375b22",
-      "name": "Duplicate Filter",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        4896,
-        2000
-      ],
-      "alwaysOutputData": false
-    },
-    {
-      "parameters": {
-        "jsCode": "const M = 'qwen3-32b';\nconst sys = 'You are a tech-news editor covering AI and crypto. Translate news to Ukrainian. Reply ONLY with valid JSON. Fields: importance (one of 4 levels), title_uk, content_uk (3-4 sentences max), analysis_uk (one key consequence, max 200 chars), tags (array). No markdown, no reasoning, only JSON object.';\nreturn $input.all().map(item => {\n  const src = item.json?.sourceText || '';\n  const msg = sys + String.fromCharCode(10, 10) + 'News: ' + src;\n  return { json: { ...item.json, _body: { model: M, messages: [{ role: 'user', content: msg }], temperature: 0.2, max_tokens: 2000 } } };\n});"
+        "jsCode": "const M = 'qwen3-32b';\nconst sys = 'You are a tech-news editor covering AI and crypto. Translate news to Ukrainian. Reply ONLY with valid JSON. Fields: importance (one of 4 levels), relevance_score (integer 0-100: how relevant the news is to an AI/crypto professional audience), title_uk, content_uk (3-4 sentences max), analysis_uk (one key consequence, max 200 chars), tags (array). No markdown, no reasoning, only JSON object.';\nreturn $input.all().map(item => {\n  const src = item.json?.sourceText || '';\n  const msg = sys + String.fromCharCode(10, 10) + 'News: ' + src;\n  return { json: { ...item.json, _body: { model: M, messages: [{ role: 'user', content: msg }], temperature: 0.2, max_tokens: 2000 } } };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5024,
-        2000
+        4912,
+        2016
       ],
       "name": "AI Translate",
       "id": "34fc78dc-9ad7-4c1b-8772-a772c0b59c4c",
@@ -493,14 +486,15 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        5660,
-        2528
+        5552,
+        2304
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "https://serpapi.com/search.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -514,8 +508,6 @@
             }
           ]
         },
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpQueryAuth",
         "options": {}
       },
       "id": "c0000000-0000-4000-8000-000000000002",
@@ -523,36 +515,36 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        5760,
-        2608
+        5728,
+        2768
       ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
       "credentials": {
         "httpQueryAuth": {
           "id": "xzrYdOCMHGLLNiuU",
           "name": "SerpAPI (Query Auth)"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000,
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Склеиваем ответ SerpAPI с исходным item; берём первое изображение.\nlet base = {};\ntry {\n  base = $('SERP Image Fallback').item.json || {};\n} catch (e) {\n  base = { ...($json || {}) };\n}\ndelete base.serpQuery;\ndelete base.error;\nconst arr = $json.images_results;\nconst found = Array.isArray(arr) && arr.length ? (arr[0].original || arr[0].thumbnail || '') : '';\nbase.imageUrl = found || base.imageUrl || '';\nreturn [{ json: base }];\n"
+        "jsCode": "// Склеиваем ответ SerpAPI с исходным item; берём первое изображение.\nlet base = {};\ntry {\n  base = $('SERP Image Fallback').item.json || {};\n} catch (e) {\n  base = { ...($json || {}) };\n}\ndelete base.serpQuery;\ndelete base.error;\nconst arr = $json.images_results;\nconst found = Array.isArray(arr) && arr.length ? (arr[0].original || arr[0].thumbnail || '') : '';\nbase.imageUrl = found || base.imageUrl || '';\nreturn base;\n",
+        "mode": "runOnceForEachItem"
       },
       "id": "c0000000-0000-4000-8000-000000000003",
       "name": "SERP Image Merge",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5860,
-        2608
+        5968,
+        2640
       ]
     },
     {
       "parameters": {
-        "resource": "database",
         "operation": "executeQuery",
         "query": "INSERT INTO llm_usage (workflow, call_node, model, prompt_tokens, completion_tokens, total_tokens, cost_usd, ref)\nSELECT $1, $2, $3, $4, $5, COALESCE($4, 0) + COALESCE($5, 0),\n       ROUND((COALESCE($4, 0) / 1000000.0) * COALESCE(p.in_per_1m, 0)\n           + (COALESCE($5, 0) / 1000000.0) * COALESCE(p.out_per_1m, 0), 6),\n       $6\nFROM (SELECT 1 AS one) s\nLEFT JOIN llm_pricing p ON p.model = $3\nRETURNING id, cost_usd;",
         "options": {
@@ -564,19 +556,48 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        5412,
+        5424,
         2000
       ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
           "id": "KxmwIIM9tjVU936P",
           "name": "Postgres account 2"
         }
       },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "name": "Telegram (Text fallback)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        6412,
+        2376
+      ],
+      "parameters": {
+        "chatId": "@aliyrd_my_news",
+        "text": "={{ $json.fullText }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      },
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "onError": "continueRegularOutput"
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput",
+      "id": "d6d24c63-b563-42f2-82b1-f1a74f4ee0b9",
+      "webhookId": "1e2ae4cc-f815-4cc2-acee-2d6fd485df0e"
     }
   ],
   "connections": {
@@ -723,7 +744,7 @@
       "main": [
         [
           {
-            "node": "Has Image?",
+            "node": "Needs SERP Image?",
             "type": "main",
             "index": 0
           }
@@ -752,7 +773,7 @@
       "main": [
         [
           {
-            "node": "Duplicate Filter",
+            "node": "AI Translate",
             "type": "main",
             "index": 0
           }
@@ -763,7 +784,7 @@
       "main": [
         [
           {
-            "node": "Needs SERP Image?",
+            "node": "SERP Image Fallback",
             "type": "main",
             "index": 0
           }
@@ -808,17 +829,6 @@
         ]
       ]
     },
-    "Duplicate Filter": {
-      "main": [
-        [
-          {
-            "node": "AI Translate",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Needs SERP Image?": {
       "main": [
         [
@@ -853,6 +863,18 @@
         [
           {
             "node": "Has Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram (Photo)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Telegram (Text fallback)",
             "type": "main",
             "index": 0
           }
