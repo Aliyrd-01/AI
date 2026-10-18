@@ -36,7 +36,9 @@ node_modules/
 
 docs/vo/
 docs/vo_n8n/
+docs/vo_n8n_en/
 hub/assets/n8n/*_raw.webm
 
 docs/n8n_shots/
 docs/n8n_seg/
+docs/n8n_seg_en/

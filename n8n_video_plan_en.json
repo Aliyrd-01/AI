@@ -1,0 +1,158 @@
+{
+  "leadqual_demo": {
+    "workflow_id": "R6TUfWY5jcGwZupm",
+    "steps": [
+      {
+        "node": null,
+        "text": "This workflow automates the qualification and scoring of incoming B2B leads. The goal is to instantly gauge how promising a lead is, and to hand it to a manager at the right moment. Let's walk through the pipeline step by step.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\leadqual_demo_00.wav",
+        "duration": 16.07
+      },
+      {
+        "node": "Webhook",
+        "text": "Step one — intake. Leads arrive from a website form through a webhook. The source can be a custom form, Typeform, or Google Forms — the pipeline is universal and not tied to any single service.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\leadqual_demo_01.wav",
+        "duration": 15.04
+      },
+      {
+        "node": "Validate Lead",
+        "text": "Step two — contact validation. The system checks that the email and phone number are well-formed. Invalid submissions are filtered out automatically, and the team gets a system notification. This keeps junk requests out of the funnel.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\leadqual_demo_02.wav",
+        "duration": 17.13
+      },
+      {
+        "node": "Enrich Contact (Postgres)",
+        "text": "Step three — enrichment. The workflow queries the corporate database and loads the company profile: industry, business size, and the contact person's role. If the contact is already in the system, their interaction history is pulled in as well. This provides the context needed for an accurate assessment.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\leadqual_demo_03.wav",
+        "duration": 22.12
+      },
+      {
+        "node": "Qubax API A",
+        "text": "Step four — intelligent scoring. A language model rates the lead on a hundred-point scale. This is an A/B setup: two independent prompts — conservative and expanded. The first sticks strictly to the facts, the second also weighs the account's growth potential. Together they produce a more objective score.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\leadqual_demo_04.wav",
+        "duration": 22.82
+      },
+      {
+        "node": "Score > 70?",
+        "text": "Step five — hot lead routing. If the score is above seventy, a manager instantly receives a card in Telegram: contacts, company, and the scoring rationale. A promising lead never waits in a manual review queue.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\leadqual_demo_05.wav",
+        "duration": 16.77
+      },
+      {
+        "node": "Save Lead (Postgres)",
+        "text": "Step six — CRM and analytics. All data is synced to the PostgreSQL database, keeping the sales funnel up to date. At the same time, model request costs and A/B statistics are recorded — so it's clear which prompt scores more accurately.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\leadqual_demo_06.wav",
+        "duration": 19.66
+      },
+      {
+        "node": null,
+        "text": "The outcome: instant response to promising deals, transparent analytics, and fully automated routine lead qualification.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\leadqual_demo_07.wav",
+        "duration": 9.39
+      }
+    ],
+    "vo": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\leadqual_demo_vo.wav"
+  },
+  "news_demo": {
+    "workflow_id": "YAyuG9GA2jUeICG2",
+    "steps": [
+      {
+        "node": null,
+        "text": "This workflow is an autonomous news desk. The pipeline collects stories from seven sources, filters out duplicates and irrelevant notes, translates them with a language model, and publishes ready-to-read posts to Telegram — with no human involved. Let's walk through the architecture step by step.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\news_demo_00.wav",
+        "duration": 22.23
+      },
+      {
+        "node": "RSS Forklog",
+        "text": "Step one — collection. The workflow runs on a schedule and pulls fresh articles from seven topical feeds: crypto, artificial intelligence, and technology. Each source has its own schedule, so the stream of material stays even.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\news_demo_01.wav",
+        "duration": 17.87
+      },
+      {
+        "node": "Deduplication",
+        "text": "Step two — the unified deduplicator. It compares links within a batch and against the publication history: titles are matched by similarity, and the registry of processed items updates automatically. Duplicates are filtered out before any language model call — which saves tokens.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\news_demo_02.wav",
+        "duration": 20.76
+      },
+      {
+        "node": "Interest Pre-Filter",
+        "text": "Step three — topic detector and interest filter. The system determines what the piece is about — crypto or AI — and rates how interesting it is for the audience. Ads, giveaways, and junk notes are discarded; relevant material moves on.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\news_demo_03.wav",
+        "duration": 18.01
+      },
+      {
+        "node": "AI Translate",
+        "text": "Step four — AI analysis. The language model translates the piece, condenses it to three or four sentences, adds an analytical takeaway, and rates relevance on a hundred-point scale. A post is dropped if the score is below the threshold, and the request cost is logged to the usage table.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\news_demo_04.wav",
+        "duration": 21.92
+      },
+      {
+        "node": "Telegram (Photo)",
+        "text": "Step five — media and publishing. The cover image comes from the source; if it's missing or unavailable, an image search service is queried, and if that also fails the post goes out as text. The formatting: headline, summary, takeaway, tags, and a link to the original.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\news_demo_05.wav",
+        "duration": 20.5
+      },
+      {
+        "node": null,
+        "text": "The outcome: a continuous stream of filtered, translated, and structured content in Telegram — with cost control and no manual work.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\news_demo_06.wav",
+        "duration": 11.38
+      }
+    ],
+    "vo": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\news_demo_vo.wav"
+  },
+  "support_demo": {
+    "workflow_id": "r7MQeVmaInZXmyYK",
+    "steps": [
+      {
+        "node": null,
+        "text": "This workflow is a smart support desk in Telegram. It answers routine questions from a knowledge base on its own, and escalates complex cases to a human operator. Let's walk through the pipeline step by step.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\support_demo_00.wav",
+        "duration": 15.43
+      },
+      {
+        "node": "Telegram Trigger",
+        "text": "Step one — message intake. The Telegram trigger listens to the chat in real time and accepts both customer requests and operator replies. A single entry point — from there, the logic branches by role.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\support_demo_01.wav",
+        "duration": 15.79
+      },
+      {
+        "node": "Register User",
+        "text": "Step two — request registration. The user is recorded in the user_states table of the PostgreSQL database: chat ID, name, and dialog state are stored. A parameterized upsert prevents duplicates and determines how the following messages are handled.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\support_demo_02.wav",
+        "duration": 19.8
+      },
+      {
+        "node": "Classify",
+        "text": "Step three — classification. A neural classifier assigns the request to a category: a routine question that can be closed automatically, or a handoff to a human. Ambiguous cases also go to the operator — thanks to the fallback category.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\support_demo_03.wav",
+        "duration": 17.49
+      },
+      {
+        "node": "AI Response",
+        "text": "Step four — automatic answer. The workflow calls a local RAG service: hybrid search over the knowledge base finds relevant fragments, and a language model drafts the answer. The service returns the finished text along with a flag for whether the answer was found in the base.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\support_demo_04.wav",
+        "duration": 19.44
+      },
+      {
+        "node": "RAG Answered?",
+        "text": "Step five — quality check. If the answer was found in the knowledge base, it goes straight to the customer. If the information isn't there, the pipeline doesn't make things up: the request is honestly escalated to a human operator.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\support_demo_05.wav",
+        "duration": 16.79
+      },
+      {
+        "node": "Alert Operator",
+        "text": "Step six — the operator's side. An alert with the customer's ID and the question text is sent to Telegram. To reply, the operator uses Telegram's Reply on the alert — the system extracts the ID and delivers the answer to the customer. The close command ends the dialog and resets the mode back to the bot.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\support_demo_06.wav",
+        "duration": 23.66
+      },
+      {
+        "node": null,
+        "text": "The outcome: routine questions are closed instantly and without a human, while complex requests are never lost — they reach the operator together with the context. Every dialog's state is stored in PostgreSQL.",
+        "audio": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\support_demo_07.wav",
+        "duration": 15.98
+      }
+    ],
+    "vo": "D:\\AI\\portfolio\\docs\\vo_n8n_en\\support_demo_vo.wav"
+  }
+}
