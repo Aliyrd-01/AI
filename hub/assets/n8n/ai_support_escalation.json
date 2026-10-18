@@ -433,8 +433,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO user_states (chat_id, username, state) VALUES ({{ $json.message.chat.id }}, '{{ $json.message.from.username }}', 'bot') ON CONFLICT (chat_id) DO UPDATE SET username = EXCLUDED.username RETURNING state",
-        "options": {}
+        "query": "INSERT INTO user_states (chat_id, username, state)\nVALUES ($1, $2, $3)\nON CONFLICT (chat_id) DO UPDATE SET username = EXCLUDED.username\nRETURNING state",
+        "options": {
+          "queryReplacement": "={{ [$json.message.chat.id, $json.message.from.username, 'bot'] }}"
+        }
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
@@ -510,6 +512,30 @@
           "name": "Qubax (OpenAI API)"
         }
       }
+    },
+    {
+      "parameters": {
+        "chatId": "=YOUR_OPERATOR_CHAT_ID",
+        "text": "=Чтобы ответить пользователю — сделайте Reply на алерт с его (ID: …) в этом чате. Тогда ответ доставится клиенту.",
+        "additionalFields": {}
+      },
+      "id": "reply-hint-operator",
+      "name": "Reply Hint to Operator",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -304,
+        958
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "7PplDwm237hUK507",
+          "name": "Telegram account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "webhookId": "00fa5413-322a-4f47-86d1-ad143f877256"
     }
   ],
   "connections": {
@@ -558,6 +584,13 @@
         [
           {
             "node": "Is Close",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply Hint to Operator",
             "type": "main",
             "index": 0
           }
@@ -714,7 +747,9 @@
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false,
-    "errorWorkflow": "UPFhcOFdKize38h9"
+    "errorWorkflow": "UPFhcOFdKize38h9",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
   },
   "pinData": {
     "Telegram Trigger": [
