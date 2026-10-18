@@ -129,15 +129,17 @@ FLOWS = [
                   "нативный Text Classifier (AI-нода n8n + Qubax Chat Model) решает simple / operator, "
                   "с fallback «other» → простые вопросы закрывает "
                   "локальный RAG-сервис (FastAPI + Qdrant), сложные (оплаты, жалобы, недовольный "
-                  "клиент) переводят пользователя в режим оператора с алертом и полной историей; "
-                  "есть закрытие диалога и сброс в режим бота.",
+                  "клиент) переводят пользователя в режим оператора; оператору уходит алерт "
+                  "с ID пользователя и текстом вопроса, а ответ доставляется обычным Reply "
+                  "на алерт; есть закрытие диалога и сброс в режим бота.",
             "en": "Telegram trigger → the message and the user state are written to Postgres "
                   "(user_states) → in operator mode the dialog is forwarded straight to the human → "
                   "a native Text Classifier node (n8n AI node + Qubax Chat Model) decides simple / "
                   "operator with an 'other' fallback → simple questions are answered by a "
                   "local RAG service (FastAPI + Qdrant), complex ones (payments, complaints, angry "
-                  "customer) switch the user to operator mode with an alert and the full history; "
-                  "dialog close and reset-to-bot are supported.",
+                  "customer) switch the user to operator mode; the operator gets an alert with "
+                  "the user ID and the question text, and a plain Reply to the alert "
+                  "delivers the answer; dialog close and reset-to-bot are supported.",
         },
         "tech_base": "n8n · Telegram API · Postgres (user_states) · AI nodes (Text Classifier) · RAG (FastAPI + Qdrant) · human handoff",
         "video": "support_demo.mp4",
