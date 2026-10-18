@@ -149,15 +149,15 @@
         256
       ],
       "webhookId": "09f822f8-2760-4742-8c2e-326e39a3dfdf",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
       "credentials": {
         "telegramApi": {
           "id": "7PplDwm237hUK507",
           "name": "Telegram account"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000
+      }
     },
     {
       "parameters": {
@@ -211,14 +211,13 @@
         "method": "POST",
         "url": "https://api.qubax.ai/v1/chat/completions",
         "authentication": "genericCredentialType",
-        "sendHeaders": false,
+        "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ $json._body }}",
         "options": {
           "timeout": 30000
-        },
-        "genericAuthType": "httpHeaderAuth"
+        }
       },
       "id": "node-http-a",
       "name": "Qubax API A",
@@ -228,15 +227,15 @@
         2208,
         -208
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "httpHeaderAuth": {
           "id": "GGcWGyo9YiJcgCqj",
           "name": "Qubax AI"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 5000
+      }
     },
     {
       "parameters": {
@@ -269,14 +268,13 @@
         "method": "POST",
         "url": "https://api.qubax.ai/v1/chat/completions",
         "authentication": "genericCredentialType",
-        "sendHeaders": false,
+        "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ $json._body }}",
         "options": {
           "timeout": 30000
-        },
-        "genericAuthType": "httpHeaderAuth"
+        }
       },
       "id": "node-http-b",
       "name": "Qubax API B",
@@ -286,15 +284,15 @@
         2208,
         208
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "httpHeaderAuth": {
           "id": "GGcWGyo9YiJcgCqj",
           "name": "Qubax AI"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 5000
+      }
     },
     {
       "parameters": {
@@ -374,15 +372,15 @@
         -208
       ],
       "webhookId": "9c4fdee0-c26d-4f54-855f-ffc6d586d7d1",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
       "credentials": {
         "telegramApi": {
           "id": "7PplDwm237hUK507",
           "name": "Telegram account"
         }
-      },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000
+      }
     },
     {
       "parameters": {
@@ -393,8 +391,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3600,
-        208
+        3504,
+        352
       ]
     },
     {
@@ -406,7 +404,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4160,
+        4432,
         208
       ]
     },
@@ -414,9 +412,9 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "lead-received",
+        "authentication": "basicAuth",
         "responseMode": "lastNode",
-        "options": {},
-        "authentication": "basicAuth"
+        "options": {}
       },
       "id": "node-webhook",
       "name": "Webhook",
@@ -436,7 +434,6 @@
     },
     {
       "parameters": {
-        "resource": "database",
         "operation": "executeQuery",
         "query": "WITH input AS (\n  SELECT $1::text AS email, $2::text AS email_domain, $3::text AS company, $4::text AS name,\n         $5::text AS phone, $6::text AS position, $7::text AS message, $8::text AS source, $9::text AS lead_id\n),\ncontact_lookup AS (\n  SELECT c.name AS contact_name, c.role AS contact_role, c.phone AS contact_phone,\n         co.name AS company_name, co.industry AS company_industry, co.size AS company_size,\n         co.domain AS company_domain, TRUE AS contact_found, TRUE AS company_found\n  FROM input i\n  JOIN leads_contacts c ON c.email = i.email\n  LEFT JOIN leads_companies co ON co.id = c.company_id\n  LIMIT 1\n),\ncompany_lookup AS (\n  SELECT NULL::text AS contact_name, NULL::text AS contact_role, NULL::text AS contact_phone,\n         co.name AS company_name, co.industry AS company_industry, co.size AS company_size,\n         co.domain AS company_domain, FALSE AS contact_found, TRUE AS company_found\n  FROM input i\n  JOIN leads_companies co ON (co.domain = i.email_domain OR LOWER(co.name) = LOWER(i.company))\n  WHERE NOT EXISTS (SELECT 1 FROM leads_contacts c2 WHERE c2.email = i.email)\n  LIMIT 1\n),\npick AS (\n  SELECT * FROM contact_lookup\n  UNION ALL\n  SELECT * FROM company_lookup\n  LIMIT 1\n)\nSELECT i.name, i.email, i.phone, i.position, i.message, i.source, i.lead_id AS \"leadId\",\n       NULLIF(p.contact_name, '') AS \"enrichedName\",\n       NULLIF(p.contact_role, '') AS \"enrichedRole\",\n       COALESCE(NULLIF(p.company_name, ''), i.company, '') AS \"enrichedCompany\",\n       NULLIF(p.company_industry, '') AS \"enrichedIndustry\",\n       NULLIF(p.company_size, '') AS \"enrichedSize\",\n       NULLIF(p.company_domain, '') AS \"enrichedDomain\",\n       COALESCE(p.contact_found, FALSE) AS \"contactFound\",\n       COALESCE(p.company_found, FALSE) AS \"companyFound\"\nFROM input i\nLEFT JOIN pick p ON TRUE;",
         "options": {
@@ -460,7 +457,6 @@
     },
     {
       "parameters": {
-        "resource": "database",
         "operation": "executeQuery",
         "query": "INSERT INTO leads_leads (lead_id, name, email, phone, company, company_industry, company_size,\n  role, source, message, lead_score, lead_tier, priority, prompt_version, status, next_action)\nVALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)\nON CONFLICT (lead_id) DO UPDATE SET\n  name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone, company = EXCLUDED.company,\n  company_industry = EXCLUDED.company_industry, company_size = EXCLUDED.company_size, role = EXCLUDED.role,\n  source = EXCLUDED.source, message = EXCLUDED.message, lead_score = EXCLUDED.lead_score,\n  lead_tier = EXCLUDED.lead_tier, priority = EXCLUDED.priority, prompt_version = EXCLUDED.prompt_version,\n  status = EXCLUDED.status, next_action = EXCLUDED.next_action, updated_at = NOW()\nRETURNING lead_id, lead_score, lead_tier, prompt_version, status;",
         "options": {
@@ -472,8 +468,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        3808,
-        208
+        3744,
+        320
       ],
       "credentials": {
         "postgres": {
@@ -484,7 +480,6 @@
     },
     {
       "parameters": {
-        "resource": "database",
         "operation": "executeQuery",
         "query": "INSERT INTO llm_usage (workflow, call_node, model, prompt_tokens, completion_tokens, total_tokens, cost_usd, ref)\nSELECT $1, $2, $3, $4, $5, COALESCE($4, 0) + COALESCE($5, 0),\n       ROUND((COALESCE($4, 0) / 1000000.0) * COALESCE(p.in_per_1m, 0)\n           + (COALESCE($5, 0) / 1000000.0) * COALESCE(p.out_per_1m, 0), 6),\n       $6\nFROM (SELECT 1 AS one) s\nLEFT JOIN llm_pricing p ON p.model = $3\nRETURNING id, cost_usd;",
         "options": {
@@ -496,23 +491,22 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        3960,
-        208
+        3984,
+        320
       ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
           "id": "KxmwIIM9tjVU936P",
           "name": "Postgres account 2"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000,
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "resource": "database",
         "operation": "executeQuery",
         "query": "SELECT prompt_version AS arm, COUNT(*)::int AS n, ROUND(AVG(lead_score)::numeric, 1)::float AS avg_score\nFROM leads_leads\nWHERE prompt_version IN ('A', 'B')\nGROUP BY prompt_version\nORDER BY prompt_version;",
         "options": {
@@ -524,18 +518,18 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        4060,
-        208
+        4208,
+        320
       ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
       "credentials": {
         "postgres": {
           "id": "KxmwIIM9tjVU936P",
           "name": "Postgres account 2"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 5000,
       "onError": "continueRegularOutput"
     }
   ],

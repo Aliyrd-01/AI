@@ -84,7 +84,7 @@ FLOWS = [
                   "LLM step's cost (usage → $) is logged to llm_usage. No human in the loop.",
         },
         "tech_base": "n8n · 7 × RSS · Code (JS) · Qubax · og:image + SerpAPI fallback · cost tracking · Telegram",
-        "video": "news_demo.mp4",
+        "video": {"ru": "news_demo.mp4", "en": "news_demo_en.mp4"},
         "images": [],
         "diagram_h": 170,
     },
@@ -113,7 +113,7 @@ FLOWS = [
                   "returns a live A/B summary (n and avg score per arm, current winner) plus cost_usd.",
         },
         "tech_base": "n8n · Webhook (Basic Auth) · Postgres CRM (native nodes, params) · A/B prompt testing · cost tracking · Telegram",
-        "video": "leadqual_demo.mp4",
+        "video": {"ru": "leadqual_demo.mp4", "en": "leadqual_demo_en.mp4"},
         "images": [],
         "diagram_h": 210,
     },
@@ -142,7 +142,7 @@ FLOWS = [
                   "delivers the answer; dialog close and reset-to-bot are supported.",
         },
         "tech_base": "n8n · Telegram API · Postgres (user_states) · AI nodes (Text Classifier) · RAG (FastAPI + Qdrant) · human handoff",
-        "video": "support_demo.mp4",
+        "video": {"ru": "support_demo.mp4", "en": "support_demo_en.mp4"},
         "images": [],
         "diagram_h": 310,
     },
@@ -313,11 +313,13 @@ else:
     if feeds:
         st.caption(f"{T['feeds']}: " + ", ".join(str(x) for x in feeds))
 
-    if meta.get("video"):
-        vpath = os.path.join(ASSETS, meta["video"])
-        if os.path.exists(vpath):
+    vfiles = meta.get("video") or {}
+    for cand in (vfiles.get(lang), vfiles.get("ru")):
+        vpath = os.path.join(ASSETS, cand) if cand else None
+        if vpath and os.path.exists(vpath):
             st.markdown(f"**{T['demo']}**")
             st.video(vpath)
+            break
 
     st.markdown(f"**{T['diagram']}**")
     render_mermaid(to_mermaid(wf), height=meta.get("diagram_h", 420), font_size=16)
