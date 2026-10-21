@@ -1,0 +1,15 @@
+{
+  "created": "2026-10-21T12:50:26",
+  "models": {
+    "triage": "qwen3-32b",
+    "planner": "qwen3-235b-a22b-2507",
+    "coder": "glm-5.2",
+    "reporter": "glm-4.7-flash"
+  },
+  "baseline_passed": false,
+  "final_passed": true,
+  "files_changed": [
+    "inventory.py",
+    "pricing.py"
+  ]
+}

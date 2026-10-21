@@ -1,0 +1,12 @@
+ACME SUPPLY CO.
+Invoice No: INV-1001
+Date: 2026-09-12
+Bill To: Northwind Traders
+
+Items:
+1. Widget A - qty 10 x $12.50 = $125.00
+2. Widget B - qty 4 x $30.00 = $120.00
+
+Subtotal: $245.00
+Tax (8%): $19.60
+Total: $264.60

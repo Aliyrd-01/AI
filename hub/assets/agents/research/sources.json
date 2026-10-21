@@ -1,0 +1,86 @@
+{
+  "question": "Как оценивать качество RAG-систем в продакшене?",
+  "created": "2026-10-20T19:42:25",
+  "models": {
+    "triage": "qwen3-32b",
+    "planner": "qwen3-235b-a22b-2507",
+    "coder": "glm-5.2",
+    "reporter": "glm-4.7-flash"
+  },
+  "tasks": [
+    {
+      "subtask": "Методы оценки точности ответов RAG-системы",
+      "query": "evaluation metrics for RAG system answer accuracy"
+    },
+    {
+      "subtask": "Мониторинг производительности RAG в реальном времени",
+      "query": "monitoring RAG system performance in production"
+    },
+    {
+      "subtask": "Оценка релевантности извлеченных фрагментов в RAG",
+      "query": "relevance assessment of retrieved chunks in RAG"
+    },
+    {
+      "subtask": "Автоматические и ручные метрики для RAG-систем",
+      "query": "automatic and manual evaluation metrics for RAG systems"
+    }
+  ],
+  "sources": [
+    {
+      "id": 1,
+      "kind": "local",
+      "title": "Локальный документ: rag_eval_notes.md",
+      "url": "",
+      "file": "sources/01_rag_eval_notes.md"
+    },
+    {
+      "id": 2,
+      "kind": "local",
+      "title": "Локальный документ: project_rag_notes.md",
+      "url": "",
+      "file": "sources/02_project_rag_notes.md"
+    },
+    {
+      "id": 3,
+      "kind": "web",
+      "title": "Evaluation Metrics for Retrieval-Augmented Generation (RAG) Systems",
+      "url": "https://www.geeksforgeeks.org/nlp/evaluation-metrics-for-retrieval-augmented-generation-rag-systems/",
+      "file": "sources/03_Evaluation_Metrics_for_Retrieval-Augmented_Generation_RAG_Sy.md"
+    },
+    {
+      "id": 4,
+      "kind": "web",
+      "title": "A complete guide to RAG evaluation: metrics, testing and best practices",
+      "url": "https://www.evidentlyai.com/llm-guide/rag-evaluation",
+      "file": "sources/04_A_complete_guide_to_RAG_evaluation_metrics_testing_and_best.md"
+    },
+    {
+      "id": 5,
+      "kind": "web",
+      "title": "Result Evaluation for RAG: Metrics & Best Practices | IBM",
+      "url": "https://www.ibm.com/think/architectures/rag-cookbook/result-evaluation",
+      "file": "sources/05_Result_Evaluation_for_RAG_Metrics_Best_Practices_IBM.md"
+    },
+    {
+      "id": 6,
+      "kind": "web",
+      "title": "Advanced RAG Evaluation & Monitoring | Production Systems",
+      "url": "https://apxml.com/courses/optimizing-rag-for-production/chapter-6-advanced-rag-evaluation-monitoring",
+      "file": "sources/06_Advanced_RAG_Evaluation_Monitoring_Production_Systems.md"
+    },
+    {
+      "id": 7,
+      "kind": "web",
+      "title": "Monitoring and Evaluating RAG System Performance",
+      "url": "https://article.chatnexus.io/knowledge-base/monitoring-and-evaluating-rag-system-performance/",
+      "file": "sources/07_Monitoring_and_Evaluating_RAG_System_Performance.md"
+    },
+    {
+      "id": 8,
+      "kind": "web",
+      "title": "Monitor Your RAG in Production | Ragas",
+      "url": "https://docs.ragas.io/en/v0.1.21/getstarted/monitoring.html",
+      "file": "sources/08_Monitor_Your_RAG_in_Production_Ragas.md"
+    }
+  ]
+}

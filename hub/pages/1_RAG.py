@@ -88,6 +88,8 @@ T = {
         "download": "Скачать .md",
         "cache_hit": "из кэша (без пересчёта)",
         "cache_miss": "поиск заново",
+        "obs": "🔭 Observability: LangSmith (EU) — подключается опционально "
+               "(`LANGCHAIN_TRACING_V2`, eu.api.smith.langchain.com)",
     },
     "en": {
         "caption": "dense + sparse (RRF) → rerank → LLM with citations · Qdrant Cloud · FastEmbed · LangChain",
@@ -136,6 +138,8 @@ T = {
         "download": "Download .md",
         "cache_hit": "cache hit (no recompute)",
         "cache_miss": "fresh retrieval",
+        "obs": "🔭 Observability: LangSmith (EU) — optional "
+               "(`LANGCHAIN_TRACING_V2`, eu.api.smith.langchain.com)",
         "bench_r": "Retrieval benchmarks",
         "bench_g": "Generation",
         "no_results": "No results — run `python hub/eval/eval_retrieval.py`.",
@@ -574,6 +578,7 @@ with st.sidebar:
 
 st.title("🔎 RAG — Production Demo")
 st.caption(T["caption"])
+st.caption(T["obs"])
 
 if dialog_mode:
     from common import describe_llm

@@ -64,23 +64,35 @@ FLOWS = [
         "short": {"ru": "Автономная новостная редакция", "en": "Autonomous news desk"},
         "desc": {
             "ru": "7 RSS-лент (Forklog, Habr, Habr AI, TechCrunch AI, MIT Tech Review, "
-                  "Decoder, DailyAI) → единый дедуп: ссылки в пачке + история публикаций "
-                  "(similarity по заголовкам, реестр в staticData) → очистка текста и извлечение "
-                  "обложки (enclosure / media:content / og:image, при промахе — SERP fallback) → "
-                  "детектор темы (crypto / AI) и предфильтр по интересам → LLM переводит и сжимает "
+                  "Decoder, DailyAI)\n\n"
+                  "→ единый дедуп: ссылки в пачке + история публикаций "
+                  "(similarity по заголовкам, реестр в staticData)\n\n"
+                  "→ очистка текста и извлечение "
+                  "обложки (enclosure / media:content / og:image, при промахе — SERP fallback)\n\n"
+                  "→ детектор темы (crypto / AI) и предфильтр по интересам\n\n"
+                  "→ LLM переводит и сжимает "
                   "материал в строгий JSON (важность, релевантность, заголовок, 3–4 предложения, "
-                  "вывод, теги; temperature 0.2 для стабильного JSON) → форматирование поста (HTML) → "
-                  "порог релевантности (relevance_score от LLM) → публикация в Telegram "
+                  "вывод, теги; temperature 0.2 для стабильного JSON)\n\n"
+                  "→ форматирование поста (HTML)\n\n"
+                  "→ порог релевантности (relevance_score от LLM)\n\n"
+                  "→ публикация в Telegram "
                   "(фото или текст); стоимость LLM-шага (usage → $) пишется в llm_usage. "
                   "Человека в цикле нет.",
             "en": "7 RSS feeds (Forklog, Habr, Habr AI, TechCrunch AI, MIT Tech Review, "
-                  "Decoder, DailyAI) → unified dedup: in-batch links + publication history "
-                  "(title similarity, registry in staticData) → text cleaning and cover extraction "
-                  "(enclosure / media:content / og:image, SERP fallback on miss) → topic detector "
-                  "(crypto / AI) and interest pre-filter → an LLM translates and condenses the piece "
+                  "Decoder, DailyAI)\n\n"
+                  "→ unified dedup: in-batch links + publication history "
+                  "(title similarity, registry in staticData)\n\n"
+                  "→ text cleaning and cover extraction "
+                  "(enclosure / media:content / og:image, SERP fallback on miss)\n\n"
+                  "→ topic detector "
+                  "(crypto / AI) and interest pre-filter\n\n"
+                  "→ an LLM translates and condenses the piece "
                   "into strict JSON (importance, relevance, title, 3–4 sentences, takeaway, tags; "
-                  "temperature 0.2 for stable JSON) → post formatting (HTML) → relevance gate "
-                  "(relevance_score from the LLM) → publish to Telegram (photo or text post); the "
+                  "temperature 0.2 for stable JSON)\n\n"
+                  "→ post formatting (HTML)\n\n"
+                  "→ relevance gate "
+                  "(relevance_score from the LLM)\n\n"
+                  "→ publish to Telegram (photo or text post); the "
                   "LLM step's cost (usage → $) is logged to llm_usage. No human in the loop.",
         },
         "tech_base": "n8n · 7 × RSS · Code (JS) · Qubax · og:image + SerpAPI fallback · cost tracking · Telegram",
@@ -95,21 +107,33 @@ FLOWS = [
         "short": {"ru": "B2B-квалификация лидов с A/B-тестом промптов",
                   "en": "B2B lead qualification with A/B prompt testing"},
         "desc": {
-            "ru": "Лид приходит с веб-формы (webhook, Basic Auth) → валидация email/телефона → обогащение "
-                  "из Postgres-CRM нативной нодой (контакт/компания, параметризованный SQL $1..$9) → "
-                  "A/B два промпта скорринга "
-                  "(conservative vs aggressive) → JSON-score (0–100, tier, next action) → "
-                  "ветка «hot > 70» → Telegram-алерт + upsert лида в CRM (нативная Postgres-нода, "
-                  "INSERT … ON CONFLICT, параметры $1..$16) → стоимость скоринга (usage → $ через "
-                  "прайс-таблицу) в llm_usage → в ответ вебхука идёт "
+            "ru": "Лид приходит с веб-формы (webhook, Basic Auth)\n\n"
+                  "→ валидация email/телефона\n\n"
+                  "→ обогащение "
+                  "из Postgres-CRM нативной нодой (контакт/компания, параметризованный SQL $1..$9)\n\n"
+                  "→ A/B два промпта скорринга "
+                  "(conservative vs aggressive)\n\n"
+                  "→ JSON-score (0–100, tier, next action)\n\n"
+                  "→ ветка «hot > 70»\n\n"
+                  "→ Telegram-алерт + upsert лида в CRM (нативная Postgres-нода, "
+                  "INSERT … ON CONFLICT, параметры $1..$16)\n\n"
+                  "→ стоимость скоринга (usage → $ через "
+                  "прайс-таблицу) в llm_usage\n\n"
+                  "→ в ответ вебхука идёт "
                   "живая сводка A/B (n и средний скор каждой руки, текущий победитель) и cost_usd.",
-            "en": "A lead arrives from a web form (webhook, Basic Auth) → email/phone validation → enrichment "
-                  "via native Postgres nodes against the CRM (contact/company, parameterized $1..$9 SQL) → "
-                  "A/B testing of two scoring "
-                  "prompts (conservative vs aggressive) → JSON score (0–100, tier, next action) → "
-                  "hot > 70 branch → Telegram alert + lead upsert into the CRM (native Postgres node, "
-                  "INSERT … ON CONFLICT, $1..$16 params) → scoring cost (usage → $ via a pricing "
-                  "table) logged to llm_usage → the webhook response "
+            "en": "A lead arrives from a web form (webhook, Basic Auth)\n\n"
+                  "→ email/phone validation\n\n"
+                  "→ enrichment "
+                  "via native Postgres nodes against the CRM (contact/company, parameterized $1..$9 SQL)\n\n"
+                  "→ A/B testing of two scoring "
+                  "prompts (conservative vs aggressive)\n\n"
+                  "→ JSON score (0–100, tier, next action)\n\n"
+                  "→ hot > 70 branch\n\n"
+                  "→ Telegram alert + lead upsert into the CRM (native Postgres node, "
+                  "INSERT … ON CONFLICT, $1..$16 params)\n\n"
+                  "→ scoring cost (usage → $ via a pricing "
+                  "table) logged to llm_usage\n\n"
+                  "→ the webhook response "
                   "returns a live A/B summary (n and avg score per arm, current winner) plus cost_usd.",
         },
         "tech_base": "n8n · Webhook (Basic Auth) · Postgres CRM (native nodes, params) · A/B prompt testing · cost tracking · Telegram",
@@ -124,18 +148,24 @@ FLOWS = [
         "short": {"ru": "Интеллектуальная техподдержка с передачей оператору",
                   "en": "Smart support desk with human handoff"},
         "desc": {
-            "ru": "Telegram-триггер → сообщение и состояние пользователя пишутся в Postgres "
-                  "(user_states) → в режиме оператора диалог сразу пересылается оператору → "
-                  "нативный Text Classifier (AI-нода n8n + Qubax Chat Model) решает simple / operator, "
-                  "с fallback «other» → простые вопросы закрывает "
+            "ru": "Telegram-триггер\n\n"
+                  "→ сообщение и состояние пользователя пишутся в Postgres "
+                  "(user_states)\n\n"
+                  "→ в режиме оператора диалог сразу пересылается оператору\n\n"
+                  "→ нативный Text Classifier (AI-нода n8n + Qubax Chat Model) решает simple / operator, "
+                  "с fallback «other»\n\n"
+                  "→ простые вопросы закрывает "
                   "локальный RAG-сервис (FastAPI + Qdrant), сложные (оплаты, жалобы, недовольный "
                   "клиент) переводят пользователя в режим оператора; оператору уходит алерт "
                   "с ID пользователя и текстом вопроса, а ответ доставляется обычным Reply "
                   "на алерт; есть закрытие диалога и сброс в режим бота.",
-            "en": "Telegram trigger → the message and the user state are written to Postgres "
-                  "(user_states) → in operator mode the dialog is forwarded straight to the human → "
-                  "a native Text Classifier node (n8n AI node + Qubax Chat Model) decides simple / "
-                  "operator with an 'other' fallback → simple questions are answered by a "
+            "en": "Telegram trigger\n\n"
+                  "→ the message and the user state are written to Postgres "
+                  "(user_states)\n\n"
+                  "→ in operator mode the dialog is forwarded straight to the human\n\n"
+                  "→ a native Text Classifier node (n8n AI node + Qubax Chat Model) decides simple / "
+                  "operator with an 'other' fallback\n\n"
+                  "→ simple questions are answered by a "
                   "local RAG service (FastAPI + Qdrant), complex ones (payments, complaints, angry "
                   "customer) switch the user to operator mode; the operator gets an alert with "
                   "the user ID and the question text, and a plain Reply to the alert "
@@ -297,6 +327,7 @@ if not wf:
 else:
     llm_stack = detect_llm_stack(wf)
     tech = meta["tech_base"] + (f" · {T['llm']}: " + ", ".join(llm_stack) if llm_stack else "")
+    st.markdown("<div style='height: 1rem'></div>", unsafe_allow_html=True)
     st.caption(f"**{T['tech']}:** {tech}")
 
     n_nodes = len(wf.get("nodes", []))

@@ -1,0 +1,76 @@
+{
+  "invoice_1001.txt": {
+    "vendor": "ACME SUPPLY CO.",
+    "invoice_no": "INV-1001",
+    "date": "2026-09-12",
+    "currency": "USD",
+    "items": [
+      {
+        "description": "Widget A",
+        "qty": 10,
+        "unit_price": 12.5
+      },
+      {
+        "description": "Widget B",
+        "qty": 4,
+        "unit_price": 30.0
+      }
+    ],
+    "subtotal": 245.0,
+    "tax": 19.6,
+    "total": 264.6
+  },
+  "invoice_1002.txt": {
+    "vendor": "Blue Harbor Consulting LLC",
+    "invoice_no": "INV-1002",
+    "date": "2026-09-15",
+    "currency": "USD",
+    "items": [
+      {
+        "description": "Consulting hours",
+        "qty": 12,
+        "unit_price": 95.0
+      }
+    ],
+    "subtotal": 1140.0,
+    "tax": 228.0,
+    "total": 1368.0
+  },
+  "invoice_1003.docx": {
+    "vendor": "Greenleaf Analytics GmbH",
+    "invoice_no": "INV-1003",
+    "date": "2026-09-18",
+    "currency": "USD",
+    "items": [
+      {
+        "description": "Data pipeline audit",
+        "qty": 1,
+        "unit_price": 2000.0
+      },
+      {
+        "description": "Support plan",
+        "qty": 3,
+        "unit_price": 150.0
+      }
+    ],
+    "subtotal": 2450.0,
+    "tax": 245.0,
+    "total": 2695.0
+  },
+  "invoice_1004.txt": {
+    "vendor": "Blue Harbor Consulting LLC",
+    "invoice_no": "INV-1002",
+    "date": "2026-09-18",
+    "currency": "USD",
+    "items": [
+      {
+        "description": "Consulting hours",
+        "qty": 5,
+        "unit_price": 95.0
+      }
+    ],
+    "subtotal": 475.0,
+    "tax": 95.0,
+    "total": 600.0
+  }
+}

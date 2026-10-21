@@ -1,0 +1,45 @@
+F.F...F                                                                  [100%]
+================================== FAILURES ===================================
+_____________________ test_add_item_accumulates_existing ______________________
+
+    def test_add_item_accumulates_existing():
+        stock = {"widget": 2}
+        add_item(stock, "widget", 3)
+>       assert stock["widget"] == 5
+E       assert 3 == 5
+
+tests\test_inventory.py:10: AssertionError
+___________________ test_remove_item_rejects_negative_stock ___________________
+
+    def test_remove_item_rejects_negative_stock():
+        stock = {"widget": 2}
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_inventory.py:21: Failed
+_______________________ test_total_value_missing_price ________________________
+
+    def test_total_value_missing_price():
+        with pytest.raises(ValueError):
+>           total_value({"a": 2, "b": 3}, {"a": 10.0})
+
+tests\test_inventory.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+stock = {'a': 2, 'b': 3}, prices = {'a': 10.0}
+
+    def total_value(stock, prices):
+        """����� qty * price �� ���� �������� ������."""
+        total = 0.0
+        for name, qty in stock.items():
+>           total += qty * prices[name]
+                           ^^^^^^^^^^^^
+E           KeyError: 'b'
+
+pricing.py:8: KeyError
+=========================== short test summary info ===========================
+FAILED tests\test_inventory.py::test_add_item_accumulates_existing - assert 3...
+FAILED tests\test_inventory.py::test_remove_item_rejects_negative_stock - Fai...
+FAILED tests\test_inventory.py::test_total_value_missing_price - KeyError: 'b'
+3 failed, 4 passed in 1.87s

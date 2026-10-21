@@ -1,0 +1,15 @@
+{
+  "created": "2026-10-21T17:49:38",
+  "models": {
+    "triage": "qwen3-32b",
+    "planner": "qwen3-235b-a22b-2507",
+    "coder": "glm-5.2",
+    "reporter": "glm-4.7-flash"
+  },
+  "documents": 4,
+  "ok": 2,
+  "check": 2,
+  "valid_totals": {
+    "USD": 2959.6
+  }
+}
