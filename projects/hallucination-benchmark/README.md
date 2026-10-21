@@ -10,14 +10,14 @@
 
 **Одна модель:**
 ```
-cd D:\workspace\hallucination-benchmark
+cd hallucination-benchmark
 python test_truthfulqa.py
 ```
 Какая модель запустится — написано в CONFIG в начале файла.
 
 **Все модели сразу:**
 ```
-cd D:\workspace\hallucination-benchmark
+cd hallucination-benchmark
 python test_all_zen.py
 ```
 
@@ -29,7 +29,7 @@ python test_all_zen.py
 **BBH** — 12 задач на логику (даты, дедукция, спорт).
 
 ```
-cd D:\workspace\hallucination-benchmark
+cd hallucination-benchmark
 python test_gsm_bbh.py
 ```
 

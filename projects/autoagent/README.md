@@ -77,7 +77,7 @@ FN_CALL=True                   # Qubax-модель поддерживает Ope
 ## Структура
 
 ```
-D:\workspace\AutoAgent\
+AutoAgent\
 ├── autoagent/           # фреймворк (оригинал HKUDS, с правками)
 ├── evaluation/          # заглушка (нужна cli.py)
 ├── loop_utils/          # заглушка (нужна cli.py)

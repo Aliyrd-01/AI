@@ -2,7 +2,7 @@ import os, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import auto_zen as az
 
-path = r"D:\trading\landing2\CryptoInsightX1\CryptoInsightX\crypto-analyzer\trading_app.py"
+path = os.getenv("BUGTEST_PATH", "trading_app.py")
 code = az.read_file(path)
 bug3 = ("3. В функции normalize_symbol стейблкоин BUSD ошибочно интерпретируется как пара B/USD. "
         "Нужно добавить BUSD в known_quotes и проверять до суффиксного разбиения.")

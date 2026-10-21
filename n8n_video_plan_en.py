@@ -173,7 +173,8 @@ def build():
             a = os.path.join(VO_DIR, f"{key}_{i:02d}.wav")
             tts(st["text"], a)
             d = duration(a)
-            steps.append({"node": st["node"], "text": st["text"], "audio": a,
+            steps.append({"node": st["node"], "text": st["text"],
+                          "audio": os.path.relpath(a, HERE).replace("\\", "/"),
                           "duration": round(d + 0.8, 2)})
             audios.append(a)
         lst = os.path.join(VO_DIR, f"concat_{key}.txt")
@@ -184,7 +185,8 @@ def build():
         subprocess.run([FFMPEG, "-y", "-f", "concat", "-safe", "0", "-i", lst, vo],
                        capture_output=True, text=True)
         total = sum(s["duration"] for s in steps)
-        plan[key] = {"workflow_id": spec["workflow_id"], "steps": steps, "vo": vo}
+        plan[key] = {"workflow_id": spec["workflow_id"], "steps": steps,
+                     "vo": os.path.relpath(vo, HERE).replace("\\", "/")}
         print(f"{key}: {len(steps)} steps, total ~{total:.0f}s ({total/60:.1f} min)")
     with open(PLAN, "w", encoding="utf-8") as f:
         json.dump(plan, f, ensure_ascii=False, indent=2)
