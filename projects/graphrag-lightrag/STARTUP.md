@@ -31,7 +31,7 @@ docker start lightrag-runner
 ## Структура
 
 ```
-<root>\GraphRAG_LightRag\lightrag-test\
+lightrag-test\
 ├── .env              # конфиг (модели, URL)
 ├── rag_storage/      # векторные индексы
 ├── inputs/           # исходные документы

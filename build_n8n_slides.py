@@ -33,6 +33,8 @@ def build(key):
     for i, st in enumerate(spec["steps"]):
         img = os.path.join(SHOT, f"{key}_{i:02d}.png")
         audio = st["audio"]
+        if not os.path.isabs(audio):
+            audio = os.path.join(HERE, audio)
         dur = st["duration"]
         seg = os.path.join(SEG, f"{key}_{i:02d}.mp4")
         frames = int(dur * FPS)

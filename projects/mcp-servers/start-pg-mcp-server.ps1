@@ -17,4 +17,4 @@ Write-Host "Auth: Bearer REDACTED_KEY"
 Write-Host "=============================="
 Write-Host ""
 
-node "<root>\MCP\pg-mcp-server\server.js"
+node "$PSScriptRoot\pg-mcp-server\server.js"
