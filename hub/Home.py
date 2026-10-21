@@ -29,10 +29,14 @@ T = {
         "n8n_d": "3 воркфлоу: Content Publisher (RSS→LLM→Telegram), Lead Qualification "
                  "(MCP + A/B промптов + CRM), AI Support & Escalation.",
         "n8n_l": "Пайплайны →",
-        "agents_t": "🤖 Agents & MCP",
+        "agents_t": "🤖 Agents",
         "agents_d": "Многоагентная система AutoAgent (triage → File/Web/Coding, "
-                    "multi-model по фазам) и MCP-серверы к Postgres/MySQL.",
+                    "multi-model по фазам) и 3 примера реализации.",
         "agents_l": "Агенты →",
+        "mcp_t": "🔌 MCP",
+        "mcp_d": "MCP-серверы к PostgreSQL/MySQL (Streamable HTTP): агент делает SQL "
+                 "через чат. Используются в n8n Lead Qualification и Unified Agent.",
+        "mcp_l": "MCP серверы →",
         "bench_t": "📊 Benchmarks",
         "bench_d": "Метрики retrieval/генерации (Hit@5, NDCG@10, faithfulness) и сравнение LLM "
                    "по TruthfulQA / GSM8K / BBH.",
@@ -60,10 +64,14 @@ T = {
         "n8n_d": "3 workflows: Content Publisher (RSS→LLM→Telegram), Lead Qualification "
                  "(MCP + A/B prompt testing + CRM), AI Support & Escalation.",
         "n8n_l": "Pipelines →",
-        "agents_t": "🤖 Agents & MCP",
+        "agents_t": "🤖 Agents",
         "agents_d": "Multi-agent AutoAgent system (triage → File/Web/Coding, multi-model per phase) "
-                    "and MCP servers for Postgres/MySQL.",
+                    "and 3 implementation examples.",
         "agents_l": "Agents →",
+        "mcp_t": "🔌 MCP",
+        "mcp_d": "MCP servers for PostgreSQL/MySQL (Streamable HTTP): the agent runs SQL through chat. "
+                 "Used by n8n Lead Qualification and the Unified Agent.",
+        "mcp_l": "MCP servers →",
         "bench_t": "📊 Benchmarks",
         "bench_d": "Retrieval/generation metrics (Hit@5, NDCG@10, faithfulness) and LLM comparison "
                    "on TruthfulQA / GSM8K / BBH.",
@@ -101,24 +109,31 @@ with row1[1]:
 with row1[2]:
     st.subheader(T["agents_t"])
     st.write(T["agents_d"])
-    st.page_link("pages/4_Agents.py", label=T["agents_l"])
+    st.page_link("pages/3_Agents.py", label=T["agents_l"])
+
+st.write("")
+row1b = st.columns(3, gap="large")
+with row1b[0]:
+    st.subheader(T["mcp_t"])
+    st.write(T["mcp_d"])
+    st.page_link("pages/4_MCP.py", label=T["mcp_l"])
 
 st.write("")
 row2 = st.columns(3, gap="large")
 with row2[0]:
     st.subheader(T["bench_t"])
     st.write(T["bench_d"])
-    st.page_link("pages/5_Benchmarks.py", label=T["bench_l"])
+    st.page_link("pages/6_Benchmarks.py", label=T["bench_l"])
 
 with row2[1]:
     st.subheader(T["projects_t"])
     st.write(T["projects_d"])
-    st.page_link("pages/3_Projects.py", label=T["projects_l"])
+    st.page_link("pages/8_Projects.py", label=T["projects_l"])
 
 with row2[2]:
     st.subheader(T["ua_t"])
     st.write(T["ua_d"])
-    st.page_link("pages/6_Unified_Agent.py", label=T["ua_l"])
+    st.page_link("pages/7_Unified_Agent.py", label=T["ua_l"])
 
 st.divider()
 st.subheader(T["video_h"])

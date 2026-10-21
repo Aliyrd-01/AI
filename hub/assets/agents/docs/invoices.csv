@@ -1,0 +1,5 @@
+﻿file,invoice_no,vendor,date,currency,items_count,subtotal,tax,total,status,issues
+invoice_1001.txt,INV-1001,ACME SUPPLY CO.,2026-09-12,USD,2,245.0,19.6,264.6,OK,
+invoice_1002.txt,INV-1002,Blue Harbor Consulting LLC,2026-09-15,USD,1,1140.0,228.0,1368.0,CHECK,дубликат invoice_no
+invoice_1003.docx,INV-1003,Greenleaf Analytics GmbH,2026-09-18,USD,2,2450.0,245.0,2695.0,OK,
+invoice_1004.txt,INV-1002,Blue Harbor Consulting LLC,2026-09-18,USD,1,475.0,95.0,600.0,CHECK,арифметика: 475.00 + 95.00 != 600.00; дубликат invoice_no

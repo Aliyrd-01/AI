@@ -1,0 +1,10 @@
+Blue Harbor Consulting LLC
+Invoice: INV-1002
+Issued: 2026-09-18
+Client: Contoso Ltd.
+
+Consulting hours: 5 x $95.00
+
+Subtotal: $475.00
+VAT (20%): $95.00
+Amount due: $600.00

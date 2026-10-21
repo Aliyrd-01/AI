@@ -20,13 +20,33 @@ def _is_dark_theme() -> bool:
     return (st.get_option("theme.base") or "light").lower() == "dark"
 
 
-def render_mermaid(code: str, height: int = 420, font_size: int = 13):
+def render_mermaid(code: str, height: int = 420, font_size: int = 13, max_width: int = 0):
     dark = _is_dark_theme()
     theme = "dark" if dark else "default"
     line = "#38bdf8" if dark else "#0284c7"
     text = "#f8fafc" if dark else "#0f172a"
     node_bkg = "#1e293b" if dark else "#ffffff"
     node_border = "#0284c7" if dark else "#94a3b8"
+
+    if max_width:
+        svg_css = (
+            f".mermaid svg {{\n"
+            f"        max-width: {max_width}px !important;\n"
+            f"        width: 100% !important;\n"
+            f"        height: auto !important;\n"
+            f"        display: block !important;\n"
+            f"        margin: 0 auto !important;\n"
+            f"      }}"
+        )
+    else:
+        svg_css = (
+            ".mermaid svg {\n"
+            "        max-width: 100% !important;\n"
+            "        width: 100% !important;\n"
+            "        height: auto !important;\n"
+            "        display: block !important;\n"
+            "      }"
+        )
     
     variables = {
         "fontSize": f"{font_size}px",
@@ -54,12 +74,7 @@ def render_mermaid(code: str, height: int = 420, font_size: int = 13):
         background: transparent !important;
         min-height: 100px;
       }}
-      .mermaid svg {{
-        max-width: 100% !important;
-        width: 100% !important;
-        height: auto !important;
-        display: block !important;
-      }}
+      {svg_css}
       .edgePath .path, .edgePath path, path.flowchart-link {{
         stroke: {line} !important;
         stroke-width: 2.5px !important;
@@ -95,7 +110,7 @@ def render_mermaid(code: str, height: int = 420, font_size: int = 13):
       <style>
         body {{
           margin: 0;
-          padding: 10px;
+          padding: 6px;
           background: transparent;
           overflow: auto;
         }}

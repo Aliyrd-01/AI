@@ -1,0 +1,34 @@
+--- a/inventory.py
++++ b/inventory.py
+@@ -5,13 +5,15 @@
+ 
+ def add_item(stock, name, qty):
+     """Добавить qty единиц товара name на склад."""
+-    stock[name] = qty
++    stock[name] = stock.get(name, 0) + qty
+ 
+ 
+ def remove_item(stock, name, qty):
+     """Списать qty единиц товара name со склада."""
+     if name not in stock:
+         raise KeyError(name)
++    if stock[name] < qty:
++        raise ValueError()
+     stock[name] -= qty
+     return stock[name]
+ 
+--- a/pricing.py
++++ b/pricing.py
+@@ -5,7 +5,11 @@
+     """Сумма qty * price по всем позициям склада."""
+     total = 0.0
+     for name, qty in stock.items():
+-        total += qty * prices[name]
++        try:
++            price = prices[name]
++        except KeyError:
++            raise ValueError(f"Missing price for {name}")
++        total += qty * price
+     return total
+ 
+ 

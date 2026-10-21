@@ -13,10 +13,11 @@ PAGES = [
     "Home.py",
     "pages/1_RAG.py",
     "pages/2_n8n.py",
-    "pages/3_Projects.py",
-    "pages/4_Agents.py",
-    "pages/5_Benchmarks.py",
-    "pages/6_Unified_Agent.py",
+    "pages/3_Agents.py",
+    "pages/4_MCP.py",
+    "pages/6_Benchmarks.py",
+    "pages/7_Unified_Agent.py",
+    "pages/8_Projects.py",
 ]
 
 fails = []

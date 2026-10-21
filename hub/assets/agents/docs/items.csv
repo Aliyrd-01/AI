@@ -1,0 +1,7 @@
+﻿file,invoice_no,vendor,description,qty,unit_price,amount
+invoice_1001.txt,INV-1001,ACME SUPPLY CO.,Widget A,10.0,12.5,125.0
+invoice_1001.txt,INV-1001,ACME SUPPLY CO.,Widget B,4.0,30.0,120.0
+invoice_1002.txt,INV-1002,Blue Harbor Consulting LLC,Consulting hours,12.0,95.0,1140.0
+invoice_1003.docx,INV-1003,Greenleaf Analytics GmbH,Data pipeline audit,1.0,2000.0,2000.0
+invoice_1003.docx,INV-1003,Greenleaf Analytics GmbH,Support plan,3.0,150.0,450.0
+invoice_1004.txt,INV-1002,Blue Harbor Consulting LLC,Consulting hours,5.0,95.0,475.0
