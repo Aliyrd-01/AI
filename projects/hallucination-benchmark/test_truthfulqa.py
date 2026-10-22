@@ -1,4 +1,4 @@
-"""
+﻿"""
 TruthfulQA Hallucination Test
 Проверяет любую LLM на галлюцинации.
 
@@ -15,6 +15,8 @@ import os
 import time
 
 import requests
+
+import os; from dotenv import load_dotenv; _HERE=os.path.dirname(os.path.abspath(__file__)); load_dotenv(os.path.join(_HERE, '..', '..', '.env'))
 
 # ====== НАСТРОЙКА МОДЕЛИ ======
 # Раскомментируй одну конфигурацию, остальные закомментируй:

@@ -17,9 +17,9 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 VO_DIR = os.path.join(HERE, "docs", "vo_n8n")
 SHOT_DIR = os.path.join(HERE, "docs", "n8n_shots")
-PIPER = os.path.join(HERE, "tools", "voices", "ru_RU-dmitri-medium.onnx")
+VOICE = "ru-RU-DmitryNeural"  # Microsoft neural male voice (edge-tts)
+RATE = "-12%"  # чуть медленнее обычного, звучит спокойнее
 PLAN = os.path.join(HERE, "n8n_video_plan.json")
-SLOW = "1.35"  # length-scale: >1 = медленнее/естественнее
 
 try:
     from imageio_ffmpeg import get_ffmpeg_exe
@@ -153,11 +153,12 @@ def duration(path: str) -> float:
 
 
 def tts(text: str, out_wav: str):
-    txt = os.path.join(VO_DIR, "step.txt")
-    with open(txt, "w", encoding="utf-8") as f:
-        f.write(text)
-    subprocess.run([sys.executable, "-m", "piper", "-m", PIPER, "-c", PIPER + ".json",
-                    "-f", out_wav, "-i", txt, "--length-scale", SLOW], check=True)
+    mp3 = out_wav[:-4] + ".mp3"
+    subprocess.run([sys.executable, "-m", "edge_tts", "--voice", VOICE,
+                    "--text", text, "--write-media", mp3],
+                   check=True, capture_output=True)
+    subprocess.run([FFMPEG, "-y", "-i", mp3, "-ar", "24000", "-ac", "1",
+                    "-c:a", "pcm_s16le", out_wav], check=True, capture_output=True)
 
 
 def build():

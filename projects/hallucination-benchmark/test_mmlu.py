@@ -1,13 +1,15 @@
-import json, os, time, sys, io
+﻿import json, os, time, sys, io
 import requests
+
+import os; from dotenv import load_dotenv; _HERE=os.path.dirname(os.path.abspath(__file__)); load_dotenv(os.path.join(_HERE, '..', '..', '.env'))
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-ZEN_KEY = 'REDACTED_KEY'
+ZEN_KEY = os.getenv('OPENAI_API_KEY', '')
 GOOGLE_KEY = 'REDACTED_KEY'
 XAI_KEY = 'REDACTED_KEY'
-MISTRAL_KEY = 'REDACTED_KEY'
-OPENROUTER_KEY = 'REDACTED_KEY'
+MISTRAL_KEY = os.getenv('MISTRAL_API_KEY', '')
+OPENROUTER_KEY = os.getenv('OPENROUTER_API_KEY', '')
 DELAY = 1
 
 MODELS = [
