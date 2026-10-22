@@ -1,9 +1,11 @@
-import json, csv, io, os, time, re, sys
+﻿import json, csv, io, os, time, re, sys
 import requests
+
+import os; from dotenv import load_dotenv; _HERE=os.path.dirname(os.path.abspath(__file__)); load_dotenv(os.path.join(_HERE, '..', '..', '.env'))
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-ZEN_KEY = 'REDACTED_KEY'
+ZEN_KEY = os.getenv('OPENAI_API_KEY', '')
 URL = 'https://opencode.ai/zen/v1/chat/completions'
 DELAY = 1
 QUESTIONS_COUNT = 20

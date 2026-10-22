@@ -1,9 +1,11 @@
-import json, os, time, sys, io
+﻿import json, os, time, sys, io
 import requests
 
-ZEN_KEY = 'REDACTED_KEY'
-MISTRAL_KEY = 'REDACTED_KEY'
-OPENROUTER_KEY = 'REDACTED_KEY'
+import os; from dotenv import load_dotenv; _HERE=os.path.dirname(os.path.abspath(__file__)); load_dotenv(os.path.join(_HERE, '..', '..', '.env'))
+
+ZEN_KEY = os.getenv('OPENAI_API_KEY', '')
+MISTRAL_KEY = os.getenv('MISTRAL_API_KEY', '')
+OPENROUTER_KEY = os.getenv('OPENROUTER_API_KEY', '')
 DELAY = 1
 BASE = os.path.dirname(os.path.abspath(__file__))
 

@@ -42,3 +42,13 @@ hub/assets/n8n/*_raw.webm
 docs/n8n_shots/
 docs/n8n_seg/
 docs/n8n_seg_en/
+
+# full video library (large binaries, never commit)
+VIDEO/
+
+# benchmarks: cached datasets & raw per-item logs (regenerate by run)
+projects/hallucination-benchmark/datasets/
+projects/hallucination-benchmark/results/raw/
+projects/hallucination-benchmark/.test-audit*
+# mcp: runtime audit + local cleaning scripts
+projects/mcp-servers/pg-mcp-server/.test-audit*

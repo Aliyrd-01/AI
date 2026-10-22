@@ -1,0 +1,69 @@
+{
+  "runs": [
+    {
+      "model": "big-pickle",
+      "dataset": "mmlu",
+      "n": 2,
+      "answered": 0,
+      "errors": 2,
+      "correct": 0,
+      "acc": 0.0,
+      "avg_latency_s": 0.0,
+      "tokens_total": 0,
+      "ts": "2026-10-22T12:22:46.053287+00:00",
+      "run_seconds": 16.2
+    },
+    {
+      "model": "qwen3-235b",
+      "dataset": "mmlu",
+      "n": 2,
+      "answered": 0,
+      "errors": 2,
+      "correct": 0,
+      "acc": 0.0,
+      "avg_latency_s": 0.0,
+      "tokens_total": 0,
+      "ts": "2026-10-22T12:24:04.412477+00:00",
+      "run_seconds": 0.0
+    },
+    {
+      "model": "minimax-m2.5",
+      "dataset": "mmlu",
+      "n": 2,
+      "answered": 2,
+      "errors": 0,
+      "correct": 1,
+      "acc": 0.5,
+      "avg_latency_s": 7.99,
+      "tokens_total": 1008,
+      "ts": "2026-10-22T12:24:20.391648+00:00",
+      "run_seconds": 16.0
+    },
+    {
+      "model": "qwen3-235b-a22b",
+      "dataset": "mmlu",
+      "n": 2,
+      "answered": 2,
+      "errors": 0,
+      "correct": 1,
+      "acc": 0.5,
+      "avg_latency_s": 16.98,
+      "tokens_total": 162,
+      "ts": "2026-10-22T12:26:27.097428+00:00",
+      "run_seconds": 34.0
+    },
+    {
+      "model": "minimax-m2.5",
+      "dataset": "mmlu",
+      "n": 2,
+      "answered": 2,
+      "errors": 0,
+      "correct": 1,
+      "acc": 0.5,
+      "avg_latency_s": 6.14,
+      "tokens_total": 1015,
+      "ts": "2026-10-22T12:26:39.396177+00:00",
+      "run_seconds": 12.3
+    }
+  ]
+}

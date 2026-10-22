@@ -1,7 +1,9 @@
-import json, os, time, sys, subprocess, tempfile
+﻿import json, os, time, sys, subprocess, tempfile
 import requests
 
-OR_KEY = 'REDACTED_KEY'
+import os; from dotenv import load_dotenv; _HERE=os.path.dirname(os.path.abspath(__file__)); load_dotenv(os.path.join(_HERE, '..', '..', '.env'))
+
+OR_KEY = os.getenv('OPENROUTER_API_KEY', '')
 
 MODELS = [
     ('nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', 'Nemotron Nano Omni 30B (R)'),

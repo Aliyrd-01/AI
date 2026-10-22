@@ -1,10 +1,12 @@
-import json, csv, io, os, time, sys
+﻿import json, csv, io, os, time, sys
 import requests
 
-ZEN_KEY = 'REDACTED_KEY'
+import os; from dotenv import load_dotenv; _HERE=os.path.dirname(os.path.abspath(__file__)); load_dotenv(os.path.join(_HERE, '..', '..', '.env'))
+
+ZEN_KEY = os.getenv('OPENAI_API_KEY', '')
 GOOGLE_KEY = 'REDACTED_KEY'
 XAI_KEY = 'REDACTED_KEY'
-MISTRAL_KEY = 'REDACTED_KEY'
+MISTRAL_KEY = os.getenv('MISTRAL_API_KEY', '')
 QUESTIONS_COUNT = 20
 DELAY = 1
 
