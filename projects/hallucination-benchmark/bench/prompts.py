@@ -4,14 +4,19 @@ ANSWER_SUFFIX = "\n\nAnswer with ONLY the letter." if False else ""  # keep it s
 
 
 def _mc_prompt(item):
-    letters = "ABCDEF"[: len(item["choices"])]
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[: len(item["choices"])]
     lines = [f"{letters[i]}) {c}" for i, c in enumerate(item["choices"])]
     return f"{item['question']}\n\n" + "\n".join(lines) + "\n\nReply with ONLY the letter."
 
 
 def build_prompt(dataset, item):
-    if dataset in ("truthfulqa", "mmlu", "bbh"):
+    if dataset == "truthfulqa":
         return _mc_prompt(item)
+    if dataset == "mmlu":
+        return _mc_prompt(item)
+    if dataset == "bbh":
+        # options live inside the question text itself (no item["choices"])
+        return f"{item['question']}\n\nReply with ONLY the letter."
     if dataset == "gsm8k":
         return f"{item['question']}\n\nSolve the problem. End your reply with the final numeric answer after ### (like: ### 42)."
     if dataset == "humaneval":

@@ -1,4 +1,4 @@
-"""Pure unit tests for graders (no network, no models). Safe in CI.
+﻿"""Pure unit tests for graders (no network, no models). Safe in CI.
 
     python bench/test_graders.py
 """
@@ -83,7 +83,7 @@ check("mmlu subset n=10", len(m) == 10 and 0 <= m[0]["gold"] <= 3 and isinstance
 he = load_humaneval(limit=5, seed=1)
 check("humaneval subset keys", all("entry_point" in r and "test" in r for r in he))
 t = load_truthfulqa(limit=4, seed=1)
-check("truthfulqa has choices+gold", all(len(r["choices"]) >= 2 and 0 <= r["gold"] < len(r["choices"]) for r in t))
+check("truthfulqa has choices+gold", all(len(r["choices"]) >= 2 and r["gold"] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[: len(r["choices"])] for r in t))
 b = load_bbh(limit_per_task=2, seed=1)
 check("bbh rows>0 and gold present", len(b) >= 2 and all("gold" in r for r in b))
 two = load_gsm8k(limit=3, seed=1); three = load_gsm8k(limit=3, seed=1)

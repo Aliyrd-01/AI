@@ -15,7 +15,7 @@ SUMMARY = os.path.join(RESULTS, "bench_results.json")
 
 SCORE_FNS = {
     "truthfulqa": graders.truthfulqa_score,
-    "gsm8k": graders.gsm8k_score,
+    "gsm8k": lambda text, item: graders.gsm8k_score(text, item["gold"]),
     "bbh": graders.bbh_score,
     "mmlu": graders.mmlu_score,
     "humaneval": graders.humaneval_score,

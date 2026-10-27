@@ -4,6 +4,7 @@ import csv
 import io
 import json
 import os
+import random
 import requests
 import urllib.parse
 
@@ -40,12 +41,17 @@ def load_truthfulqa(limit=60, seed=42):
     rows = _subset(rows, limit, seed)
     out = []
     for r in rows:
-        # mc1: choices are comma-inside strings like "","",""; parse safely
+        # mc1: choices are comma-inside strings like "","",""; parse safely,
+        # then SHUFFLE deterministically (else correct answer is always option A)
         correct = r.get("Correct Answers", "")
         wrong = r.get("Incorrect Answers", "")
-        choices = [x.strip() for x in _csv_split(correct) + _csv_split(wrong)]
-        gold_idx = _csv_split(correct).index(next(s for s in _csv_split(correct) if s.strip() in choices))
-        out.append({"question": r.get("Question", ""), "choices": choices, "gold": gold_idx, "category": r.get("Category", "")})
+        correct_split = _csv_split(correct)
+        choices = correct_split + _csv_split(wrong)
+        rnd = random.Random(seed + hash(tuple(choices)))
+        rnd.shuffle(choices)
+        gold_idx = choices.index(next(s for s in correct_split if s.strip() in choices))
+        gold_letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[gold_idx]
+        out.append({"question": r.get("Question", ""), "choices": choices, "gold": gold_letter, "category": r.get("Category", "")})
     return out
 
 

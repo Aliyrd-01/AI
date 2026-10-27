@@ -1,0 +1,2 @@
+{"ts": "2026-10-22T12:26:24.687807+00:00", "item": "mmlu", "model": "qwen3-235b-a22b", "correct": true, "score": 1, "latency_s": 31.55, "prompt_tokens": 112, "completion_tokens": 2, "error": null, "i": 1}
+{"ts": "2026-10-22T12:26:27.097104+00:00", "item": "mmlu", "model": "qwen3-235b-a22b", "correct": false, "score": 0, "latency_s": 2.41, "prompt_tokens": 46, "completion_tokens": 2, "error": null, "i": 2}

@@ -1,0 +1,419 @@
+{
+  "meta": {
+    "generated": "2026-10-24T05:09:57+00:00",
+    "n": {
+      "mmlu": 100,
+      "truthfulqa": 60,
+      "gsm8k": 50,
+      "bbh": 25,
+      "humaneval": 30
+    },
+    "datasets": [
+      "mmlu",
+      "truthfulqa",
+      "gsm8k",
+      "bbh",
+      "humaneval"
+    ],
+    "models": [
+      "grok",
+      "gemini",
+      "glm",
+      "kimi",
+      "qwen",
+      "deepseek",
+      "mistral",
+      "minimax"
+    ]
+  },
+  "results": {
+    "deepseek": {
+      "label": "DeepSeek V4.1 Flash",
+      "mmlu": {
+        "acc": 0.94,
+        "answered": 100,
+        "n": 100,
+        "err": 0,
+        "latency_s": 5.16
+      },
+      "humaneval": {
+        "acc": 0.267,
+        "answered": 30,
+        "n": 30,
+        "err": 0,
+        "latency_s": 6.23
+      },
+      "truthfulqa": {
+        "acc": 0.533,
+        "answered": 60,
+        "n": 60,
+        "err": 0,
+        "latency_s": 6.58
+      },
+      "gsm8k": {
+        "acc": 0.94,
+        "answered": 50,
+        "n": 50,
+        "err": 0,
+        "latency_s": 5.1
+      },
+      "bbh": {
+        "acc": 0.56,
+        "answered": 25,
+        "n": 25,
+        "err": 0,
+        "latency_s": 6.43
+      },
+      "avg": 0.648,
+      "datasets_done": 5
+    },
+    "gemini": {
+      "label": "Gemini 3.8 Flash",
+      "mmlu": {
+        "acc": 0.97,
+        "answered": 99,
+        "n": 100,
+        "err": 1,
+        "latency_s": 10.35
+      },
+      "truthfulqa": {
+        "acc": 0.767,
+        "answered": 60,
+        "n": 60,
+        "err": 0,
+        "latency_s": 13.29
+      },
+      "gsm8k": {
+        "acc": 0.86,
+        "answered": 50,
+        "n": 50,
+        "err": 0,
+        "latency_s": 11.5
+      },
+      "bbh": {
+        "acc": 0.6,
+        "answered": 25,
+        "n": 25,
+        "err": 0,
+        "latency_s": 17.13
+      },
+      "humaneval": {
+        "acc": 0.233,
+        "answered": 30,
+        "n": 30,
+        "err": 0,
+        "latency_s": 10.29
+      },
+      "avg": 0.686,
+      "datasets_done": 5
+    },
+    "glm": {
+      "label": "GLM 5.3 Flash",
+      "mmlu": {
+        "acc": 0.92,
+        "answered": 100,
+        "n": 100,
+        "err": 0,
+        "latency_s": 8.5
+      },
+      "truthfulqa": {
+        "acc": 0.667,
+        "answered": 60,
+        "n": 60,
+        "err": 0,
+        "latency_s": 10.96
+      },
+      "gsm8k": {
+        "acc": 0.96,
+        "answered": 50,
+        "n": 50,
+        "err": 0,
+        "latency_s": 7.66
+      },
+      "bbh": {
+        "acc": 0.6,
+        "answered": 25,
+        "n": 25,
+        "err": 0,
+        "latency_s": 8.65
+      },
+      "humaneval": {
+        "acc": 0.267,
+        "answered": 30,
+        "n": 30,
+        "err": 0,
+        "latency_s": 13.97
+      },
+      "avg": 0.6828,
+      "datasets_done": 5
+    },
+    "qwen": {
+      "label": "Qwen3.8 Flash",
+      "mmlu": {
+        "acc": 0.88,
+        "answered": 100,
+        "n": 100,
+        "err": 0,
+        "latency_s": 6.3
+      },
+      "truthfulqa": {
+        "acc": 0.633,
+        "answered": 60,
+        "n": 60,
+        "err": 0,
+        "latency_s": 8.87
+      },
+      "gsm8k": {
+        "acc": 0.9,
+        "answered": 50,
+        "n": 50,
+        "err": 0,
+        "latency_s": 6.61
+      },
+      "bbh": {
+        "acc": 0.6,
+        "answered": 25,
+        "n": 25,
+        "err": 0,
+        "latency_s": 7.07
+      },
+      "humaneval": {
+        "acc": 0.233,
+        "answered": 30,
+        "n": 30,
+        "err": 0,
+        "latency_s": 9.71
+      },
+      "avg": 0.6492,
+      "datasets_done": 5
+    },
+    "kimi": {
+      "label": "Kimi K3",
+      "mmlu": {
+        "acc": 0.93,
+        "answered": 100,
+        "n": 100,
+        "err": 0,
+        "latency_s": 6.42
+      },
+      "truthfulqa": {
+        "acc": 0.633,
+        "answered": 60,
+        "n": 60,
+        "err": 0,
+        "latency_s": 8.42
+      },
+      "gsm8k": {
+        "acc": 0.96,
+        "answered": 50,
+        "n": 50,
+        "err": 0,
+        "latency_s": 6.52
+      },
+      "bbh": {
+        "acc": 0.52,
+        "answered": 25,
+        "n": 25,
+        "err": 0,
+        "latency_s": 7.78
+      },
+      "humaneval": {
+        "acc": 0.233,
+        "answered": 30,
+        "n": 30,
+        "err": 0,
+        "latency_s": 11.0
+      },
+      "avg": 0.6552,
+      "datasets_done": 5
+    },
+    "minimax": {
+      "label": "MiniMax M2.5",
+      "mmlu": {
+        "acc": 0.7,
+        "answered": 100,
+        "n": 100,
+        "err": 0,
+        "latency_s": 9.42
+      },
+      "truthfulqa": {
+        "acc": 0.45,
+        "answered": 60,
+        "n": 60,
+        "err": 0,
+        "latency_s": 10.33
+      },
+      "gsm8k": {
+        "acc": 0.78,
+        "answered": 50,
+        "n": 50,
+        "err": 0,
+        "latency_s": 11.6
+      },
+      "bbh": {
+        "acc": 0.24,
+        "answered": 25,
+        "n": 25,
+        "err": 0,
+        "latency_s": 10.15
+      },
+      "humaneval": {
+        "acc": 0.0,
+        "answered": 30,
+        "n": 30,
+        "err": 0,
+        "latency_s": 9.52
+      },
+      "avg": 0.434,
+      "datasets_done": 5
+    },
+    "mistral": {
+      "label": "Mistral Large 4.0",
+      "mmlu": {
+        "acc": 0.74,
+        "answered": 100,
+        "n": 100,
+        "err": 0,
+        "latency_s": 11.17
+      },
+      "truthfulqa": {
+        "acc": 0.5,
+        "answered": 60,
+        "n": 60,
+        "err": 0,
+        "latency_s": 10.15
+      },
+      "gsm8k": {
+        "acc": 0.86,
+        "answered": 50,
+        "n": 50,
+        "err": 0,
+        "latency_s": 7.45
+      },
+      "bbh": {
+        "acc": 0.4,
+        "answered": 25,
+        "n": 25,
+        "err": 0,
+        "latency_s": 9.28
+      },
+      "humaneval": {
+        "acc": 0.167,
+        "answered": 30,
+        "n": 30,
+        "err": 0,
+        "latency_s": 9.62
+      },
+      "avg": 0.5334,
+      "datasets_done": 5
+    },
+    "grok": {
+      "label": "Grok 4.7",
+      "mmlu": {
+        "acc": 0.968,
+        "answered": 95,
+        "n": 100,
+        "err": 5,
+        "latency_s": 20.43
+      },
+      "truthfulqa": {
+        "acc": 0.768,
+        "answered": 56,
+        "n": 60,
+        "err": 4,
+        "latency_s": 25.55
+      },
+      "gsm8k": {
+        "acc": 0.959,
+        "answered": 49,
+        "n": 50,
+        "err": 1,
+        "latency_s": 11.28
+      },
+      "bbh": {
+        "acc": 0.625,
+        "answered": 24,
+        "n": 25,
+        "err": 1,
+        "latency_s": 23.59
+      },
+      "humaneval": {
+        "acc": 0.467,
+        "answered": 30,
+        "n": 30,
+        "err": 0,
+        "latency_s": 9.59
+      },
+      "avg": 0.7574,
+      "datasets_done": 5
+    }
+  },
+  "tqa": {
+    "grok": {
+      "acc": 0.768
+    },
+    "gemini": {
+      "acc": 0.767
+    },
+    "glm": {
+      "acc": 0.667
+    },
+    "kimi": {
+      "acc": 0.633
+    },
+    "qwen": {
+      "acc": 0.633
+    },
+    "deepseek": {
+      "acc": 0.533
+    },
+    "mistral": {
+      "acc": 0.5
+    },
+    "minimax": {
+      "acc": 0.45
+    }
+  },
+  "gsm_bbh": {
+    "grok": {
+      "gsm8k": 95.89999999999999,
+      "bbh": 62.5,
+      "total": 75.74
+    },
+    "gemini": {
+      "gsm8k": 86.0,
+      "bbh": 60.0,
+      "total": 68.60000000000001
+    },
+    "glm": {
+      "gsm8k": 96.0,
+      "bbh": 60.0,
+      "total": 68.28
+    },
+    "kimi": {
+      "gsm8k": 96.0,
+      "bbh": 52.0,
+      "total": 65.52
+    },
+    "qwen": {
+      "gsm8k": 90.0,
+      "bbh": 60.0,
+      "total": 64.92
+    },
+    "deepseek": {
+      "gsm8k": 94.0,
+      "bbh": 56.00000000000001,
+      "total": 64.8
+    },
+    "mistral": {
+      "gsm8k": 86.0,
+      "bbh": 40.0,
+      "total": 53.339999999999996
+    },
+    "minimax": {
+      "gsm8k": 78.0,
+      "bbh": 24.0,
+      "total": 43.4
+    }
+  }
+}
