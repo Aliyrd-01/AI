@@ -69,5 +69,17 @@ check("cite repair: decimal/date untouched",
 check("cite repair: grounds the answer",
       not apply_strict_grounding(normalize_citations("Dark urine is concentrated 1.", ids), ids)["refused"])
 
+# --- judge score parser ------------------------------------------------------
+from module_7_generation import parse_score  # noqa: E402
+
+check("score: plain", parse_score("0.95") == 0.95)
+check("score: comma decimal", parse_score("0,95") == 0.95)
+check("score: percent", parse_score("95%") == 0.95)
+check("score: sentence", parse_score("The score is 0.8 out of 1.") == 0.8)
+check("score: clamped", parse_score("1.4") == 1.0)
+check("score: garbage -> None (not a silent 0)", parse_score("yes") is None)
+check("score: empty -> None", parse_score("") is None)
+check("score: huge -> None", parse_score("1000000") is None)
+
 print("\n" + ("ALL UNIT TESTS PASSED" if not FAILS else f"FAILED: {FAILS}"))
 sys.exit(1 if FAILS else 0)

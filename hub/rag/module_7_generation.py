@@ -270,23 +270,34 @@ def apply_strict_grounding(answer, retrieved_ids, refusal=None):
     }
 
 
-def _parse_faithfulness(response: str) -> float:
-    """Парсит число из ответа judge, устойчиво к лишнему тексту."""
-    response = response.strip()
-    m = re.search(r'([0-9]*\.?[0-9]+)', response)
-    if m:
-        val = float(m.group(1))
-        return max(0.0, min(1.0, val))
-    return 0.0
+def parse_score(response: str):
+    """Parse a 0..1 score from a judge reply. Returns None if unparseable —
+    so a judge FAILURE is never silently counted as a real 0."""
+    if not response:
+        return None
+    s = re.sub(r"(\d),(\d)", r"\1.\2", response.strip())   # "0,95" -> "0.95"
+    m = re.search(r"(?<![\d.])(\d{1,3}(?:\.\d+)?)(?![\d.])", s)  # standalone number
+    if not m:
+        return None
+    val = float(m.group(1))
+    if s[m.end():].lstrip().startswith("%"):
+        val /= 100.0                                        # "95%" -> 0.95
+    if val > 100:
+        return None
+    return max(0.0, min(1.0, val))
+
+
+_parse_faithfulness = parse_score
 
 
 def check_faithfulness(context, answer, llm, config=None):
+    """Faithfulness 0..1, or None when the judge failed / returned garbage."""
     prompt = FAITHFULNESS_TPL.replace("$CONTEXT$", context).replace("$ANSWER$", answer)
     try:
         resp = llm.invoke([HumanMessage(content=prompt)], config=config or {}).content
-        return _parse_faithfulness(resp)
-    except Exception:
-        return 0.0
+    except Exception:  # noqa: BLE001
+        return None
+    return parse_score(resp or "")
 
 
 def stream_answer(prompt_template, query, context, llm, source="msmarco"):
@@ -359,7 +370,7 @@ def interactive():
             else:
                 print(f"  ✅ Citations: {cited}")
             faithfulness = check_faithfulness(context, full, llm)
-            print(f"  Faithfulness: {faithfulness:.2f}")
+            print(f"  Faithfulness: {'n/a (judge failed)' if faithfulness is None else f'{faithfulness:.2f}'}")
 
 
 def run_benchmark():
@@ -393,6 +404,7 @@ def run_benchmark():
             gt = time.time() - t0
 
             faithfulness = check_faithfulness(context, answer, llm)
+            fmt_f = "  n/a" if faithfulness is None else f"{faithfulness:.2f}"
 
             results[s]["retrieve"].append(rt)
             results[s]["gen"].append(gt)
@@ -402,7 +414,7 @@ def run_benchmark():
             results[s]["tok_out"] += count_tokens(answer)
 
             preview = answer[:80].replace("\n", " ")
-            print(f"  {s:15s}  gen={gt*1000:.0f}ms  faith={faithfulness:.2f}  \"{preview}\"")
+            print(f"  {s:15s}  gen={gt*1000:.0f}ms  faith={fmt_f}  \"{preview}\"")
 
     print("\n" + "=" * 80)
     print(f"{'Strategy':15s}  {'Retrieve':>10s}  {'Generate':>10s}  {'Total':>10s}  {'Faithfulness':>12s}  {'Tokens':>10s}")
@@ -411,7 +423,8 @@ def run_benchmark():
         avg_r = sum(results[s]["retrieve"]) / len(results[s]["retrieve"]) * 1000
         avg_g = sum(results[s]["gen"]) / len(results[s]["gen"]) * 1000
         avg_t = sum(results[s]["total"]) / len(results[s]["total"]) * 1000
-        avg_f = sum(results[s]["faith"]) / len(results[s]["faith"])
+        valid_f = [f for f in results[s]["faith"] if f is not None]
+        avg_f = sum(valid_f) / len(valid_f) if valid_f else float("nan")
         toks = results[s]["tok_in"] + results[s]["tok_out"]
         print(f"  {s:15s}  {avg_r:8.0f}ms  {avg_g:8.0f}ms  {avg_t:8.0f}ms  {avg_f:10.2f}     {toks:>8d}")
     print("=" * 80)
