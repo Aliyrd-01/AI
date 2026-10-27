@@ -8,7 +8,7 @@ A Streamlit multi-page app; the vector index lives in Qdrant Cloud, so the conta
 | Page | Contents |
 |---|---|
 | `Home.py` | landing / overview |
-| `pages/1_RAG.py` | production-style RAG demo (hybrid retrieval, citations, live benchmark) |
+| `pages/1_RAG.py` | production-style RAG demo (hybrid retrieval, citations, on-machine benchmark) |
 | `pages/2_n8n.py` | 3 n8n workflows (diagrams + video + exported JSON) |
 | `pages/3_Projects.py` | project list |
 | `pages/4_Agents.py` | AutoAgent + MCP |
@@ -74,7 +74,7 @@ stats (`hub/eval/idf_stats_<collection>.json`) and uploads dense+sparse vectors 
 
 ## Evaluation
 
-- **Retrieval** (offline + live in the page): Hit@5, Hit@10, MRR@10, NDCG@10 over an eval set
+- **Retrieval** (offline + on-demand in the page): Hit@5, Hit@10, MRR@10, NDCG@10 over an eval set
   with ground-truth qrels → `hub/eval/results_retrieval.json`.
 - **Generation** (LLM judge, cross-model): faithfulness, answer relevancy, citation validity →
   `hub/eval/results_generation.json`.

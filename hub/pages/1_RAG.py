@@ -63,7 +63,7 @@ T = {
         "weak": "**Нет ответа в корпусе** — retrieval слабый или пустой.",
         "fb_log": "Спасибо — записал.",
         "bench_static": "📊 Статичный оффлайн-снимок (не пересчитывается)",
-        "live_sub": "Живой бенчмарк на eval-наборе (на этой машине)",
+        "live_sub": "Бенчмарк на eval-наборе (на этой машине)",
         "live_cap": "Реальный прогон: Hit@K / MRR@10 / NDCG@10 по eval-набору активного корпуса.",
         "live_strats": "Стратегии",
         "live_limit": "Вопросов",
@@ -90,6 +90,13 @@ T = {
         "cache_miss": "поиск заново",
         "obs": "🔭 Observability: LangSmith (EU) — подключается опционально "
                "(`LANGCHAIN_TRACING_V2`, eu.api.smith.langchain.com)",
+        "ragas_h": "🧪 Качество проверяется, а не обещается — RAGAS",
+        "ragas_b": "На этой странице работает система, которая прошла автоматическую оценку качества: "
+                   "**faithfulness** (ответ опирается на найденные документы, а не на фантазии модели) и "
+                   "**answer relevancy** (ответ отвечает именно на заданный вопрос) считаются RAGAS на "
+                   "наборе вопросов MS MARCO; судья — LLM, независимый от отвечающей модели. "
+                   "Дополнительно проверяется, что каждая цитата [n] ссылается на реально извлечённый чанк. "
+                   "Метрики и баз-линия зафиксированы, поэтому деградацию после доработок видно сразу.",
     },
     "en": {
         "caption": "dense + sparse (RRF) → rerank → LLM with citations · Qdrant Cloud · FastEmbed · LangChain",
@@ -140,6 +147,14 @@ T = {
         "cache_miss": "fresh retrieval",
         "obs": "🔭 Observability: LangSmith (EU) — optional "
                "(`LANGCHAIN_TRACING_V2`, eu.api.smith.langchain.com)",
+        "ragas_h": "🧪 Quality is verified, not promised — RAGAS",
+        "ragas_b": "This page runs a system that went through automated quality evaluation: "
+                   "**faithfulness** (the answer is grounded in the retrieved documents, not in model "
+                   "imagination) and **answer relevancy** (the answer actually addresses the question) are "
+                   "scored by RAGAS on an MS MARCO question set, with a judge LLM independent from the "
+                   "answering model. A separate check verifies every [n] citation points to a chunk that was "
+                   "really retrieved. Metrics and a baseline are fixed, so any quality regression after "
+                   "changes is visible immediately.",
         "bench_r": "Retrieval benchmarks",
         "bench_g": "Generation",
         "no_results": "No results — run `python hub/eval/eval_retrieval.py`.",
@@ -153,7 +168,7 @@ T = {
         "weak": "**No answer in corpus** — retrieval too weak or empty.",
         "fb_log": "Thanks — logged.",
         "bench_static": "📊 Static offline snapshot (not recomputed here)",
-        "live_sub": "Live benchmark on the eval set (this machine)",
+        "live_sub": "Benchmark on the eval set (this machine)",
         "live_cap": "Real run: Hit@K / MRR@10 / NDCG@10 over the active corpus eval set.",
         "live_strats": "Strategies",
         "live_limit": "Queries",
@@ -579,6 +594,9 @@ with st.sidebar:
 st.title("🔎 RAG — Production Demo")
 st.caption(T["caption"])
 st.caption(T["obs"])
+with st.container(border=True):
+    st.markdown(T["ragas_h"])
+    st.write(T["ragas_b"])
 
 if dialog_mode:
     from common import describe_llm

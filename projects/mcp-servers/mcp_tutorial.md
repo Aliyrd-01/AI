@@ -1,21 +1,21 @@
-﻿# MCP Servers вЂ” Р·Р°РїСѓСЃРє Рё С‚РµСЃС‚ (runbook)
+# MCP Servers — запуск и тест (runbook)
 
-РљРѕРјРїРѕРЅРµРЅС‚С‹:
-- `pg-mcp-server/` вЂ” РЅР°С€ Node.js СЃРµСЂРІРµСЂ Рє PostgreSQL (РїРѕСЂС‚ 9002)
-- `start-mysql-mcp-server.ps1` вЂ” РєРѕСЂРѕР±РѕС‡РЅС‹Р№ npm-РїР°РєРµС‚ Рє MySQL (РїРѕСЂС‚ 9001)
+Компоненты:
+- `pg-mcp-server/` — наш Node.js сервер к PostgreSQL (порт 9002)
+- `start-mysql-mcp-server.ps1` — коробочный npm-пакет к MySQL (порт 9001)
 
 ---
 
-## РЁРђР“ 1. Р—Р°РїСѓСЃС‚РёС‚СЊ СЃРµСЂРІРµСЂ + РёРЅСЃРїРµРєС‚РѕСЂ РѕРґРЅРѕР№ РєРѕРјР°РЅРґРѕР№ (СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ)
+## ШАГ 1. Запустить сервер + инспектор одной командой (рекомендуется)
 
-РћС‚РєСЂРѕР№ PowerShell Рё РІС‹РїРѕР»РЅРё РґРІРµ СЃС‚СЂРѕРєРё:
+Открой PowerShell и выполни две строки:
 
 ```powershell
 cd <repo>\projects\mcp-servers
 .\start-inspector.ps1
 ```
 
-РћР±СЏР·Р°С‚РµР»СЊРЅРѕ РґРѕР¶РґРёСЃСЊ СЃС‚СЂРѕРє:
+Обязательно дождись строк:
 
 ```
 pg-mcp-server started, PID ...
@@ -23,40 +23,40 @@ Server is up: http://localhost:9002/mcp
 Opening MCP Inspector ...
 ```
 
-Р­С‚Рѕ РѕРєРЅРѕ РќР• Р·Р°РєСЂС‹РІР°Р№ (РІ РЅС‘Рј РєСЂСѓС‚РёС‚СЃСЏ СЃРµСЂРІРµСЂ; СЃРІРµСЂРЅСѓР» вЂ” РЅРµ СЃС‚СЂР°С€РЅРѕ).
+Это окно НЕ закрывай (в нём крутится сервер; свернул — не страшно).
 
-Р‘СЂР°СѓР·РµСЂ РѕС‚РєСЂРѕРµС‚СЃСЏ СЃР°Рј СЃ MCP Inspector, РЅР°С€ СЃРµСЂРІРµСЂ СѓР¶Рµ РІС‹Р±СЂР°РЅ.
+Браузер откроется сам с MCP Inspector, наш сервер уже выбран.
 
-Р’ Р±СЂР°СѓР·РµСЂРµ:
+В браузере:
 1. **Connect**
-2. РІРєР»Р°РґРєР° **Tools** в†’ **List Tools** вЂ” СѓРІРёРґРёС€СЊ 10 РёРЅСЃС‚СЂСѓРјРµРЅС‚РѕРІ
-3. `list_tables` в†’ **Run** в†’ СЃРїРёСЃРѕРє С‚Р°Р±Р»РёС†
-4. `select` в†’ SQL `SELECT COUNT(*) FROM leads_leads` в†’ **Run** в†’ С‡РёСЃР»Рѕ
+2. вкладка **Tools** → **List Tools** — увидишь 10 инструментов
+3. `list_tables` → **Run** → список таблиц
+4. `select` → SQL `SELECT COUNT(*) FROM leads_leads` → **Run** → число
 
-Р—Р°РІРµСЂС€РµРЅРёРµ: РІРµСЂРЅРёСЃСЊ РІ РѕРєРЅРѕ PowerShell, РЅР°Р¶РјРё `Ctrl+C` вЂ” СЃРєСЂРёРїС‚ РѕСЃС‚Р°РЅРѕРІРёС‚ СЃРµСЂРІРµСЂ.
+Завершение: вернись в окно PowerShell, нажми `Ctrl+C` — скрипт остановит сервер.
 
-Р•СЃР»Рё Р±СЂР°СѓР·РµСЂ РЅРµ РѕС‚РєСЂС‹Р»СЃСЏ СЃР°Рј: РѕС‚РєСЂРѕР№ РІСЂСѓС‡РЅСѓСЋ `http://localhost:6274`
-(Рё РІ UI: Transport = Streamable HTTP, URL = http://localhost:9002/mcp,
-Header: `Authorization` = `Bearer <С‚РѕРєРµРЅ РёР· start-pg-mcp-server.ps1>`, РґР°Р»РµРµ Connect).
+Если браузер не открылся сам: открой вручную `http://localhost:6274`
+(и в UI: Transport = Streamable HTTP, URL = http://localhost:9002/mcp,
+Header: `Authorization` = `Bearer <токен из start-pg-mcp-server.ps1>`, далее Connect).
 
 ---
 
-## РЁРђР“ 2. Р’Р°СЂРёР°РЅС‚ СЂСѓРєР°РјРё: СЃРµСЂРІРµСЂ РѕС‚РґРµР»СЊРЅРѕ, РёРЅСЃРїРµРєС‚РѕСЂ РѕС‚РґРµР»СЊРЅРѕ
+## ШАГ 2. Вариант руками: сервер отдельно, инспектор отдельно
 
-РўРµСЂРјРёРЅР°Р» СЃРµСЂРІРµСЂР° (РќР• Р·Р°РєСЂС‹РІР°С‚СЊ):
+Терминал сервера (НЕ закрывать):
 ```powershell
 cd <repo>\projects\mcp-servers
 .\start-pg-mcp-server.ps1
 ```
-РЈСЃРїРµС… = Р±Р°РЅРЅРµСЂ В«PostgreSQL MCP Server / URL: http://localhost:9002/mcpВ».
+Успех = баннер «PostgreSQL MCP Server / URL: http://localhost:9002/mcp».
 
-РўРµСЂРјРёРЅР°Р» РёРЅСЃРїРµРєС‚РѕСЂР°:
+Терминал инспектора:
 ```powershell
-npx @modelcontextprotocol/inspector@latest --transport http --server-url http://localhost:9002/mcp --header "Authorization: Bearer <С‚РѕРєРµРЅ РёР· СЃРєСЂРёРїС‚Р° СЃРµСЂРІРµСЂР°>"
+npx @modelcontextprotocol/inspector@latest --transport http --server-url http://localhost:9002/mcp --header "Authorization: Bearer <токен из скрипта сервера>"
 ```
-(С‚РѕРєРµРЅ РІР·СЏС‚СЊ РёР· `start-pg-mcp-server.ps1`, СЃС‚СЂРѕРєР° REMOTE_SECRET_KEY)
+(токен взять из `start-pg-mcp-server.ps1`, строка REMOTE_SECRET_KEY)
 
-РџРѕСЃР»Рµ СѓСЃС‚Р°РЅРѕРІРєРё Р·Р°РІРёСЃРёРјРѕСЃС‚РµР№ СЃРµСЂРІРµСЂР° (РѕРґРёРЅ СЂР°Р·):
+После установки зависимостей сервера (один раз):
 ```powershell
 cd <repo>\projects\mcp-servers\pg-mcp-server
 npm install
@@ -64,40 +64,40 @@ npm install
 
 ---
 
-## РЁРђР“ 3. РџСЂРѕРІРµСЂРєР° Р¶РёРІРѕСЃС‚Рё Р±РµР· Р±СЂР°СѓР·РµСЂР° (СЃРµСЂРІРµСЂ РёР· РЁРђР“Рђ 2 РµС‰С‘ СЂР°Р±РѕС‚Р°РµС‚)
+## ШАГ 3. Проверка доступности без браузера (сервер из ШАГА 2 ещё работает)
 
-Р’ Р»СЋР±РѕРј РЅРѕРІРѕРј РѕРєРЅРµ (РїР°РїРєР° РЅРµ РІР°Р¶РЅР°):
+В любом новом окне (папка не важна):
 ```powershell
 Invoke-RestMethod -Uri http://localhost:9002/mcp -Method Post `
   -ContentType "application/json" `
   -Headers @{ Accept = "application/json, text/event-stream" } `
   -Body '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"smoke","version":"0"}}}'
 ```
-РћС‚РІРµС‚ JSON вЂ” СЃРµСЂРІРµСЂ Р¶РёРІ.
+Ответ JSON — сервер доступен.
 
 ---
 
-## РЁРђР“ 4. MySQL MCP (РіРѕС‚РѕРІС‹Р№ РїР°РєРµС‚, РїРѕ Р¶РµР»Р°РЅРёСЋ)
+## ШАГ 4. MySQL MCP (готовый пакет, по желанию)
 
 ```powershell
 cd <repo>\projects\mcp-servers
 .\start-mysql-mcp-server.ps1
 ```
-Р­РЅРґРїРѕРёРЅС‚: `POST http://localhost:9001/mcp`.
-РљРѕРЅРЅРµРєС‚ Рє Р‘Р” вЂ” РїРµСЂРµРјРµРЅРЅС‹Рµ РѕРєСЂСѓР¶РµРЅРёСЏ РІ СЃРєСЂРёРїС‚Рµ (MYSQL_HOST/USER/PASS/DB), Р·Р°РїРѕР»РЅРёС‚СЊ РѕРґРёРЅ СЂР°Р·.
-Р’ РёРЅСЃРїРµРєС‚РѕСЂРµ: С‚Рѕ Р¶Рµ СЃР°РјРѕРµ, С‚РѕР»СЊРєРѕ URL `http://localhost:9001/mcp`.
+Эндпоинт: `POST http://localhost:9001/mcp`.
+Коннект к БД — переменные окружения в скрипте (MYSQL_HOST/USER/PASS/DB), заполнить один раз.
+В инспекторе: то же самое, только URL `http://localhost:9001/mcp`.
 
 ---
 
-## РЁРђР“ 5. РџРѕРґРєР»СЋС‡РёС‚СЊ Рє Р°РіРµРЅС‚Сѓ РІ n8n
+## ШАГ 5. Подключить к агенту в n8n
 
-Р’ РІРѕСЂРєС„Р»РѕСѓ: **AI Agent** в†’ СЃРЅРёР·Сѓ РїРѕР»Рµ РёРЅСЃС‚СЂСѓРјРµРЅС‚РѕРІ в†’ **MCP Client**:
+В воркфлоу: **AI Agent** → снизу поле инструментов → **MCP Client**:
 
-| РџР°СЂР°РјРµС‚СЂ | Р—РЅР°С‡РµРЅРёРµ |
+| Параметр | Значение |
 |----------|----------|
 | Server Transport | `Streamable HTTP` |
 | Endpoint | `http://localhost:9002/mcp` |
-| Additional Headers | `Authorization: Bearer <С‚РѕРєРµРЅ>` |
+| Additional Headers | `Authorization: Bearer <токен>` |
 
-Р’ С‡Р°С‚ Р°РіРµРЅС‚Сѓ: В«РїРѕРєР°Р¶Рё С‚Р°Р±Р»РёС†С‹В» / В«СЃРєРѕР»СЊРєРѕ Р»РёРґРѕРІВ» вЂ” Р°РіРµРЅС‚ СЃР°Рј РІС‹Р±РµСЂРµС‚ tool.
-РџСЂРёРјРµСЂ РІРѕСЂРєС„Р»РѕСѓ: `MySQL-MCP.json` РІ СЌС‚РѕР№ РїР°РїРєРµ (Chat Trigger в†’ AI Agent в†’ MCP Client).
+В чат агенту: «покажи таблицы» / «сколько лидов» — агент сам выберет tool.
+Пример воркфлоу: `MySQL-MCP.json` в этой папке (Chat Trigger → AI Agent → MCP Client).
