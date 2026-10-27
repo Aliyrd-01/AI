@@ -127,6 +127,7 @@ T = {
         "more": [
             ("pages/1_RAG.py", "🔎 RAG-система: retrieval, цитаты, метрики"),
             ("pages/4_MCP.py", "🔌 MCP-серверы: SQL через чат"),
+            ("pages/7_Security.py", "🔐 Безопасность: guardrails и примеры"),
             ("pages/9_Testing.py", "🧪 Тестирование RAG и агентов"),
             ("pages/6_Benchmarks.py", "📊 Замеренные метрики"),
         ],
@@ -238,6 +239,7 @@ T = {
         "more": [
             ("pages/1_RAG.py", "🔎 RAG system: retrieval, citations, metrics"),
             ("pages/4_MCP.py", "🔌 MCP servers: SQL through chat"),
+            ("pages/7_Security.py", "🔐 Security: guardrails and examples"),
             ("pages/9_Testing.py", "🧪 RAG & Agent testing"),
             ("pages/6_Benchmarks.py", "📊 Measured metrics"),
         ],

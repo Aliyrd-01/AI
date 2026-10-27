@@ -37,6 +37,14 @@ T = {
         "mcp_d": "MCP-серверы к PostgreSQL/MySQL (Streamable HTTP): агент делает SQL "
                  "через чат. Используются в n8n Lead Qualification и Unified Agent.",
         "mcp_l": "MCP серверы →",
+        "int_t": "🔌 Интеграции",
+        "int_d": "Матрица связей: источники данных и приёмники — протокол, статус в демо "
+                 "и что нужно для подключения.",
+        "int_l": "Матрица интеграций →",
+        "sec_t": "🔐 Безопасность",
+        "sec_d": "Read-only SQL, белый список таблиц, PII-маскирование, Bearer-авторизация, лимиты — "
+                 "слои защиты и примеры.",
+        "sec_l": "Guardrails →",
         "bench_t": "📊 Benchmarks",
         "bench_d": "Метрики retrieval/генерации (Hit@5, NDCG@10, faithfulness) и сравнение LLM "
                    "по TruthfulQA / GSM8K / BBH.",
@@ -74,6 +82,14 @@ T = {
         "mcp_d": "MCP servers for PostgreSQL/MySQL (Streamable HTTP): the agent runs SQL through chat. "
                  "Used by n8n Lead Qualification and the Unified Agent.",
         "mcp_l": "MCP servers →",
+        "int_t": "🔌 Integrations",
+        "int_d": "Connection matrix: data sources and targets — protocol, demo status "
+                 "and what it takes to wire them up.",
+        "int_l": "Integration matrix →",
+        "sec_t": "🔐 Security",
+        "sec_d": "Read-only SQL, table allowlist, PII masking, Bearer auth, step limits — "
+                 "defence layers with examples.",
+        "sec_l": "Guardrails →",
         "bench_t": "📊 Benchmarks",
         "bench_d": "Retrieval/generation metrics (Hit@5, NDCG@10, faithfulness) and LLM comparison "
                    "on TruthfulQA / GSM8K / BBH.",
@@ -121,6 +137,16 @@ with row1b[0]:
     st.subheader(T["mcp_t"])
     st.write(T["mcp_d"])
     st.page_link("pages/4_MCP.py", label=T["mcp_l"])
+
+with row1b[1]:
+    st.subheader(T["int_t"])
+    st.write(T["int_d"])
+    st.page_link("pages/5_Integrations.py", label=T["int_l"])
+
+with row1b[2]:
+    st.subheader(T["sec_t"])
+    st.write(T["sec_d"])
+    st.page_link("pages/7_Security.py", label=T["sec_l"])
 
 st.write("")
 row2 = st.columns(3, gap="large")

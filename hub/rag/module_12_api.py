@@ -274,7 +274,8 @@ async def _run_faithfulness(task_id: str, context: str, answer: str, config=None
             return check_faithfulness(context, answer, llm, config)
 
     faith = await loop.run_in_executor(None, _faith_check)
-    _faith_results[task_id] = round(faith, 3)
+    # None = judge failure (kept distinct from a real 0.0 score)
+    _faith_results[task_id] = round(faith, 3) if faith is not None else None
 
 
 def _check_auth(request: Request):
@@ -515,7 +516,7 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
 
 class FaithfulnessResult(BaseModel):
     task_id: str
-    faithfulness: float
+    faithfulness: float | None = None   # None until done; None when judge failed
     done: bool
 
 

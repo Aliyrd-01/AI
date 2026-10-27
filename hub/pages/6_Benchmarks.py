@@ -38,6 +38,14 @@ T = {
         "none": "Нет `results_retrieval.json`.",
         "gen_sub": "Generation — LLM-судья",
         "gen_none": "Нет `results_generation.json`.",
+        "ref_sub": "Отказы (OOD) — честность системы",
+        "ref_none": "Нет `results_refusal.json` — прогони `python hub/eval/eval_refusal.py`.",
+        "ref_rate": "Refusal rate (OOD)", "ref_target": "цель ≥",
+        "ref_false": "Ложные отказы (in-corpus)", "ref_false_max": "не больше",
+        "ref_verdict": "Вердикт", "ref_rows_cap": "refusal_rate по N вопросам вне корпуса + "
+                         "контроль на in-corpus вопросах; сигналы: нет валидной цитаты / "
+                         "модель сама отказалась / низкая уверенность retrieval.",
+        "ref_run": "Прогнать заново: `python hub/eval/eval_refusal.py`",
         "judge": "Судья",
         "answerer": "Отвечающий",
         "llm_sub": "LLM Benchmark Suite",
@@ -77,6 +85,14 @@ T = {
         "none": "No `results_retrieval.json`.",
         "gen_sub": "Generation — LLM judge",
         "gen_none": "No `results_generation.json`.",
+        "ref_sub": "Refusals (OOD) — system honesty",
+        "ref_none": "No `results_refusal.json` — run `python hub/eval/eval_refusal.py`.",
+        "ref_rate": "Refusal rate (OOD)", "ref_target": "target ≥",
+        "ref_false": "False refusals (in-corpus)", "ref_false_max": "max",
+        "ref_verdict": "Verdict", "ref_rows_cap": "refusal_rate over questions outside the corpus "
+                         "plus an in-corpus control; signals: no valid citation / model refused / "
+                         "low retrieval confidence.",
+        "ref_run": "Re-run: `python hub/eval/eval_refusal.py`",
         "judge": "Judge",
         "answerer": "Answerer",
         "llm_sub": "LLM Benchmark Suite",
@@ -157,6 +173,23 @@ with tab_rag:
         st.caption(f"{T['judge']}: `{judge.get('served', '?')}` · {T['answerer']}: "
                    f"`{ans.get('served', '?')}` · n={gen.get('n')}")
         st.dataframe(gen.get("rows", []), use_container_width=True, hide_index=True)
+
+    st.subheader(T["ref_sub"])
+    ref = _load("results_refusal.json")
+    if not ref:
+        st.info(T["ref_none"])
+    else:
+        rs = ref.get("summary", {})
+        params = ref.get("params", {})
+        c1, c2, c3 = st.columns(3)
+        c1.metric(T["ref_rate"], f"{rs.get('refusal_rate', 0):.3f}",
+                  f"{T['ref_target']} {params.get('target', 0.7):.2f}")
+        c2.metric(T["ref_false"], f"{rs.get('false_refusal_rate', 0):.3f}",
+                  f"{T['ref_false_max']} {params.get('max_false_refusal', 0.1):.2f}")
+        c3.metric(T["ref_verdict"], "PASS ✅" if rs.get("passed") else "FAIL ❌")
+        st.caption(T["ref_rows_cap"] + f" · {ref.get('ts', '')}")
+        st.dataframe(ref.get("rows", []), use_container_width=True, hide_index=True)
+        st.code(T["ref_run"], language=None)
 
 with tab_llm:
     st.subheader(T["llm_sub"])

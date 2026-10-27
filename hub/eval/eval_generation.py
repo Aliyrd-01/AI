@@ -33,11 +33,6 @@ RELEVANCY_TPL = (
 )
 
 
-def _num(text):
-    m = re.search(r"[0-9]*\.?[0-9]+", (text or "").strip())
-    return max(0.0, min(1.0, float(m.group(0)))) if m else 0.0
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--strategy", default="hybrid")
@@ -49,7 +44,7 @@ def main():
     import module_5_retrieval as m
     from module_7_generation import (
         format_context, sanitize_context, generate_citations,
-        verify_grounding, check_faithfulness,
+        verify_grounding, check_faithfulness, parse_score,
     )
     from common import get_chat_llm, get_judge_llm, describe_llm
 
@@ -86,11 +81,12 @@ def main():
 
         ids = [str(d[0]) for d in docs]
         issues, cited, has_issues = verify_grounding(answer, ids, len(docs))
-        faith = check_faithfulness(context, answer, judge)
+        faith = check_faithfulness(context, answer, judge)   # None = judge failure
         try:
-            rel = _num(judge.invoke(RELEVANCY_TPL.format(q=it["query"], a=answer)).content)
-        except Exception:
-            rel = 0.0
+            rel = parse_score(judge.invoke(RELEVANCY_TPL.format(q=it["query"], a=answer)).content)
+        except Exception:  # noqa: BLE001
+            rel = None
+        judge_errors = sum(1 for v in (faith, rel) if v is None)
 
         rows.append({
             "qid": it["qid"],
@@ -98,20 +94,27 @@ def main():
             "n_docs": len(docs),
             "n_citations": len(cited),
             "citation_valid": (not has_issues) and bool(cited),
-            "faithfulness": round(faith, 3),
-            "answer_relevancy": round(rel, 3),
+            "faithfulness": round(faith, 3) if faith is not None else None,
+            "answer_relevancy": round(rel, 3) if rel is not None else None,
+            "judge_errors": judge_errors,
             "latency_s": round(time.time() - t0, 2),
         })
-        print("[%3d/%3d] faith=%.2f rel=%.2f cit=%s  \"%s\""
-              % (i, len(items), faith, rel, "ok" if rows[-1]["citation_valid"] else "bad",
-                 it["query"][:48]))
+        def _f(x):
+            return " n/a" if x is None else f"{x:.2f}"
+        print("[%3d/%3d] faith=%s rel=%s cit=%s  \"%s\""
+              % (i, len(items), _f(faith), _f(rel),
+                 "ok" if rows[-1]["citation_valid"] else "bad", it["query"][:48]))
 
+    valid_f = [r["faithfulness"] for r in rows if r["faithfulness"] is not None]
+    valid_r = [r["answer_relevancy"] for r in rows if r["answer_relevancy"] is not None]
     n = len(rows) or 1
     summary = {
-        "faithfulness": round(sum(r["faithfulness"] for r in rows) / n, 4),
-        "answer_relevancy": round(sum(r["answer_relevancy"] for r in rows) / n, 4),
+        "faithfulness": round(sum(valid_f) / len(valid_f), 4) if valid_f else 0.0,
+        "answer_relevancy": round(sum(valid_r) / len(valid_r), 4) if valid_r else 0.0,
         "citation_valid_rate": round(sum(1.0 for r in rows if r["citation_valid"]) / n, 4),
         "avg_latency_s": round(sum(r["latency_s"] for r in rows) / n, 3),
+        "judge_score_errors": sum(r["judge_errors"] for r in rows),
+        "judged": {"faithfulness": len(valid_f), "answer_relevancy": len(valid_r)},
     }
 
     out = {
