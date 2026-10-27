@@ -43,20 +43,28 @@ API_KEYS = {
     "qubax": QUBAX_KEY,
 }
 
-# Default eval candidates (probed with precheck_all.py; free-tier friendly).
+# Default eval candidates — "equal weight-class" open/flash-tier lineup (Qubax aggregator).
+# Chosen by user 2026-10-23: no OpenAI/Anthropic flagships (token cost), latest versions only.
 MODELS = {
-    "big-pickle": ("opencode-zen", "big-pickle", "Big Pickle"),
-    "deepseek-v4-flash-free": ("opencode-zen", "deepseek-v4-flash-free", "DeepSeek V4 Flash"),
-    "nemotron-3-ultra-free": ("opencode-zen", "nemotron-3-ultra-free", "Nemotron 3 Ultra"),
-    "qwen3-235b-a22b": ("qubax", "qwen3-235b-a22b-2507", "Qwen3 235B"),
-    "minimax-m2.5": ("qubax", "minimax-m2.5", "MiniMax M2.5"),
-    "mistral-medium-latest": ("mistral", "mistral-medium-latest", "Mistral Medium 3.5"),
+    "deepseek": ("qubax", "deepseek-v4.1-flash", "DeepSeek V4.1 Flash"),
+    "gemini": ("qubax", "gemini-3.8-flash", "Gemini 3.8 Flash"),
+    "glm": ("qubax", "glm-5.3-flash", "GLM 5.3 Flash"),
+    "qwen": ("qubax", "qwen3.8-flash", "Qwen3.8 Flash"),
+    "kimi": ("qubax", "kimi-k3", "Kimi K3"),
+    "minimax": ("qubax", "minimax-m2.5", "MiniMax M2.5"),
+    "mistral": ("qubax", "mistral-large-4-0", "Mistral Large 4.0"),
+    "grok": ("qubax", "grok-4.7", "Grok 4.7"),
 }
 
 ALIASES = {
-    "qwen3-235b": "qwen3-235b-a22b",
-    "minimax": "minimax-m2.5",
-    "bigpickle": "big-pickle",
+    "deepseek-v4.1-flash": "deepseek",
+    "gemini-3.8-flash": "gemini",
+    "glm-5.3-flash": "glm",
+    "qwen3.8-flash": "qwen",
+    "kimi-k3": "kimi",
+    "minimax-m2.5": "minimax",
+    "mistral-large-4-0": "mistral",
+    "grok-4.7": "grok",
 }
 
 
@@ -96,6 +104,8 @@ def ask(model_key, prompt, max_tokens=200, temperature=0.0):
         return {"text": "", "latency_s": 0.0, "prompt_tokens": 0, "completion_tokens": 0, "error": f"no API key for {provider}"}
 
     payload = {"model": model, "messages": [{"role": "user", "content": prompt}], "max_tokens": max_tokens, "temperature": temperature}
+    if temperature == 0:
+        payload["top_p"] = 1
     headers = {"Authorization": "Bearer " + key, "Content-Type": "application/json"}
 
     t0 = time.time()

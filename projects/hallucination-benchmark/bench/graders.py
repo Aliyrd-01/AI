@@ -7,7 +7,7 @@ import sys
 import tempfile
 import os
 
-LETTERS = "ABCDEF"
+LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
 # --- multiple choice -------------------------------------------------------
@@ -19,21 +19,32 @@ def mchoice_answer(text):
     if not text or not text.strip():
         return -1
     t = text.strip()
-    m = re.search(r"[Aa]nswer\s*[:\-]?\s*\(?([A-F])\)?", t)
+    m = re.search(r"[Aa]nswer\s*[:\-]?\s*\(?([A-Z])\)?", t)
     if m:
         return LETTERS.index(m.group(1))
     m = None
-    for pat in (r"\(([A-F])\)", r"\b([A-F])\)"):
+    for pat in (r"\(([A-Z])\)", r"\b([A-Z])\)"):
         found = re.findall(pat, t)
         if found:
             return LETTERS.index(found[-1])
-    found = re.findall(r"\b([A-F])\b", t)
+    found = re.findall(r"\b([A-Z])\b", t)
     if found:
         return LETTERS.index(found[0])
     return -1
 
 
 def mchoice_score(text, gold):
+    """Accept gold as int index (0..25) or letter string ('A', '(D)')."""
+    if isinstance(gold, str):
+        g = gold.strip()
+        if g.startswith("(") and g.endswith(")"):
+            g = g[1:-1].strip()
+        try:
+            gold = LETTERS.index(g)
+        except ValueError:
+            return 0
+    elif isinstance(gold, str):  # unreachable; kept for clarity
+        pass
     return int(mchoice_answer(text) == gold)
 
 

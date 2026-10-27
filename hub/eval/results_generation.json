@@ -1,14 +1,15 @@
 {
-  "ts": "2026-10-08 10:09:03",
-  "tag": "run",
+  "ts": "2026-10-24 17:55:25",
+  "tag": "gemini-judge",
   "strategy": "hybrid",
   "k": 5,
-  "n": 3,
+  "n": 50,
   "judge": {
     "provider": "Qubax",
-    "requested": "qwen3-32b",
-    "served": "qwen3-32b",
+    "requested": "gemini-3.8-flash",
+    "served": "gemini-3.8-flash",
     "pool": [
+      "gemini-3.8-flash",
       "qwen3-32b",
       "glm-4.5-air",
       "minimax-m2.5"
@@ -26,21 +27,21 @@
     ]
   },
   "summary": {
-    "faithfulness": 0.9667,
-    "answer_relevancy": 0.9333,
+    "faithfulness": 0.952,
+    "answer_relevancy": 0.926,
     "citation_valid_rate": 1.0,
-    "avg_latency_s": 7.39
+    "avg_latency_s": 30.193
   },
   "rows": [
     {
       "qid": "408144",
       "query": "is dha important after birth",
       "n_docs": 5,
-      "n_citations": 2,
+      "n_citations": 3,
       "citation_valid": true,
       "faithfulness": 1.0,
       "answer_relevancy": 1.0,
-      "latency_s": 10.52
+      "latency_s": 18.1
     },
     {
       "qid": "25392",
@@ -50,17 +51,487 @@
       "citation_valid": true,
       "faithfulness": 1.0,
       "answer_relevancy": 1.0,
-      "latency_s": 6.65
+      "latency_s": 10.15
     },
     {
       "qid": "414994",
       "query": "is java enabled",
       "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.3,
+      "latency_s": 12.22
+    },
+    {
+      "qid": "604951",
+      "query": "what county is daviston al in?",
+      "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 17.04
+    },
+    {
+      "qid": "33048",
+      "query": "average cost of anesthesia for cataract surgery",
+      "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6,
+      "latency_s": 36.5
+    },
+    {
+      "qid": "319931",
+      "query": "how much for residential carpet install",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 36.83
+    },
+    {
+      "qid": "615004",
+      "query": "what county lebanon, mo",
+      "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 19.33
+    },
+    {
+      "qid": "878886",
+      "query": "what months are each of the seasons in?",
+      "n_docs": 5,
+      "n_citations": 5,
+      "citation_valid": true,
+      "faithfulness": 0.9,
+      "answer_relevancy": 1.0,
+      "latency_s": 32.28
+    },
+    {
+      "qid": "958607",
+      "query": "when was lincoln memorial built",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 18.87
+    },
+    {
+      "qid": "106777",
+      "query": "cost of rewiring a house",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 33.65
+    },
+    {
+      "qid": "251778",
+      "query": "how long does food last in fridge without power",
+      "n_docs": 5,
+      "n_citations": 5,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 21.53
+    },
+    {
+      "qid": "607971",
+      "query": "what county is kenton ohio",
+      "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 29.9
+    },
+    {
+      "qid": "1024915",
+      "query": "who called the aca obamacare",
+      "n_docs": 5,
       "n_citations": 2,
+      "citation_valid": true,
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.8,
+      "latency_s": 19.66
+    },
+    {
+      "qid": "266364",
+      "query": "how long should a landlord keep old leases",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 26.26
+    },
+    {
+      "qid": "614370",
+      "query": "what county is watertown wi in?",
+      "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8,
+      "latency_s": 162.89
+    },
+    {
+      "qid": "461117",
+      "query": "nakashima phone number",
+      "n_docs": 5,
+      "n_citations": 2,
+      "citation_valid": true,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.8,
+      "latency_s": 179.51
+    },
+    {
+      "qid": "17821",
+      "query": "anathema maranatha means",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 137.83
+    },
+    {
+      "qid": "239865",
+      "query": "how long are hard boiled eggs good to eat",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 12.91
+    },
+    {
+      "qid": "627589",
+      "query": "what does 1 km equal in miles",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 14.42
+    },
+    {
+      "qid": "953841",
+      "query": "when is wonder woman being released on dvd",
+      "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 11.6
+    },
+    {
+      "qid": "409139",
+      "query": "is edta safe",
+      "n_docs": 5,
+      "n_citations": 6,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 13.24
+    },
+    {
+      "qid": "679642",
+      "query": "what is a cpim",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 24.29
+    },
+    {
+      "qid": "86515",
+      "query": "causes of flank pain on both sides",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 0.85,
+      "answer_relevancy": 1.0,
+      "latency_s": 13.79
+    },
+    {
+      "qid": "243107",
+      "query": "how long can you keep egg whites in the fridge",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 12.79
+    },
+    {
+      "qid": "572835",
+      "query": "what are the qualifications of a professor",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9,
+      "latency_s": 11.19
+    },
+    {
+      "qid": "671476",
+      "query": "what insurance companies are required to use oem parts",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9,
+      "latency_s": 20.31
+    },
+    {
+      "qid": "242857",
+      "query": "how long can you eat roto chicken in the fridge",
+      "n_docs": 5,
+      "n_citations": 2,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 9.72
+    },
+    {
+      "qid": "690493",
+      "query": "what is a medical gas",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 0.9,
+      "answer_relevancy": 1.0,
+      "latency_s": 23.51
+    },
+    {
+      "qid": "138653",
+      "query": "definition of tbi",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 0.95,
+      "answer_relevancy": 1.0,
+      "latency_s": 13.32
+    },
+    {
+      "qid": "615759",
+      "query": "what currency does portugal use",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 9.63
+    },
+    {
+      "qid": "712767",
+      "query": "what is an average iq score for adults",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 9.87
+    },
+    {
+      "qid": "557726",
+      "query": "what are different ways rocks form",
+      "n_docs": 5,
+      "n_citations": 5,
+      "citation_valid": true,
+      "faithfulness": 0.5,
+      "answer_relevancy": 1.0,
+      "latency_s": 239.58
+    },
+    {
+      "qid": "720194",
+      "query": "what is aso fee",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 19.7
+    },
+    {
+      "qid": "517717",
+      "query": "the movie raze cast",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7,
+      "latency_s": 11.47
+    },
+    {
+      "qid": "418916",
+      "query": "is naproxen the same as aleve",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 10.21
+    },
+    {
+      "qid": "202",
+      "query": "+pregnant woman symptoms",
+      "n_docs": 5,
+      "n_citations": 8,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 15.87
+    },
+    {
+      "qid": "808179",
+      "query": "what is the best day to book air flights",
+      "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 13.32
+    },
+    {
+      "qid": "610634",
+      "query": "what county is ocoee tn in?",
+      "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 7.23
+    },
+    {
+      "qid": "557379",
+      "query": "what are crystals made from",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 0.8,
+      "answer_relevancy": 1.0,
+      "latency_s": 24.29
+    },
+    {
+      "qid": "110362",
+      "query": "cost to pour slab",
+      "n_docs": 5,
+      "n_citations": 5,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 11.67
+    },
+    {
+      "qid": "561390",
+      "query": "what are major exchanges",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8,
+      "latency_s": 11.51
+    },
+    {
+      "qid": "433675",
+      "query": "justdial mumbai number",
+      "n_docs": 5,
+      "n_citations": 1,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 8.87
+    },
+    {
+      "qid": "49661",
+      "query": "before the pirate game on opening day",
+      "n_docs": 5,
+      "n_citations": 2,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 12.0
+    },
+    {
+      "qid": "1163248",
+      "query": "what did martin luther king do in his life",
+      "n_docs": 5,
+      "n_citations": 2,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8,
+      "latency_s": 10.8
+    },
+    {
+      "qid": "738635",
+      "query": "what is dependent care fsa plan",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 13.27
+    },
+    {
+      "qid": "454632",
+      "query": "minimum soldier requirements",
+      "n_docs": 5,
+      "n_citations": 5,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8,
+      "latency_s": 25.7
+    },
+    {
+      "qid": "440285",
+      "query": "linea alba definition",
+      "n_docs": 5,
+      "n_citations": 4,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 25.1
+    },
+    {
+      "qid": "426952",
+      "query": "is the nile river in the sahara desert",
+      "n_docs": 5,
+      "n_citations": 2,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "latency_s": 10.96
+    },
+    {
+      "qid": "504412",
+      "query": "stripe how many days before payment",
+      "n_docs": 5,
+      "n_citations": 3,
       "citation_valid": true,
       "faithfulness": 0.9,
       "answer_relevancy": 0.8,
-      "latency_s": 5.0
+      "latency_s": 12.9
+    },
+    {
+      "qid": "549955",
+      "query": "what affects ovulation",
+      "n_docs": 5,
+      "n_citations": 3,
+      "citation_valid": true,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.3,
+      "latency_s": 12.05
     }
   ]
 }

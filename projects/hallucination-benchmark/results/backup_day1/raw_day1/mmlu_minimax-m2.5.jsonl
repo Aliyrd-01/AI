@@ -1,0 +1,4 @@
+{"ts": "2026-10-22T12:24:10.662690+00:00", "item": "mmlu", "model": "minimax-m2.5", "correct": true, "score": 1, "latency_s": 6.24, "prompt_tokens": 138, "completion_tokens": 283, "error": null, "i": 1}
+{"ts": "2026-10-22T12:24:20.391306+00:00", "item": "mmlu", "model": "minimax-m2.5", "correct": false, "score": 0, "latency_s": 9.73, "prompt_tokens": 75, "completion_tokens": 512, "error": null, "i": 2}
+{"ts": "2026-10-22T12:26:31.598379+00:00", "item": "mmlu", "model": "minimax-m2.5", "correct": true, "score": 1, "latency_s": 4.49, "prompt_tokens": 138, "completion_tokens": 290, "error": null, "i": 1}
+{"ts": "2026-10-22T12:26:39.395462+00:00", "item": "mmlu", "model": "minimax-m2.5", "correct": false, "score": 0, "latency_s": 7.79, "prompt_tokens": 75, "completion_tokens": 512, "error": null, "i": 2}
