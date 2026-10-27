@@ -65,13 +65,13 @@ def _check_api_keys(need_zen: bool = False):
         _KEYS_WARNED = True
 
 
-def _make(temperature: float, model: str, base: str, key: str) -> ChatOpenAI:
+def _make(temperature: float, model: str, base: str, key: str, timeout: int = 60) -> ChatOpenAI:
     return ChatOpenAI(
         model=model,
         openai_api_key=key,
         openai_api_base=base,
         temperature=temperature,
-        timeout=60,
+        timeout=timeout,
         max_retries=2,
     )
 
@@ -260,7 +260,7 @@ def get_judge_llm():
     """
     fallbacks = [JUDGE_MODEL] + [m for m in _JUDGE_FALLBACKS if m != JUDGE_MODEL]
     if QUBAX_KEY:
-        pool = [_make(0, m, QUBAX_BASE, QUBAX_KEY) for m in fallbacks]
+        pool = [_make(0, m, QUBAX_BASE, QUBAX_KEY, timeout=180) for m in fallbacks]
         return _PooledLLM(pool)
     return get_chat_llm(temperature=0)
 

@@ -13,7 +13,7 @@ import streamlit as st
 from diagrams import render_mermaid
 from i18n import lang_switcher
 
-st.set_page_config(page_title="n8n Automations", page_icon="🔗", layout="wide")
+st.set_page_config(page_title="N8N Automations", page_icon="🔗", layout="wide")
 
 lang = lang_switcher()
 
@@ -30,7 +30,7 @@ T = {
         "download": "⬇️ Download workflow JSON",
         "demo": "Демо-запись",
         "foot": "Диаграмма строится из реального графа воркфлоу (JSON, экспортированный из n8n): "
-                "узлы и связи — как в редакторе. Живой n8n-редактор и креды наружу не публикуются, "
+                "узлы и связи — как в редакторе.  n8n-редактор и креды наружу не публикуются, "
                 "секреты в JSON заменены плейсхолдерами.",
         "notfound": "Файл не найден: assets/n8n/{f}",
         "tech": "Технологии",
@@ -38,7 +38,7 @@ T = {
     },
     "en": {
         "caption": "Three production pipelines: content, sales, support. "
-                   "No live editor exposed — workflow diagram + JSON + demo recording.",
+                   "No n8n editor exposed — workflow diagram + JSON + demo recording.",
         "nodes": "Nodes",
         "conns": "Connections",
         "workflow": "Workflow",
@@ -48,7 +48,7 @@ T = {
         "download": "⬇️ Download workflow JSON",
         "demo": "Demo recording",
         "foot": "The diagram is generated from the real workflow graph (JSON exported from n8n): "
-                "nodes and edges as in the editor. The live n8n editor and credentials are never "
+                "nodes and edges as in the editor. The n8n editor and credentials are never "
                 "exposed; secrets in the JSON are replaced with placeholders.",
         "notfound": "File not found: assets/n8n/{f}",
         "tech": "Tech",
@@ -119,8 +119,8 @@ FLOWS = [
                   "INSERT … ON CONFLICT, параметры $1..$16)\n\n"
                   "→ стоимость скоринга (usage → $ через "
                   "прайс-таблицу) в llm_usage\n\n"
-                  "→ в ответ вебхука идёт "
-                  "живая сводка A/B (n и средний скор каждой руки, текущий победитель) и cost_usd.",
+                   "→ в ответ вебхука идёт "
+                   "сводка A/B (n и средний скор каждой руки, текущий победитель) и cost_usd.",
             "en": "A lead arrives from a web form (webhook, Basic Auth)\n\n"
                   "→ email/phone validation\n\n"
                   "→ enrichment "
@@ -134,7 +134,7 @@ FLOWS = [
                   "→ scoring cost (usage → $ via a pricing "
                   "table) logged to llm_usage\n\n"
                   "→ the webhook response "
-                  "returns a live A/B summary (n and avg score per arm, current winner) plus cost_usd.",
+                   "returns the A/B summary (n and avg score per arm, current winner) plus cost_usd.",
         },
         "tech_base": "n8n · Webhook (Basic Auth) · Postgres CRM (native nodes, params) · A/B prompt testing · cost tracking · Telegram",
         "video": {"ru": "leadqual_demo.mp4", "en": "leadqual_demo_en.mp4"},
