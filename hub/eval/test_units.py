@@ -81,5 +81,15 @@ check("score: garbage -> None (not a silent 0)", parse_score("yes") is None)
 check("score: empty -> None", parse_score("") is None)
 check("score: huge -> None", parse_score("1000000") is None)
 
+# --- citation remap (position<->id autocorrect) ----------------------------
+from module_7_generation import remap_citation_ids  # noqa: E402
+
+_num = [(1, "a1"), (2, "b2"), (3, "c3")]
+_r = remap_citation_ids("X [1](msmarco#c3) and [2](msmarco#b2).", _num)
+check("remap: wrong number corrected to real position",
+      _r == "X [3](msmarco#c3) and [2](msmarco#b2).")
+_r2 = remap_citation_ids("Y [3](msmarco#3)", _num)
+check("remap: fabricated numeric id -> real id", _r2 == "Y [3](msmarco#c3)")
+
 print("\n" + ("ALL UNIT TESTS PASSED" if not FAILS else f"FAILED: {FAILS}"))
 sys.exit(1 if FAILS else 0)

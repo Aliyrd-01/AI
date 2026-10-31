@@ -9,8 +9,16 @@ common.py — единая точка доступа к LLM для всех ск
 OPENAI_API_KEY (sk-proj-...) перекрывает .env и скрипты незаметно уходят не туда.
 """
 
-import os, time, threading
+import os, time, threading, logging
 from dotenv import load_dotenv
+
+logger = logging.getLogger("rag.common")
+if not logger.handlers:
+    _h = logging.StreamHandler()
+    _h.setFormatter(logging.Formatter("[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+    logger.addHandler(_h)
+    logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
+
 from langchain_openai import ChatOpenAI
 from langchain_core.runnables import Runnable
 from openai import APIError, RateLimitError, AuthenticationError, InternalServerError, Timeout
@@ -55,13 +63,13 @@ def _check_api_keys(need_zen: bool = False):
         raise RuntimeError("OPENAI_API_KEY required for get_judge_llm")
     if not _KEYS_WARNED:
         if not QUBAX_KEY:
-            print("[!] QUBAX_API_KEY not set - Qubax models skipped")
+            logger.warning("QUBAX_API_KEY not set - Qubax models skipped")
         if not ZEN_KEY:
-            print("[!] OPENAI_API_KEY not set - Zen models skipped")
+            logger.warning("OPENAI_API_KEY not set - Zen models skipped")
         if not MISTRAL_KEY:
-            print("[!] MISTRAL_API_KEY not set - Mistral fallback unavailable")
+            logger.warning("MISTRAL_API_KEY not set - Mistral fallback unavailable")
         if not OR_KEY:
-            print("[!] OPENROUTER_API_KEY not set - OpenRouter fallback unavailable")
+            logger.warning("OPENROUTER_API_KEY not set - OpenRouter fallback unavailable")
         _KEYS_WARNED = True
 
 

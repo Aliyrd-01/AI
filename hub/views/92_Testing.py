@@ -162,7 +162,7 @@ with st.container(border=True):
     st.markdown(T["offer_h"])
     st.write(T["offer_b"])
     st.info(T["cta"])
-    st.page_link("pages/10_Contacts.py", label=T["contact_l"], icon="✉️")
+    st.page_link("views/93_Contacts.py", label=T["contact_l"], icon="✉️")
 
 st.subheader(T["what_h"])
 c1, c2 = st.columns(2)
@@ -225,7 +225,7 @@ with st.container(border=True):
                          "avg_latency_s": st.column_config.NumberColumn(format="%.1f s"),
                      })
         st.caption(T["rep_cap"])
-    st.page_link("pages/6_Benchmarks.py", label=T["proof_cta"], icon="📊")
+    st.page_link("views/6_Benchmarks.py", label=T["proof_cta"], icon="📊")
 
 st.subheader(T["faq_h"].strip("*"))
 for q, a in T["faq"]:

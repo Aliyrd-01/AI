@@ -55,10 +55,10 @@ T = {
                 "для доступов используем защищённый канал.",
         "more_h": "**Полезно перед разговором**",
         "more": [
-            ("pages/7_Unified_Agent.py", "🧭 Unified Agent — демо и guardrails"),
-            ("pages/1_RAG.py", "🔎 RAG-система — retrieval и цитаты"),
-            ("pages/9_Testing.py", "🧪 Тестирование RAG и агентов"),
-            ("pages/2_N8N.py", "🔗 n8n-пайплайны"),
+            ("views/7_Unified_Agent.py", "🧭 Unified Agent — демо и guardrails"),
+            ("views/1_RAG.py", "🔎 RAG-система — retrieval и цитаты"),
+            ("views/92_Testing.py", "🧪 Тестирование RAG и агентов"),
+            ("views/2_N8N.py", "🔗 n8n-пайплайны"),
         ],
     },
     "en": {
@@ -98,10 +98,10 @@ T = {
                 "we use a secure channel for access.",
         "more_h": "**Useful before we talk**",
         "more": [
-            ("pages/7_Unified_Agent.py", "🧭 Unified Agent — demo and guardrails"),
-            ("pages/1_RAG.py", "🔎 RAG system — retrieval and citations"),
-            ("pages/9_Testing.py", "🧪 RAG & Agent testing"),
-            ("pages/2_N8N.py", "🔗 n8n pipelines"),
+            ("views/7_Unified_Agent.py", "🧭 Unified Agent — demo and guardrails"),
+            ("views/1_RAG.py", "🔎 RAG system — retrieval and citations"),
+            ("views/92_Testing.py", "🧪 RAG & Agent testing"),
+            ("views/2_N8N.py", "🔗 n8n pipelines"),
         ],
     },
 }[lang]

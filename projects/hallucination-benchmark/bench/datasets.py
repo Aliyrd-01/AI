@@ -1,6 +1,7 @@
 """Dataset loaders - pure, deterministic, local-first (cached downloads)."""
 
 import csv
+import hashlib
 import io
 import json
 import os
@@ -47,7 +48,8 @@ def load_truthfulqa(limit=60, seed=42):
         wrong = r.get("Incorrect Answers", "")
         correct_split = _csv_split(correct)
         choices = correct_split + _csv_split(wrong)
-        rnd = random.Random(seed + hash(tuple(choices)))
+        choice_digest = int(hashlib.md5(";;".join(choices).encode("utf-8")).hexdigest()[:8], 16)
+        rnd = random.Random(seed + choice_digest)
         rnd.shuffle(choices)
         gold_idx = choices.index(next(s for s in correct_split if s.strip() in choices))
         gold_letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[gold_idx]

@@ -1,4 +1,4 @@
-﻿"""Pure unit tests for graders (no network, no models). Safe in CI.
+"""Pure unit tests for graders (no network, no models). Safe in CI.
 
     python bench/test_graders.py
 """
@@ -73,6 +73,10 @@ ITEM_HE = {"task_id": "H/1", "prompt": "def add(a, b):\n\"\"\"add two\"\"\"\n", 
 check("humaneval: valid code passes", humaneval_score(CODE_OK, ITEM_HE) == 1)
 check("humaneval: broken code fails", humaneval_score("def add(a, b):\n    return a - b", ITEM_HE) == 0)
 check("humaneval: fence extraction", humaneval_score("```python\ndef add(a, b):\n    return a + b\n```", ITEM_HE) == 1)
+check("humaneval: blocks os import RCE", humaneval_score("import os\ndef add(a, b):\n    os.system('whoami')\n    return a + b", ITEM_HE) == 0)
+check("humaneval: blocks subprocess import RCE", humaneval_score("import subprocess\ndef add(a, b):\n    return a + b", ITEM_HE) == 0)
+check("humaneval: blocks eval / exec execution", humaneval_score("def add(a, b):\n    eval('1+1')\n    return a + b", ITEM_HE) == 0)
+check("humaneval: blocks open() file access", humaneval_score("def add(a, b):\n    f = open('pwn.txt', 'w')\n    return a + b", ITEM_HE) == 0)
 
 # --- datasets loaders ------------------------------------------------------
 check("DATASETS list stable", DATASETS == ["truthfulqa", "gsm8k", "bbh", "mmlu", "humaneval"])

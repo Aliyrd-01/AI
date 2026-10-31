@@ -109,22 +109,32 @@ def mask_pii(text: str) -> str:
     return _PHONE_RX.sub("[phone]", text)
 
 
+_FORBIDDEN_FUNCS = re.compile(
+    r"\b(pg_[a-z0-9_]+|current_setting|set_config|dblink\w*|lo_[a-z0-9_]+)\b",
+    re.I,
+)
+
+
 def validate_sql(sql: str) -> tuple[bool, str]:
-    """Client-side read-only guard: SELECT/WITH only, single statement, CRM tables."""
+    """Client-side read-only guard: SELECT/WITH only, single statement, CRM tables, no pg_* funcs."""
     s = (sql or "").strip()
     if not s:
         return False, "empty statement"
     if not re.match(r"^(select|with)\b", s, re.I):
         return False, "only SELECT / WITH statements are allowed"
     body = s.rstrip().rstrip(";")
-    if ";" in body:
-        return False, "multiple statements are not allowed"
+    if ";" in body or "--" in body or "/*" in body:
+        return False, "multiple statements or SQL comments are not allowed"
     low = body.lower()
     for word in _FORBIDDEN:
         if re.search(rf"\b{word}\b", low):
             return False, f"{word.upper()} is not allowed"
+    if _FORBIDDEN_FUNCS.search(low):
+        return False, "system and administrative functions (pg_*, current_setting, etc.) are forbidden"
     ctes = set(re.findall(r"(?:with|,)\s*([a-z_][a-z0-9_]*)\s+as\s*\(", low))
     tables = set(re.findall(r"\b(?:from|join)\s+([a-z_][a-z0-9_]*)", low)) - ctes
+    if not tables and not re.match(r"^select\s+['\"0-9a-z\s,_\+\-\*\/]+$", low):
+        return False, "queries must reference allowed CRM tables with a FROM clause"
     unknown = tables - _ALLOWED_TABLES
     if unknown:
         return False, "table not in allowlist: " + ", ".join(sorted(unknown))
