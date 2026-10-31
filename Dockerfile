@@ -17,13 +17,20 @@ ENV PYTHONUNBUFFERED=1 \
     STREAMLIT_SERVER_HEADLESS=true \
     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 
-WORKDIR /app
+RUN useradd -m -u 1000 appuser && \
+    mkdir -p /data/fastembed && \
+    chown -R appuser:appuser /data /app
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-COPY . .
+COPY --chown=appuser:appuser . .
+
+USER appuser
 
 EXPOSE 7860
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:7860/_stcore/health || exit 1
 
 CMD ["streamlit", "run", "hub/Home.py", "--server.port=7860", "--server.address=0.0.0.0"]

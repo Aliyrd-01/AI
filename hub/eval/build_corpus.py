@@ -150,7 +150,9 @@ def build_index(client, collection, docs, batch_size, source, lang, max_chars, s
     sparse = get_fastembed_sparse()
 
     if start == 0:
-        client.recreate_collection(
+        if client.collection_exists(collection_name=collection):
+            client.delete_collection(collection_name=collection)
+        client.create_collection(
             collection_name=collection,
             vectors_config={
                 "dense": qm.VectorParams(

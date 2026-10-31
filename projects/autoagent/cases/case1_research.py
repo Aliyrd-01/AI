@@ -13,7 +13,7 @@
   python case1_research.py "вопрос" --pages 8
 """
 
-import os, re, sys, json, time, shutil
+import os, re, sys, json, time, shutil, ipaddress, socket
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs, unquote
 
@@ -108,9 +108,36 @@ def ddg_search(query: str, limit: int = 5) -> list[dict]:
     return results
 
 
-def fetch_page(url: str, max_chars: int = 20000) -> str:
+def is_safe_url(url: str) -> bool:
+    """SSRF guard: reject non-HTTP schemes, loopback, private, and cloud metadata IPs."""
     try:
-        r = httpx.get(url, headers=UA, timeout=25, follow_redirects=True)
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return False
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        if hostname.lower() in ("localhost", "127.0.0.1", "0.0.0.0", "::1"):
+            return False
+        ip_str = socket.gethostbyname(hostname)
+        ip = ipaddress.ip_address(ip_str)
+        if ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local:
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def fetch_page(url: str, max_chars: int = 20000) -> str:
+    if not is_safe_url(url):
+        return ""
+    try:
+        r = httpx.get(url, headers=UA, timeout=25, follow_redirects=False)
+        if 300 <= r.status_code < 400 and "location" in r.headers:
+            redir_url = r.headers["location"]
+            if not is_safe_url(redir_url):
+                return ""
+            r = httpx.get(redir_url, headers=UA, timeout=25, follow_redirects=False)
         if r.status_code >= 400 or "text/html" not in r.headers.get("content-type", ""):
             return ""
     except Exception:

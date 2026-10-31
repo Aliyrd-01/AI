@@ -11,7 +11,7 @@
   python case2_repo.py
 """
 
-import os, sys, json, shutil, subprocess, difflib
+import os, sys, json, shutil, subprocess, difflib, ast
 from datetime import datetime
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -32,7 +32,51 @@ def make_run_dir(prefix: str) -> str:
     return path
 
 
-# ─── Helpers ─────────────────────────────────────────────────
+# ─── Helpers & Security Sandbox ─────────────────────────────
+
+FORBIDDEN_REPO_MODULES = {
+    "subprocess", "socket", "http", "urllib", "requests",
+    "ctypes", "posix", "nt", "pty", "fcntl", "winreg",
+    "webbrowser", "multiprocessing", "threading", "importlib",
+}
+
+FORBIDDEN_REPO_CALLS = {
+    "eval", "exec", "compile", "__import__", "breakpoint",
+}
+
+FORBIDDEN_REPO_ATTRS = {
+    "__subclasses__", "__globals__", "__code__", "__bases__", "__mro__",
+    "__builtins__", "func_globals", "gi_frame"
+}
+
+
+def validate_safe_repo_code(code_str: str) -> tuple[bool, str]:
+    """Validate that LLM-generated code does not contain malicious system or network operations."""
+    try:
+        tree = ast.parse(code_str)
+    except SyntaxError as e:
+        return False, f"Syntax error: {e}"
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                root_pkg = alias.name.split(".")[0]
+                if root_pkg in FORBIDDEN_REPO_MODULES:
+                    return False, f"Dangerous import rejected: {alias.name}"
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                root_pkg = node.module.split(".")[0]
+                if root_pkg in FORBIDDEN_REPO_MODULES:
+                    return False, f"Dangerous from-import rejected: {node.module}"
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_REPO_CALLS:
+                return False, f"Dangerous call rejected: {node.func.id}"
+        elif isinstance(node, ast.Attribute):
+            if node.attr in FORBIDDEN_REPO_ATTRS:
+                return False, f"Introspection attribute rejected: {node.attr}"
+
+    return True, "OK"
+
 
 def copy_repo(src: str, dst: str):
     if os.path.isdir(dst):
@@ -41,13 +85,55 @@ def copy_repo(src: str, dst: str):
 
 
 def run_tests(cwd: str) -> tuple[bool, str]:
-    r = subprocess.run(
-        [sys.executable, "-m", "pytest", "-q"],
-        cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace",
-        timeout=180,
-    )
-    out = (r.stdout or "") + (r.stderr or "")
-    return r.returncode == 0, out.strip()
+    """Run pytest in an isolated sandbox without exposing credentials or network."""
+    use_docker = os.environ.get("DOCKER_SANDBOX", "0").lower() in ("1", "true", "yes")
+
+    if use_docker:
+        abs_cwd = os.path.abspath(cwd).replace("\\", "/")
+        cmd = [
+            "docker", "run", "--rm",
+            "--network", "none",
+            "-m", "256m",
+            "-v", f"{abs_cwd}:/workspace",
+            "-w", "/workspace",
+            "python:3.11-slim",
+            "pytest", "-q"
+        ]
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+            out = (r.stdout or "") + (r.stderr or "")
+            return r.returncode == 0, out.strip()
+        except subprocess.TimeoutExpired:
+            return False, "Docker pytest timeout expired (60s)"
+        except Exception:
+            pass  # Fallback to isolated process
+
+    # Clean execution environment: strip host secrets and cloud API credentials
+    clean_env = {
+        k: v for k, v in os.environ.items()
+        if not any(s in k.upper() for s in ("KEY", "SECRET", "TOKEN", "PASS", "DATABASE", "AUTH", "CREDENTIAL", "ADMIN"))
+    }
+    clean_env["PYTHONPATH"] = os.path.abspath(cwd)
+    clean_env["PYTHONHASHSEED"] = "0"
+    clean_env["PYTHONDONTWRITEBYTECODE"] = "1"
+
+    try:
+        r = subprocess.run(
+            [sys.executable, "-m", "pytest", "-q", "-o", "addopts="],
+            cwd=cwd,
+            env=clean_env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=60,
+        )
+        out = (r.stdout or "") + (r.stderr or "")
+        return r.returncode == 0, out.strip()
+    except subprocess.TimeoutExpired:
+        return False, "Pytest execution timeout (exceeded 60s)"
+    except Exception as e:
+        return False, f"Test execution error: {e}"
 
 
 def repo_sources(root: str) -> dict[str, str]:
@@ -96,6 +182,11 @@ def ask_coder(rel: str, code: str, bugs: str, test_output: str, note: str = "") 
         fixed = strip_code_fences(llm(system, user + f"\n\nПредыдущий ответ не компилируется:\n{err}", temp=0.1, role="coder"))
         if validate_python(fixed):
             return ""
+
+    is_safe, sec_err = validate_safe_repo_code(fixed)
+    if not is_safe:
+        print(safe(f"      [coder] [security] отклонено из соображений безопасности: {sec_err}"))
+        return ""
     return fixed
 
 

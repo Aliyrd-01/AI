@@ -44,7 +44,8 @@ def main():
     import module_5_retrieval as m
     from module_7_generation import (
         format_context, sanitize_context, generate_citations,
-        verify_grounding, check_faithfulness, parse_score,
+        verify_grounding, check_faithfulness, parse_score, context_numbering,
+        reorder_lost_in_middle,
     )
     from common import get_chat_llm, get_judge_llm, describe_llm
 
@@ -76,11 +77,14 @@ def main():
     for i, it in enumerate(items, 1):
         t0 = time.time()
         docs = retrieve(it["query"], args.k)
-        context = sanitize_context(format_context(docs))
+        # Тот же порядок, что уйдёт в промпт: [n] должен указывать на ids[n-1].
+        docs = reorder_lost_in_middle(docs)
+        numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
+        context = sanitize_context(format_context(docs, reorder=False))
         answer = generate_citations(it["query"], context, llm)
 
         ids = [str(d[0]) for d in docs]
-        issues, cited, has_issues = verify_grounding(answer, ids, len(docs))
+        issues, cited, has_issues = verify_grounding(answer, ids, len(docs), numbering=numbering)
         faith = check_faithfulness(context, answer, judge)   # None = judge failure
         try:
             rel = parse_score(judge.invoke(RELEVANCY_TPL.format(q=it["query"], a=answer)).content)

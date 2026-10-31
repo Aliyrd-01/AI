@@ -12,7 +12,7 @@ Module 12 — Production RAG API (FastAPI).
   POST /ingest              — добавить документ (заглушка)
 """
 
-import os, sys, time, json, asyncio, uuid
+import os, sys, time, json, asyncio, uuid, threading, queue
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dotenv import load_dotenv
@@ -31,8 +31,11 @@ from pydantic import BaseModel, Field
 import uvicorn
 
 from common import get_chat_llm, get_fastembed_dense, get_embeddings
-from module_5_retrieval import search_dense, search_sparse, search_hybrid, search_hybrid_rerank
-from module_7_generation import format_context, generate_citations, check_faithfulness, CITATIONS_PROMPT
+from module_5_retrieval import (search_dense, search_sparse, search_hybrid,
+                                search_hybrid_rerank, is_meaningful_chunk)
+from module_7_generation import (format_context, generate_citations, check_faithfulness,
+                                 CITATIONS_PROMPT, context_numbering, apply_strict_grounding,
+                                 looks_like_refusal, reorder_lost_in_middle, remap_citation_ids)
 
 # ─── Langfuse ─────────────────────────────────────────────────────────────
 _langfuse_handler = None
@@ -150,7 +153,7 @@ app = FastAPI(title="RAG Production API", version="1.0.0")
 
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000")
 API_KEY = os.getenv("API_KEY", "")
-CACHE_SIM_THRESHOLD = float(os.getenv("CACHE_SIM_THRESHOLD", "0.92"))
+CACHE_SIM_THRESHOLD = float(os.getenv("CACHE_SIM_THRESHOLD", "0.97"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -164,6 +167,7 @@ llm = get_chat_llm(temperature=0)
 # ─── Semantic Cache ────────────────────────────────────────────────────────
 
 _cache_entries = []
+_cache_lock = threading.Lock()
 _CACHE_MAX = int(os.getenv("CACHE_MAX", "256"))
 _CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))
 CACHE_ENABLED = os.getenv("CACHE_ENABLED", "0") == "1"
@@ -184,38 +188,42 @@ def _cosine_sim(a, b):
 
 def _cache_evict():
     now = time.time()
-    _cache_entries[:] = [e for e in _cache_entries if now - e["ts"] < _CACHE_TTL]
-    while len(_cache_entries) > _CACHE_MAX:
-        _cache_entries.pop(0)
+    with _cache_lock:
+        _cache_entries[:] = [e for e in _cache_entries if now - e["ts"] < _CACHE_TTL]
+        while len(_cache_entries) > _CACHE_MAX:
+            _cache_entries.pop(0)
 
 
 def _cache_lookup(question: str, filters: dict | None = None):
     if not CACHE_ENABLED:
         return None
     _cache_evict()
-    if not _cache_entries:
-        return None
     key = json.dumps({"q": question, "f": filters}, sort_keys=True, default=str)
     qv = _cache_embed(question)
-    for entry in _cache_entries:
-        if entry.get("key") == key:
-            return entry["result"]
-        if not filters and _cosine_sim(qv, entry["vector"]) >= CACHE_SIM_THRESHOLD:
-            if not entry.get("filters"):
+    with _cache_lock:
+        if not _cache_entries:
+            return None
+        for entry in _cache_entries:
+            if entry.get("key") == key:
                 return entry["result"]
+            if not filters and _cosine_sim(qv, entry["vector"]) >= CACHE_SIM_THRESHOLD:
+                if not entry.get("filters"):
+                    return entry["result"]
     return None
 
 
 def _cache_store(question: str, result: dict, filters: dict | None = None):
     if not CACHE_ENABLED:
         return
-    _cache_entries.append({
+    entry = {
         "key": json.dumps({"q": question, "f": filters}, sort_keys=True, default=str),
         "filters": bool(filters),
         "vector": _cache_embed(question),
         "ts": time.time(),
         "result": result,
-    })
+    }
+    with _cache_lock:
+        _cache_entries.append(entry)
     _cache_evict()
 
 # ─── MySQL Logging ────────────────────────────────────────────────────────
@@ -231,6 +239,53 @@ MYSQL_CONFIG = {
 MYSQL_LOG_ENABLED = bool(pymysql and MYSQL_CONFIG["password"])
 
 
+class _MySQLPool:
+    """Thread-safe connection pool for MySQL query logging."""
+    def __init__(self, config: dict, max_size: int = 10):
+        self.config = config
+        self.max_size = max_size
+        self._pool = queue.Queue(maxsize=max_size)
+        self._created = 0
+        self._lock = threading.Lock()
+
+    def get_conn(self):
+        try:
+            conn = self._pool.get_nowait()
+            conn.ping(reconnect=True)
+            return conn
+        except queue.Empty:
+            pass
+        with self._lock:
+            if self._created < self.max_size:
+                self._created += 1
+                return pymysql.connect(**self.config)
+        try:
+            conn = self._pool.get(timeout=3)
+            conn.ping(reconnect=True)
+            return conn
+        except queue.Empty:
+            return pymysql.connect(**self.config)
+
+    def release_conn(self, conn):
+        try:
+            self._pool.put_nowait(conn)
+        except queue.Full:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
+_mysql_pool = None
+
+
+def _get_mysql_pool():
+    global _mysql_pool
+    if _mysql_pool is None and MYSQL_LOG_ENABLED:
+        _mysql_pool = _MySQLPool(MYSQL_CONFIG, max_size=10)
+    return _mysql_pool
+
+
 def _sources_to_json(task, sources):
     out = []
     for r in sources:
@@ -243,21 +298,31 @@ def _sources_to_json(task, sources):
 def _log_query_mysql(question, answer, sources_json, latency_ms, faithfulness, cache_hit, client_ip):
     if not MYSQL_LOG_ENABLED:
         return
+    pool = _get_mysql_pool()
+    if not pool:
+        return
+    conn = None
     try:
-        conn = pymysql.connect(**MYSQL_CONFIG)
-        try:
-            with conn.cursor() as c:
-                c.execute(
-                    "INSERT INTO rag_query_logs "
-                    "(question, answer, sources, latency_ms, faithfulness, cache_hit, client_ip) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                    (question, answer, sources_json, int(latency_ms), faithfulness, int(cache_hit), client_ip),
-                )
-            conn.commit()
-        finally:
-            conn.close()
+        conn = pool.get_conn()
+        with conn.cursor() as c:
+            c.execute(
+                "INSERT INTO rag_query_logs "
+                "(question, answer, sources, latency_ms, faithfulness, cache_hit, client_ip) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (question, answer, sources_json, int(latency_ms), faithfulness, int(cache_hit), client_ip),
+            )
+        conn.commit()
     except Exception as e:
         print(f"[mysql] log write failed: {e}")
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            conn = None
+    finally:
+        if conn:
+            pool.release_conn(conn)
 
 
 # ─── Faithfulness Background ──────────────────────────────────────────────
@@ -310,8 +375,9 @@ def _check_rate(client_ip: str):
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=1000)
     top_k: int = Field(default=5, ge=1, le=20)
-    strategy: str = Field(default="hybrid", pattern="^(dense_only|sparse_only|hybrid|hybrid_rerank)$")
+    strategy: str = Field(default="hybrid_rerank", pattern="^(dense_only|sparse_only|hybrid|hybrid_rerank)$")
     filters: dict | None = Field(default=None, description='e.g. {"source": "news", "lang": "en"}')
+    min_score: float = Field(default=0.15, ge=0.0, le=1.0, description="Minimum top document confidence (0 = off, default 0.15)")
 
 
 class SourceItem(BaseModel):
@@ -394,6 +460,12 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
     _check_rate(client_ip)
     t0 = time.time()
 
+    # Fix-3: нормализация ввода (пробелы/невидимые символы по краям)
+    _clean_q = (req.question or "").strip(" \t\r\n\u200b\u200c\u200d\ufeff\u00a0")
+    if not _clean_q:
+        raise HTTPException(422, "question is empty after normalization")
+    req.question = _clean_q
+
     # Единый root span/trace в Langfuse для всего RAG-запроса
     lf_cm = None
     lf_obj = None
@@ -416,6 +488,10 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
     cached = _cache_lookup(req.question, req.filters)
     if cached:
         cached["cached"] = True
+        # Fix-2: не возвращать устаревшие латентности первого прогона
+        cached["latency_ms"] = round((time.time() - t0) * 1000, 1)
+        cached["latency_retrieval_ms"] = 0.0
+        cached["latency_generation_ms"] = 0.0
         if lf_cm:
             lf_cm.__exit__(None, None, None)
         if _langfuse_client:
@@ -446,11 +522,18 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
         )
         retr_cm.__enter__()
 
-    docs = await loop.run_in_executor(None, strategy_fn, req.question, req.top_k, req.filters)
+    try:
+        docs = await loop.run_in_executor(None, strategy_fn, req.question, req.top_k, req.filters)
+    except Exception as e:  # noqa: BLE001
+        if retr_cm:
+            retr_cm.__exit__(None, None, None)
+        raise HTTPException(502, f"retrieval failed: {type(e).__name__}: {e}")
     t1 = time.time()
 
     if retr_cm:
         retr_cm.__exit__(None, None, None)
+    # Fix-4: отсекаем бессмысленные чанки (одни точки/подчёркивания из корпуса)
+    docs = [d for d in docs if is_meaningful_chunk(d[1])]
     print(f"  docs={len(docs)}")
 
     if not docs:
@@ -471,14 +554,60 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
             latency_retrieval_ms=round((t1 - t0) * 1000, 1),
         )
 
-    context = format_context(docs)
+    top_raw = max((float(d[2]) for d in docs), default=0.0)
+    top_conf = top_raw / (top_raw + 0.25) if (req.strategy in ("hybrid", "hybrid_rerank") and top_raw < 0.2) else min(1.0, max(0.0, top_raw))
+    if req.min_score > 0 and top_conf < req.min_score:
+        if lf_cm:
+            lf_cm.__exit__(None, None, None)
+        if _langfuse_client:
+            _langfuse_client.flush()
+        loop = asyncio.get_running_loop()
+        refusal_msg = f"The query is outside the corpus or retrieval confidence is too low (confidence {top_conf:.2f} < threshold {req.min_score:.2f}). Refusing to answer."
+        sources_list = [
+            SourceItem(
+                id=str(d[0]),
+                score=round(float(d[2]), 4),
+                text_snippet=d[1][:200],
+                source=d[3].get("source", "") if len(d) > 3 and isinstance(d[3], dict) else "",
+                lang=d[3].get("lang", "") if len(d) > 3 and isinstance(d[3], dict) else "",
+            )
+            for d in docs[:req.top_k]
+        ]
+        await loop.run_in_executor(None, _log_query_mysql,
+                                   req.question, refusal_msg,
+                                   _sources_to_json(None, sources_list), round((t1 - t0) * 1000, 1), 0.0, 0, client_ip)
+        return QueryResponse(
+            question=req.question,
+            answer=refusal_msg,
+            sources=sources_list,
+            unsupported=True,
+            latency_ms=round((t1 - t0) * 1000, 1),
+            latency_retrieval_ms=round((t1 - t0) * 1000, 1),
+        )
+
+    # Единый порядок: контекст в промпте и список sources[] должны совпадать,
+    # иначе [n] указывает на другой документ, чем sources[n-1].
+    docs = reorder_lost_in_middle(docs)
+    context = format_context(docs, reorder=False)
 
     def _gen_traced():
         with propagate_attributes(trace_name="rag_query"):
             return generate_citations(req.question, context, llm, q_config)
 
-    answer = await asyncio.get_running_loop().run_in_executor(None, _gen_traced)
+    try:
+        answer = await asyncio.get_running_loop().run_in_executor(None, _gen_traced)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(502, f"generation failed: {type(e).__name__}: {e}")
     t2 = time.time()
+
+    # B1-фикс: unsupported=true, когда ответ не подтверждён цитатами из контекста
+    # ИЛИ текст ответа — явный отказ модели (даже если она приплела формальные ссылки).
+    _ids = [str(d[0]) for d in docs]
+    _numbering = context_numbering(docs, reorder=False)
+    # Fix-6: если модель написала номер позиции вместо doc_id ([3](#3)) — подменить на реальный id
+    answer = remap_citation_ids(answer, _numbering)
+    unsupported = apply_strict_grounding(answer, _ids, numbering=_numbering)["refused"] \
+        or looks_like_refusal(answer)
 
     task_id = uuid.uuid4().hex[:12]
     background_tasks.add_task(_run_faithfulness, task_id, context, answer, q_config)
@@ -486,6 +615,7 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
     resp = QueryResponse(
         question=req.question,
         answer=answer,
+        unsupported=unsupported,
         sources=[
             SourceItem(
                 id=d[0], score=round(d[2], 3), text_snippet=d[1][:200],
@@ -578,10 +708,21 @@ async def get_logs(request: Request, limit: int = 20):
 
 # ─── Stream ──────────────────────────────────────────────────────────────
 
-async def _stream_gen(question: str, top_k: int = 5):
+async def _stream_gen(question: str, top_k: int = 5, min_score: float = 0.15):
     docs = await asyncio.get_running_loop().run_in_executor(
         None, search_hybrid, question, top_k
     )
+    docs = [d for d in docs if is_meaningful_chunk(d[1])]
+    top_raw = max((float(d[2]) for d in docs), default=0.0)
+    top_conf = top_raw / (top_raw + 0.25) if top_raw < 0.2 else min(1.0, max(0.0, top_raw))
+
+    if min_score > 0 and (not docs or top_conf < min_score):
+        refusal_msg = f"The query is outside the corpus or retrieval confidence is too low (confidence {top_conf:.2f} < threshold {min_score:.2f})."
+        yield f"data: {json.dumps({'type': 'meta', 'n_docs': len(docs), 'unsupported': True})}\n\n"
+        yield f"data: {json.dumps({'type': 'token', 'text': refusal_msg})}\n\n"
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+        return
+
     context = format_context(docs)
     prompt = CITATIONS_PROMPT.invoke({"context": context, "question": question, "source": "msmarco"})
 
@@ -636,7 +777,7 @@ async def ingest(req: IngestRequest):
         points.append(qm.PointStruct(
             id=str(uuid.uuid4()),
             vector={
-                "dense": dv.tolist(),
+                "dense": dv if isinstance(dv, list) else dv.tolist(),
                 "sparse": qm.SparseVector(
                     indices=sv.indices.tolist(),
                     values=sv.values.tolist(),

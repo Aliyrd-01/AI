@@ -70,7 +70,7 @@ T = {
         "mode_rec": "Записанные прогоны",
         "mode_hint": "«Записанные прогоны» — реальные ответы этого агента, снятые заранее: "
                      "проигрываются мгновенно, без обращения к модели и без расхода токенов, "
-                     "с полным трейсом и SQL. «Запуск» — живой вызов модели: видно время, "
+                     "с полным трейсом и SQL. «Запуск» —  вызов модели: видно время, "
                      "токены и стоимость, ответ по актуальным данным.",
         "rec_badge": "записанный прогон — не тратит токены",
         "rec_miss": "Для этого вопроса записи нет — запускаю сейчас.",
@@ -125,11 +125,11 @@ T = {
         ],
         "more_h": "**Смотрите также**",
         "more": [
-            ("pages/1_RAG.py", "🔎 RAG-система: retrieval, цитаты, метрики"),
-            ("pages/4_MCP.py", "🔌 MCP-серверы: SQL через чат"),
-            ("pages/7_Security.py", "🔐 Безопасность: guardrails и примеры"),
-            ("pages/9_Testing.py", "🧪 Тестирование RAG и агентов"),
-            ("pages/6_Benchmarks.py", "📊 Замеренные метрики"),
+            ("views/1_RAG.py", "🔎 RAG-система: retrieval, цитаты, метрики"),
+            ("views/4_MCP.py", "🔌 MCP-серверы: SQL через чат"),
+            ("views/91_Security.py", "🔐 Безопасность: guardrails и примеры"),
+            ("views/92_Testing.py", "🧪 Тестирование RAG и агентов"),
+            ("views/6_Benchmarks.py", "📊 Замеренные метрики"),
         ],
         "foot": "Демо — реальный сервис, без мокапов. CRM-инструмент ходит в PostgreSQL MCP-сервер "
                 "(`POST /mcp`, localhost:9002); если сервер не запущен, агент поднимет его сам "
@@ -237,11 +237,11 @@ T = {
         ],
         "more_h": "**See also**",
         "more": [
-            ("pages/1_RAG.py", "🔎 RAG system: retrieval, citations, metrics"),
-            ("pages/4_MCP.py", "🔌 MCP servers: SQL through chat"),
-            ("pages/7_Security.py", "🔐 Security: guardrails and examples"),
-            ("pages/9_Testing.py", "🧪 RAG & Agent testing"),
-            ("pages/6_Benchmarks.py", "📊 Measured metrics"),
+            ("views/1_RAG.py", "🔎 RAG system: retrieval, citations, metrics"),
+            ("views/4_MCP.py", "🔌 MCP servers: SQL through chat"),
+            ("views/91_Security.py", "🔐 Security: guardrails and examples"),
+            ("views/92_Testing.py", "🧪 RAG & Agent testing"),
+            ("views/6_Benchmarks.py", "📊 Measured metrics"),
         ],
         "foot": "The demo is a real service, no mockups. The CRM tool talks to the PostgreSQL MCP server "
                 "(`POST /mcp`, localhost:9002); if it is not running, the agent starts it automatically "
@@ -468,7 +468,7 @@ for col, (t, d) in zip([p1, p2, p3], [
         with st.container(border=True):
             st.markdown(f"**{t}**")
             st.write(d)
-st.page_link("pages/10_Contacts.py", label=T["contact_link"], icon="✉️")
+st.page_link("views/93_Contacts.py", label=T["contact_link"], icon="✉️")
 
 gap()
 st.markdown(T["faq_h"])

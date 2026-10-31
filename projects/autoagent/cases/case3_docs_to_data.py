@@ -263,11 +263,29 @@ def main():
                  "INSERT INTO invoices (invoice_no, vendor, invoice_date, currency, subtotal, tax, total)",
                  "VALUES"]
     vals = []
+    def sql_quote_str(v):
+        if v is None or (hasattr(pd, "isna") and pd.isna(v)):
+            return "NULL"
+        s = str(v).replace("\\", "\\\\").replace("'", "''")
+        return f"'{s}'"
+
+    def sql_quote_num(v):
+        if v is None or (hasattr(pd, "isna") and pd.isna(v)):
+            return "NULL"
+        try:
+            return str(float(v))
+        except (ValueError, TypeError):
+            return "NULL"
+
     for _, r in df[df["status"] == "OK"].iterrows():
-        def q(v):
-            return "'" + str(v).replace("'", "''") + "'"
-        vals.append(f"  ({q(r['invoice_no'])}, {q(r['vendor'])}, {q(r['date'])}, "
-                    f"{q(r['currency'])}, {r['subtotal']}, {r['tax']}, {r['total']})")
+        inv_no = sql_quote_str(r.get("invoice_no"))
+        vendor = sql_quote_str(r.get("vendor"))
+        inv_date = sql_quote_str(r.get("date"))
+        currency = sql_quote_str(r.get("currency"))
+        subtotal = sql_quote_num(r.get("subtotal"))
+        tax = sql_quote_num(r.get("tax"))
+        total = sql_quote_num(r.get("total"))
+        vals.append(f"  ({inv_no}, {vendor}, {inv_date}, {currency}, {subtotal}, {tax}, {total})")
     if vals:
         sql_lines.append(",\n".join(vals))
         sql_lines.append("ON CONFLICT (invoice_no) DO NOTHING;")

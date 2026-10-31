@@ -1,7 +1,9 @@
 import requests, time, json, os
 
-TOKEN = "REDACTED"
-LIGHTRAG_URL = "http://localhost:9621/query"
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+if not TOKEN:
+    print("Warning: TELEGRAM_BOT_TOKEN is not set. Set it before running the bot.")
+LIGHTRAG_URL = os.getenv("LIGHTRAG_URL", "http://localhost:9621/query")
 OFFSET_FILE = os.path.expanduser("~/.tg_bot_offset")
 
 def get_offset():

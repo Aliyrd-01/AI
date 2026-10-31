@@ -143,8 +143,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE user_states SET state = 'bot' WHERE chat_id = {{ $('Parse Reply').item.json.user_chat_id }}",
-        "options": {}
+        "query": "UPDATE user_states SET state = 'bot' WHERE chat_id = $1",
+        "options": {
+          "queryReplacement": "={{ [parseInt($('Parse Reply').item.json.user_chat_id, 10)] }}"
+        }
       },
       "id": "a15940ea-29f8-46ec-a8d6-a59b275527f5",
       "name": "Reset to Bot",
@@ -305,8 +307,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE user_states SET state = 'operator' WHERE chat_id = {{ $('Telegram Trigger').item.json.message.chat.id }}",
-        "options": {}
+        "query": "UPDATE user_states SET state = 'operator' WHERE chat_id = $1",
+        "options": {
+          "queryReplacement": "={{ [parseInt($('Telegram Trigger').item.json.message.chat.id, 10)] }}"
+        }
       },
       "id": "b79a13f5-2bed-4910-afaf-eb584c520660",
       "name": "Set Operator State",

@@ -25,7 +25,7 @@ const pool = new Pool({
 
 const APP_PORT = parseInt(process.env.PORT || "9002");
 const SECRET_KEY = process.env.REMOTE_SECRET_KEY || "";
-const READ_ONLY = (process.env.READ_ONLY || "").toLowerCase() === "1";
+const READ_ONLY = (process.env.READ_ONLY || "1").toLowerCase() !== "0";
 const ROW_LIMIT = parseInt(process.env.ROW_LIMIT || "100");
 const AUDIT_FILE = process.env.AUDIT_FILE || "";
 
@@ -72,6 +72,14 @@ function assertWritable(name) {
   if (READ_ONLY) throw new Error(`Server is in READ_ONLY mode: "${name}" is not available`);
 }
 
+function validateSafeClause(clause, name = "clause") {
+  if (typeof clause !== "string" || !clause.trim()) throw new Error(`Missing ${name}`);
+  if (/;|\/\*|\*\/|--/.test(clause)) {
+    throw new Error(`Forbidden SQL characters in ${name}: semicolons and comment tokens are rejected`);
+  }
+  return clause.trim();
+}
+
 async function handleToolCall(name, args) {
   const t0 = Date.now();
   try {
@@ -95,6 +103,7 @@ async function handleToolCall(name, args) {
       case "select": {
         if (typeof args.sql !== "string") throw new Error("Missing argument: sql");
         if (!/^\s*select\b|^\s*with\b/i.test(args.sql)) throw new Error("select tool accepts SELECT or WITH queries only");
+        if (/;/.test(args.sql.trim().replace(/\s*;?\s*$/, ""))) throw new Error("Multiple SQL statements separated by ';' are forbidden");
         rows = await runSql(limitSelect(args.sql));
         break;
       }
@@ -114,15 +123,15 @@ async function handleToolCall(name, args) {
         const setCols = Object.keys(args.set).map((c) => safeIdent(c, "column"));
         const vals = Object.values(args.set);
         const setClause = setCols.map((c, i) => `${c} = $${i + 1}`).join(", ");
-        if (typeof args.where !== "string" || !args.where.trim()) throw new Error("update requires a WHERE condition");
-        rows = await runSql(`UPDATE ${table} SET ${setClause} WHERE ${args.where} RETURNING *`, vals);
+        const whereClause = validateSafeClause(args.where, "WHERE condition");
+        rows = await runSql(`UPDATE ${table} SET ${setClause} WHERE ${whereClause} RETURNING *`, vals);
         break;
       }
       case "delete_rows": {
         assertWritable(name);
         const table = safeIdent(args.table, "table name");
-        if (typeof args.where !== "string" || !args.where.trim()) throw new Error("delete_rows requires a WHERE condition");
-        rows = await runSql(`DELETE FROM ${table} WHERE ${args.where} RETURNING *`);
+        const whereClause = validateSafeClause(args.where, "WHERE condition");
+        rows = await runSql(`DELETE FROM ${table} WHERE ${whereClause} RETURNING *`);
         break;
       }
       case "create_table": {
@@ -153,14 +162,9 @@ async function handleToolCall(name, args) {
         break;
       }
       case "run_sql": {
-        if (!READ_ONLY) {
-          rows = await runSqlRaw(args.sql);
-        } else {
-          if (typeof args.sql !== "string" || !/^\s*select\b|^\s*with\b/i.test(args.sql)) {
-            throw new Error('Server is in READ_ONLY mode: run_sql allows SELECT/WITH only');
-          }
-          rows = await runSql(limitSelect(args.sql));
-        }
+        assertWritable(name);
+        if (typeof args.sql !== "string") throw new Error("Missing argument: sql");
+        rows = await runSqlRaw(args.sql);
         break;
       }
       default:
@@ -364,9 +368,9 @@ app.use(express.json());
 app.post("/mcp", async (req, res) => {
   const auth = req.headers["authorization"];
   const t0 = Date.now();
-  if (SECRET_KEY && (!auth || auth !== `Bearer ${SECRET_KEY}`)) {
+  if (!SECRET_KEY || !auth || auth !== `Bearer ${SECRET_KEY}`) {
     audit({ kind: "http", event: "unauthorized", ok: false, ms: Date.now() - t0 });
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized: Missing or invalid token" });
   }
   try {
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });

@@ -178,13 +178,13 @@ T = {
 }[lang]
 
 STRATEGIES = {
-    "hybrid": "Hybrid — dense + sparse (RRF) + IDF  ← default",
+    "hybrid_cross_encoder": "Hybrid + CrossEncoder rerank  ← default (high quality)",
+    "dense_only": "Dense only (Nomic v1.5)  ← fast baseline",
+    "hybrid": "Hybrid — dense + sparse (RRF) + IDF",
     "hybrid_diverse": "Hybrid + MMR diversity",
-    "hybrid_cross_encoder": "Hybrid + CrossEncoder rerank",
     "hybrid_hyde": "Hybrid + HyDE (hypothetical answer)",
     "hybrid_hyde_cross_encoder": "Hybrid + HyDE + CrossEncoder  (best quality)",
     "multi_query": "Multi-query (LLM rewrites) + hybrid",
-    "dense_only": "Dense only (Nomic v1.5)",
     "sparse_only": "Sparse only (BM25 + IDF)",
     "hybrid_weighted": "Hybrid — weighted RRF",
     "hybrid_llm_rerank": "Hybrid + LLM rerank",
@@ -556,8 +556,8 @@ with st.sidebar:
 
     st.divider()
     st.markdown(f"**{T['answering']}**")
-    min_score = st.slider(T["min_score"], 0.0, 1.0, 0.0, 0.05)
-    strict_grounding = st.checkbox(T["strict"], value=False)
+    min_score = st.slider(T["min_score"], 0.0, 1.0, 0.15, 0.05)
+    strict_grounding = st.checkbox(T["strict"], value=True)
 
     st.divider()
     st.markdown(f"**{T['meta']}**")
@@ -705,14 +705,18 @@ if dialog_mode:
                     t_gen = time.time() - t_gen0
 
                     retrieved_ids = [str(d[0]) for d in docs]
+                    doc_numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
                     repaired = normalize_citations(answer, retrieved_ids, corpus["source"])
                     if repaired != answer:
                         answer = repaired
                         ph.markdown(answer)
                     cited = {str(did) for _, did in extract_citations(answer)}
-                    issues, _c, _h = verify_grounding(answer, retrieved_ids, len(docs))
+                    issues, _c, _h = verify_grounding(answer, retrieved_ids, len(docs),
+                                                      numbering=doc_numbering)
                     if strict_grounding:
-                        gate = apply_strict_grounding(answer, retrieved_ids, refusal=T["refuse"])
+                        gate = apply_strict_grounding(answer, retrieved_ids,
+                                                      refusal=T["refuse"],
+                                                      numbering=doc_numbering)
                         refused, draft = gate["refused"], gate["draft"]
                         if refused:
                             answer = gate["answer"]
@@ -892,17 +896,19 @@ if asked:
 
             answer = answer or ""
             retrieved_ids = [str(d[0]) for d in docs]
+            doc_numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
             repaired = normalize_citations(answer, retrieved_ids, corpus["source"])
             if repaired != answer:
                 answer = repaired
                 answer_ph.markdown(answer)
             cited = {str(did) for _, did in extract_citations(answer)}
             issues, _cited, _has_issues = verify_grounding(
-                answer, retrieved_ids, len(docs))
+                answer, retrieved_ids, len(docs), numbering=doc_numbering)
 
             refused, draft = False, ""
             if strict_grounding:
-                gate = apply_strict_grounding(answer, retrieved_ids, refusal=T["refuse"])
+                gate = apply_strict_grounding(answer, retrieved_ids, refusal=T["refuse"],
+                                              numbering=doc_numbering)
                 refused, draft = gate["refused"], gate["draft"]
                 if refused:
                     answer = gate["answer"]

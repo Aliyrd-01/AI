@@ -89,7 +89,7 @@ def main():
     import module_5_retrieval as m
     from module_7_generation import (
         format_context, sanitize_context, generate_citations,
-        apply_strict_grounding,
+        apply_strict_grounding, reorder_lost_in_middle,
     )
     from common import get_chat_llm, describe_llm
 
@@ -102,9 +102,11 @@ def main():
         docs = m.search_hybrid(q, args.k)
         raw = max((float(d[2]) for d in docs), default=0.0)
         conf = raw / (raw + _RRF_SAT)
-        context = sanitize_context(format_context(docs))
+        docs = reorder_lost_in_middle(docs)
+        numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
+        context = sanitize_context(format_context(docs, reorder=False))
         answer = generate_citations(q, context, llm)
-        gate = apply_strict_grounding(answer, [str(d[0]) for d in docs])
+        gate = apply_strict_grounding(answer, [str(d[0]) for d in docs], numbering=numbering)
         signals = []
         if gate["refused"]:
             signals.append("no_valid_citation")

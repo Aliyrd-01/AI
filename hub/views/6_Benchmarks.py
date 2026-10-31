@@ -267,4 +267,4 @@ with tab_llm:
             st.dataframe(rows, use_container_width=True, hide_index=True)
         st.caption(T["src"] + ": `projects/hallucination-benchmark`")
 
-    st.page_link("pages/9_Testing.py", label=T["testing_link"], icon="🧪")
+    st.page_link("views/92_Testing.py", label=T["testing_link"], icon="🧪")

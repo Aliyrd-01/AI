@@ -1,7 +1,9 @@
 """Pure graders (no network) + HumanEval executor (subprocess sandbox)."""
 
+import ast
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -88,25 +90,106 @@ def extract_code(text, entry_point):
     return t.strip()
 
 
-def humaneval_run(code, harness, entry_point, timeout=15):
-    """Run code+tests in an isolated python subprocess. Returns 1/0/-1 (error)."""
-    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False, encoding="utf-8") as f:
-        f.write(code + "\n\n" + harness + "\n")
-        f.write(f"\ncheck({entry_point})\n")
-        path = f.name
-    if "def check(" not in harness:
-        # humaneval test blocks call check(candidate) as wrapper
-        f2 = open(path, "a", encoding="utf-8")
-        f2.write("def check(candidate):\n    pass\n")
-        f2.close()
+DANGEROUS_MODULES = {
+    "os", "sys", "subprocess", "shutil", "socket", "http", "urllib", "requests",
+    "ctypes", "posix", "nt", "pty", "fcntl", "signal", "winreg", "webbrowser",
+    "multiprocessing", "threading", "asyncio", "importlib", "inspect", "builtins",
+    "tempfile", "pickle", "shelve", "marshal", "tarfile", "zipfile", "pathlib", "gc",
+}
+
+DANGEROUS_CALLS = {
+    "eval", "exec", "compile", "__import__", "open", "breakpoint", "globals", "locals", "vars", "dir"
+}
+
+DANGEROUS_ATTRS = {
+    "__subclasses__", "__globals__", "__code__", "__bases__", "__mro__",
+    "__builtins__", "__class__", "func_globals", "gi_frame"
+}
+
+
+def is_safe_humaneval_code(code_str: str) -> tuple[bool, str]:
+    """AST-based static security verification to prevent RCE, network, file or privilege escalation."""
     try:
-        p = subprocess.run([sys.executable, path], capture_output=True, timeout=timeout)
-        return 1 if p.returncode == 0 else 0
-    except subprocess.TimeoutExpired:
+        tree = ast.parse(code_str)
+    except SyntaxError as e:
+        return False, f"Syntax error: {e}"
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                root_pkg = alias.name.split(".")[0]
+                if root_pkg in DANGEROUS_MODULES:
+                    return False, f"Dangerous import rejected: {alias.name}"
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                root_pkg = node.module.split(".")[0]
+                if root_pkg in DANGEROUS_MODULES:
+                    return False, f"Dangerous from-import rejected: {node.module}"
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in DANGEROUS_CALLS:
+                return False, f"Dangerous built-in call rejected: {node.func.id}"
+        elif isinstance(node, ast.Attribute):
+            if node.attr in DANGEROUS_ATTRS:
+                return False, f"Introspection attribute rejected: {node.attr}"
+
+    return True, "OK"
+
+
+def humaneval_run(code, harness, entry_point, timeout=10):
+    """Run code+tests in a sandboxed execution environment. Returns 1/0/-1 (error)."""
+    # 1. AST static analysis to stop RCE attacks before execution
+    safe, _ = is_safe_humaneval_code(code)
+    if not safe:
+        return 0
+
+    # 2. Check if Docker container sandbox is enabled
+    use_docker = os.environ.get("DOCKER_SANDBOX", "0").lower() in ("1", "true", "yes")
+
+    sandbox_dir = tempfile.mkdtemp(prefix="he_sandbox_")
+    script_path = os.path.join(sandbox_dir, "solution.py")
+
+    try:
+        with open(script_path, "w", encoding="utf-8") as f:
+            f.write(code + "\n\n" + harness + "\n")
+            if "def check(" not in harness:
+                f.write("\ndef check(candidate):\n    pass\n")
+            f.write(f"\ncheck({entry_point})\n")
+
+        if use_docker:
+            cmd = [
+                "docker", "run", "--rm",
+                "--network", "none",
+                "-m", "128m",
+                "-v", f"{sandbox_dir}:/sandbox:ro",
+                "python:3.11-slim",
+                "python", "/sandbox/solution.py"
+            ]
+            p = subprocess.run(cmd, capture_output=True, timeout=timeout)
+            return 1 if p.returncode == 0 else 0
+        else:
+            # Isolated subprocess: no secrets in env, isolated working dir, -I flag
+            clean_env = {
+                "PATH": os.environ.get("PATH", ""),
+                "SYSTEMROOT": os.environ.get("SYSTEMROOT", "C:\\Windows"),
+                "PYTHONIOENCODING": "utf-8",
+                "PYTHONPATH": "",
+                "PYTHONHASHSEED": "0",
+                "TEMP": sandbox_dir,
+                "TMP": sandbox_dir,
+            }
+            p = subprocess.run(
+                [sys.executable, "-I", script_path],
+                cwd=sandbox_dir,
+                env=clean_env,
+                capture_output=True,
+                timeout=timeout,
+            )
+            return 1 if p.returncode == 0 else 0
+    except (subprocess.TimeoutExpired, Exception):
         return 0
     finally:
         try:
-            os.unlink(path)
+            shutil.rmtree(sandbox_dir, ignore_errors=True)
         except OSError:
             pass
 

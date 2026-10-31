@@ -166,9 +166,11 @@ def _load_idf():
     try:
         with open(path, encoding="utf-8") as f:
             raw = json.load(f)
-        stats = {"n_docs": raw["n_docs"],
-                 "df": {int(k): v for k, v in raw["df"].items()}}
-        stats["avg_len"] = sum(stats["df"].values()) / max(len(stats["df"]), 1)
+        stats = {
+            "n_docs": raw["n_docs"],
+            "df": {int(k): v for k, v in raw["df"].items()},
+            "avg_len": raw.get("avg_doc_len", 100.0),
+        }
     except Exception as e:
         print(f"  ⚠ IDF stats unavailable ({e}), using raw term-frequency")
         stats = None
@@ -177,11 +179,11 @@ def _load_idf():
 
 
 def apply_bm25_idf(svec, k1: float = 1.2, b: float = 0.75):
-    """Перевзвешивает sparse-вектор запроса формулой BM25 (idf + длина запроса).
+    """Перевзвешивает sparse-вектор запроса классической формулой Robertson-Spärck Jones IDF.
 
-    svec — результат Qdrant/bm25 из fastembed (уже с tf-saturation).
-    Домножаем на idf и нормируем по длине запроса, чтобы короткие запросы
-    не получали систематически больший вес.
+    svec — результат Qdrant/bm25 из fastembed.
+    Домножаем каждый терм запроса на его обратную документную частоту:
+    IDF(t) = ln(1 + (N - df(t) + 0.5) / (df(t) + 0.5)).
     """
     stats = _load_idf()
     if not stats:
@@ -189,19 +191,16 @@ def apply_bm25_idf(svec, k1: float = 1.2, b: float = 0.75):
 
     n_docs = stats["n_docs"]
     df = stats["df"]
-    avg_len = stats["avg_len"] or 1.0
 
     indices = svec.indices.tolist() if hasattr(svec.indices, "tolist") else list(svec.indices)
     values = svec.values.tolist() if hasattr(svec.values, "tolist") else list(svec.values)
 
-    norm = k1 * (1 - b + b * len(indices) / avg_len)
-
     out_idx, out_val = [], []
     for idx, tf in zip(indices, values):
         freq = df.get(int(idx), 0)
-        idf = max(math.log(1.0 + (n_docs - freq + 0.5) / (freq + 0.5)), 1e-6)
+        idf = max(math.log(1.0 + (n_docs - freq + 0.5) / (freq + 0.5)), 1e-4)
         out_idx.append(int(idx))
-        out_val.append(float(tf) * idf / norm)
+        out_val.append(float(tf) * idf)
 
     return qm.SparseVector(indices=out_idx, values=out_val)
 
@@ -305,10 +304,16 @@ def _to_filter(filters: dict | None):
     return qm.Filter(must=conditions) if conditions else None
 
 
-def search_dense(query: str, k: int = 10, filters: dict | None = None):
+def is_meaningful_chunk(text: str, min_letters: int = 20) -> bool:
+    """Чанк осмысленный, если содержит минимум букв (фильтр «....» и «____» из корпуса)."""
+    return sum(ch.isalpha() for ch in (text or "")) >= min_letters
+
+
+def search_dense(query: str, k: int = 10, filters: dict | None = None, collection: str | None = None):
     client = get_client()
+    target_coll = collection or COLLECTION
     results = client.query_points(
-        collection_name=COLLECTION,
+        collection_name=target_coll,
         query=_dense_query(query),
         using="dense",
         limit=max(k * 4, 20),
@@ -318,10 +323,11 @@ def search_dense(query: str, k: int = 10, filters: dict | None = None):
     return _dedupe_by_doc_id([_row(p) for p in results.points], k)
 
 
-def search_sparse(query: str, k: int = 10, filters: dict | None = None):
+def search_sparse(query: str, k: int = 10, filters: dict | None = None, collection: str | None = None):
     client = get_client()
+    target_coll = collection or COLLECTION
     results = client.query_points(
-        collection_name=COLLECTION,
+        collection_name=target_coll,
         query=_sparse_query(query),
         using="sparse",
         limit=max(k * 4, 20),
@@ -331,12 +337,13 @@ def search_sparse(query: str, k: int = 10, filters: dict | None = None):
     return _dedupe_by_doc_id([_row(p) for p in results.points], k)
 
 
-def search_hybrid(query: str, k: int = 10, filters: dict | None = None):
+def search_hybrid(query: str, k: int = 10, filters: dict | None = None, collection: str | None = None):
     client = get_client()
+    target_coll = collection or COLLECTION
     qfilter = _to_filter(filters)
     try:
         results = client.query_points(
-            collection_name=COLLECTION,
+            collection_name=target_coll,
             prefetch=[
                 qm.Prefetch(query=_dense_query(query), using="dense", limit=k * 4),
                 qm.Prefetch(query=_sparse_query(query), using="sparse", limit=k * 4),
@@ -347,7 +354,7 @@ def search_hybrid(query: str, k: int = 10, filters: dict | None = None):
     except Exception as e:
         print(f"  ⚠ Sparse model failed ({e}), falling back to dense-only")
         results = client.query_points(
-            collection_name=COLLECTION,
+            collection_name=target_coll,
             query=_dense_query(query), using="dense",
             limit=max(k * 4, 20), with_payload=True, query_filter=qfilter,
         )
