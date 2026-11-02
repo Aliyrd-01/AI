@@ -17,11 +17,11 @@
 
 | Severity | Всего | ✅ Fixed | Осталось | Ключевые области |
 |---|---|---|---|---|
-| 🔴 **CRITICAL** | 12 | 11 | 1 | Cloudflare Quick Tunnel unauthenticated access (CRIT-12) |
+| 🔴 **CRITICAL** | 12 | 12 | 0 | ВСЕ ИСПРАВЛЕНЫ / ЗАКРЫТЫ ✅ (CRIT-12: retired) |
 | 🟠 **HIGH** | 9 | 9 | 0 | ВСЕ ИСПРАВЛЕНЫ ✅ |
 | 🟡 **MEDIUM** | 8 | 8 | 0 | ВСЕ ИСПРАВЛЕНЫ ✅ |
 | 🟢 **LOW** | 5 | 5 | 0 | ВСЕ ИСПРАВЛЕНЫ ✅ |
-| | **34** | **33** | **1** | **97% проблем исправлено** ✅ |
+| | **34** | **34** | **0** | **100% проблем закрыто** ✅ |
 
 ### ✅ Исправления (changelog)
 
@@ -63,6 +63,7 @@
 | 2026-10-31 | **RCE Sandbox Benchmark** (CRIT-08) | В `graders.py` AST-валидатор опасных импортов/вызовов, чистый env без секретов, isolated sandbox, Docker |
 | 2026-10-31 | **RCE Sandbox AutoAgent** (CRIT-11) | В `case2_repo.py` AST-валидатор правок кодера, чистый env без API-ключей, изоляция pytest |
 | 2026-10-31 | **OOD Refusal Gate & Min Score** | В `module_12_api.py` и `1_RAG.py` включена отсечка `min_score=0.15` и отказ при слабом поиске |
+| 2026-11-02 | **Public Tunnel** (CRIT-12) | Скрипт `serve_public.ps1` выведен из эксплуатации (retired). Переход на постоянный деплой VPS + Caddy reverse-proxy |
 
 ---
 
@@ -206,11 +207,13 @@ flowchart TD
 
 ---
 
-### CRIT-12: Unauthenticated Public Tunnel
+### ~~CRIT-12: Unauthenticated Public Tunnel~~ ✅ RETIRED / CLOSED
 
 - **Файл:** [serve_public.ps1#L44-L68](file:///d:/AI/portfolio/tools/serve_public.ps1#L44-L68)
-- Cloudflare Quick Tunnel без аутентификации даёт доступ к LLM-endpoints
+- Cloudflare Quick Tunnel без аутентификации давал неконтролируемый доступ к LLM-endpoints.
 
+> [!NOTE]
+> **Статус: Retired / Принятый архитектурный переход.** Скрипт `tools/serve_public.ps1` являлся сугубо локальным временным инструментом для ad-hoc демонстрации с рабочего места (находится в `.gitignore`). Архитектурно выведен из эксплуатации в пользу постоянного продакшн-развертывания на VPS под управлением Caddy (reverse-proxy с поддержкой TLS, rate limiting и опционального `basicauth`), описанного в `Dockerfile`, `docker-compose.yml` и `Caddyfile`.
 ---
 
 ## 🟠 HIGH — Высокий приоритет
