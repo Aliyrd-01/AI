@@ -45,7 +45,7 @@ def main():
     from module_7_generation import (
         format_context, sanitize_context, generate_citations,
         verify_grounding, check_faithfulness, parse_score, context_numbering,
-        reorder_lost_in_middle,
+        reorder_lost_in_middle, remap_citation_ids,
     )
     from common import get_chat_llm, get_judge_llm, describe_llm
 
@@ -82,6 +82,8 @@ def main():
         numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
         context = sanitize_context(format_context(docs, reorder=False))
         answer = generate_citations(it["query"], context, llm)
+        # Как в API: сначала чиним цитаты по нумерации, потом проверяем grounding.
+        answer = remap_citation_ids(answer, numbering)
 
         ids = [str(d[0]) for d in docs]
         issues, cited, has_issues = verify_grounding(answer, ids, len(docs), numbering=numbering)

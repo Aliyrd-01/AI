@@ -35,7 +35,8 @@ from module_5_retrieval import (search_dense, search_sparse, search_hybrid,
                                 search_hybrid_rerank, is_meaningful_chunk)
 from module_7_generation import (format_context, generate_citations, check_faithfulness,
                                  CITATIONS_PROMPT, context_numbering, apply_strict_grounding,
-                                 looks_like_refusal, reorder_lost_in_middle, remap_citation_ids)
+                                 looks_like_refusal, reorder_lost_in_middle, remap_citation_ids,
+                                 sanitize_context, sanitize_question, strip_prompt_leak)
 
 # ─── Langfuse ─────────────────────────────────────────────────────────────
 _langfuse_handler = None
@@ -466,6 +467,20 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
         raise HTTPException(422, "question is empty after normalization")
     req.question = _clean_q
 
+    # Fix-7: инструкции внутри вопроса — это данные, а не команды.
+    # Вырезаем инъекционные фразы, остальное (собственно вопрос) сохраняем.
+    req.question, _removed = sanitize_question(req.question)
+    if _removed:
+        print(f"  [guard] injection clauses removed: {_removed}")
+    if not req.question.strip():
+        loop = asyncio.get_running_loop()
+        msg = ("The request contains only instruction-like content and no corpus question. "
+               "Nothing to answer.")
+        await loop.run_in_executor(None, _log_query_mysql,
+                                   _clean_q, msg, "[]", 0, 0.0, 0, client_ip)
+        return QueryResponse(question=_clean_q, answer=msg, sources=[], unsupported=True,
+                             latency_ms=round((time.time() - t0) * 1000, 1))
+
     # Единый root span/trace в Langfuse для всего RAG-запроса
     lf_cm = None
     lf_obj = None
@@ -588,7 +603,7 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
     # Единый порядок: контекст в промпте и список sources[] должны совпадать,
     # иначе [n] указывает на другой документ, чем sources[n-1].
     docs = reorder_lost_in_middle(docs)
-    context = format_context(docs, reorder=False)
+    context = sanitize_context(format_context(docs, reorder=False))
 
     def _gen_traced():
         with propagate_attributes(trace_name="rag_query"):
@@ -606,8 +621,15 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
     _numbering = context_numbering(docs, reorder=False)
     # Fix-6: если модель написала номер позиции вместо doc_id ([3](#3)) — подменить на реальный id
     answer = remap_citation_ids(answer, _numbering)
+    # Fix-8: если модель начала пересказывать системный промпт — обрезаем утёкший хвост.
+    answer, _leaked = strip_prompt_leak(answer)
     unsupported = apply_strict_grounding(answer, _ids, numbering=_numbering)["refused"] \
         or looks_like_refusal(answer)
+    if _leaked:
+        unsupported = True
+        if not answer.strip():
+            answer = ("I cannot answer this: the response would have consisted of instructions "
+                      "rather than corpus-grounded content.")
 
     task_id = uuid.uuid4().hex[:12]
     background_tasks.add_task(_run_faithfulness, task_id, context, answer, q_config)
@@ -709,6 +731,17 @@ async def get_logs(request: Request, limit: int = 20):
 # ─── Stream ──────────────────────────────────────────────────────────────
 
 async def _stream_gen(question: str, top_k: int = 5, min_score: float = 0.15):
+    question, _removed = sanitize_question(question)
+    if _removed:
+        print(f"  [guard] stream injection clauses removed: {_removed}")
+    if not question.strip():
+        msg = ("The request contains only instruction-like content and no corpus question. "
+               "Nothing to answer.")
+        yield f"data: {json.dumps({'type': 'meta', 'n_docs': 0, 'unsupported': True})}\n\n"
+        yield f"data: {json.dumps({'type': 'token', 'text': msg})}\n\n"
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+        return
+
     docs = await asyncio.get_running_loop().run_in_executor(
         None, search_hybrid, question, top_k
     )
@@ -723,14 +756,27 @@ async def _stream_gen(question: str, top_k: int = 5, min_score: float = 0.15):
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
         return
 
-    context = format_context(docs)
+    docs = reorder_lost_in_middle(docs)
+    context = sanitize_context(format_context(docs, reorder=False))
     prompt = CITATIONS_PROMPT.invoke({"context": context, "question": question, "source": "msmarco"})
 
     yield f"data: {json.dumps({'type': 'meta', 'n_docs': len(docs)})}\n\n"
 
+    buf = ""
+    emitted = 0
     async for chunk in llm.astream(prompt, config=LC_CONFIG):
-        if chunk.content:
-            yield f"data: {json.dumps({'type': 'token', 'text': chunk.content})}\n\n"
+        if not chunk.content:
+            continue
+        buf += chunk.content
+        # Fix-8 (стрим): как только модель начала пересказывать промпт — глушим поток.
+        tail, leaked = strip_prompt_leak(buf)
+        if leaked:
+            if len(tail) > emitted:
+                yield f"data: {json.dumps({'type': 'token', 'text': tail[emitted:]})}\n\n"
+            yield f"data: {json.dumps({'type': 'redacted', 'unsupported': True})}\n\n"
+            break
+        yield f"data: {json.dumps({'type': 'token', 'text': chunk.content})}\n\n"
+        emitted = len(buf)
 
     yield f"data: {json.dumps({'type': 'done'})}\n\n"
 

@@ -604,6 +604,7 @@ if dialog_mode:
         apply_strict_grounding, condense_query, count_tokens, extract_citations,
         format_context, generate_citations, generate_citations_stream,
         normalize_citations, sanitize_context, verify_grounding,
+        remap_citation_ids, strip_prompt_leak,
     )
 
     st.caption(T["chat_note"])
@@ -710,6 +711,13 @@ if dialog_mode:
                     if repaired != answer:
                         answer = repaired
                         ph.markdown(answer)
+                    remapped = remap_citation_ids(answer, doc_numbering)
+                    if remapped != answer:
+                        answer = remapped
+                        ph.markdown(answer)
+                    answer, leaked = strip_prompt_leak(answer)
+                    if leaked:
+                        ph.markdown(answer or T["refuse"])
                     cited = {str(did) for _, did in extract_citations(answer)}
                     issues, _c, _h = verify_grounding(answer, retrieved_ids, len(docs),
                                                       numbering=doc_numbering)
