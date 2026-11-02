@@ -1,5 +1,5 @@
 {
-  "ts": "2026-10-27 17:54:05",
+  "ts": "2026-10-31 14:59:43",
   "llm": {
     "provider": "Qubax",
     "requested": "qwen3-235b-a22b-2507",
@@ -19,10 +19,12 @@
   },
   "summary": {
     "ood_n": 26,
-    "control_n": 20,
-    "refusal_rate": 0.692,
-    "false_refusal_rate": 0.0,
-    "passed": false
+    "control_n": 10,
+    "refusal_rate": 0.962,
+    "false_refusal_rate": 0.1,
+    "ungrounded_rate_ood": 0.885,
+    "ungrounded_rate_control": 0.0,
+    "passed": true
   },
   "rows": [
     {
@@ -32,7 +34,11 @@
       "conf": 0.769,
       "raw_top": 0.8333,
       "via": "says_cannot",
-      "latency_s": 25.06
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 33.33
     },
     {
       "query": "what is the latest ChatGPT model released in 2026",
@@ -40,8 +46,12 @@
       "refused": true,
       "conf": 0.667,
       "raw_top": 0.5,
-      "via": "no_valid_citation,says_cannot",
-      "latency_s": 2.13
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 9.5
     },
     {
       "query": "what is the price of bitcoin right now today",
@@ -50,16 +60,22 @@
       "conf": 0.8,
       "raw_top": 1.0,
       "via": "-",
-      "latency_s": 1.53
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 2.0
     },
     {
       "query": "who is the current president of the United States in 2026",
       "kind": "ood",
-      "refused": false,
+      "refused": true,
       "conf": 0.698,
       "raw_top": 0.5769,
-      "via": "-",
-      "latency_s": 4.95
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 17.12
     },
     {
       "query": "what Python version was released most recently in 2026",
@@ -68,7 +84,11 @@
       "conf": 0.769,
       "raw_top": 0.8333,
       "via": "says_cannot",
-      "latency_s": 13.26
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 15.21
     },
     {
       "query": "how do I configure the Qubax router v9 dashboard",
@@ -76,8 +96,10 @@
       "refused": true,
       "conf": 0.714,
       "raw_top": 0.625,
-      "via": "no_valid_citation",
-      "latency_s": 81.97
+      "via": "says_cannot",
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 4.83
     },
     {
       "query": "what is the release date of iPhone 18 Pro",
@@ -86,7 +108,11 @@
       "conf": 0.8,
       "raw_top": 1.0,
       "via": "says_cannot",
-      "latency_s": 4.82
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 14.38
     },
     {
       "query": "who won Eurovision song contest 2025",
@@ -95,7 +121,11 @@
       "conf": 0.696,
       "raw_top": 0.5714,
       "via": "says_cannot",
-      "latency_s": 3.83
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 18.65
     },
     {
       "query": "what is the newest NVIDIA GPU announced this year",
@@ -103,8 +133,12 @@
       "refused": true,
       "conf": 0.769,
       "raw_top": 0.8333,
-      "via": "no_valid_citation,says_cannot",
-      "latency_s": 2.22
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 16.07
     },
     {
       "query": "how many active users does the Telegram app have in 2026",
@@ -113,16 +147,24 @@
       "conf": 0.75,
       "raw_top": 0.75,
       "via": "says_cannot",
-      "latency_s": 7.32
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 1.81
     },
     {
       "query": "what is the weather forecast for Moscow tomorrow morning",
       "kind": "ood",
-      "refused": false,
+      "refused": true,
       "conf": 0.75,
       "raw_top": 0.75,
-      "via": "-",
-      "latency_s": 7.84
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 13.12
     },
     {
       "query": "who won the Nobel Prize in physics last year",
@@ -131,7 +173,11 @@
       "conf": 0.714,
       "raw_top": 0.625,
       "via": "says_cannot",
-      "latency_s": 3.63
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 19.19
     },
     {
       "query": "what does the zzzq-frobnicator npm package do",
@@ -140,16 +186,24 @@
       "conf": 0.667,
       "raw_top": 0.5,
       "via": "says_cannot",
-      "latency_s": 7.12
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 18.38
     },
     {
       "query": "how do I reset my password on the ryochan crypto exchange",
       "kind": "ood",
-      "refused": false,
+      "refused": true,
       "conf": 0.727,
       "raw_top": 0.6667,
-      "via": "-",
-      "latency_s": 4.52
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 10.03
     },
     {
       "query": "what is the exchange rate of USDT to EUR right now",
@@ -157,8 +211,12 @@
       "refused": true,
       "conf": 0.714,
       "raw_top": 0.625,
-      "via": "no_valid_citation",
-      "latency_s": 4.18
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 31.14
     },
     {
       "query": "which team won the super bowl in February 2026",
@@ -167,7 +225,11 @@
       "conf": 0.667,
       "raw_top": 0.5,
       "via": "says_cannot",
-      "latency_s": 2.45
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 3.24
     },
     {
       "query": "what is OpenAI o5 and when was it released",
@@ -176,7 +238,11 @@
       "conf": 0.667,
       "raw_top": 0.5,
       "via": "says_cannot",
-      "latency_s": 4.1
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 9.21
     },
     {
       "query": "how tall is the new Burj Jeddah tower completed in 2026",
@@ -185,16 +251,22 @@
       "conf": 0.8,
       "raw_top": 1.0,
       "via": "says_cannot",
-      "latency_s": 3.73
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 14.27
     },
     {
       "query": "what are the latest Windows 12 features",
       "kind": "ood",
-      "refused": false,
+      "refused": true,
       "conf": 0.696,
       "raw_top": 0.5714,
-      "via": "-",
-      "latency_s": 3.71
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 1.86
     },
     {
       "query": "who is the CEO of Qubax company",
@@ -202,17 +274,25 @@
       "refused": true,
       "conf": 0.667,
       "raw_top": 0.5,
-      "via": "no_valid_citation,says_cannot",
-      "latency_s": 3.27
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 4.17
     },
     {
       "query": "what is the score of yesterday's real madrid barcelona match",
       "kind": "ood",
-      "refused": false,
+      "refused": true,
       "conf": 0.769,
       "raw_top": 0.8333,
-      "via": "-",
-      "latency_s": 4.12
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 16.97
     },
     {
       "query": "how do I sync my Ledger Nano X with the 2026 firmware",
@@ -220,8 +300,12 @@
       "refused": true,
       "conf": 0.727,
       "raw_top": 0.6667,
-      "via": "no_valid_citation",
-      "latency_s": 7.15
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 15.94
     },
     {
       "query": "what is the EU AI Act risk tier for GPT-5 agents",
@@ -230,7 +314,11 @@
       "conf": 0.667,
       "raw_top": 0.5,
       "via": "says_cannot",
-      "latency_s": 8.42
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 5.49
     },
     {
       "query": "who is streaming the champions league final 2027",
@@ -238,26 +326,38 @@
       "refused": true,
       "conf": 0.667,
       "raw_top": 0.5,
-      "via": "no_valid_citation,says_cannot",
-      "latency_s": 8.63
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 13.38
     },
     {
       "query": "what is the air quality index in Delhi today",
       "kind": "ood",
-      "refused": false,
+      "refused": true,
       "conf": 0.75,
       "raw_top": 0.75,
-      "via": "-",
-      "latency_s": 6.08
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 6.11
     },
     {
       "query": "what does the quantum-flux capacitor error code 42 mean",
       "kind": "ood",
-      "refused": false,
+      "refused": true,
       "conf": 0.667,
       "raw_top": 0.5,
-      "via": "-",
-      "latency_s": 4.88
+      "via": "says_cannot",
+      "ungrounded": true,
+      "grounding_issues": [
+        "no citations"
+      ],
+      "latency_s": 4.13
     },
     {
       "query": "is dha important after birth",
@@ -266,7 +366,9 @@
       "conf": 0.75,
       "raw_top": 0.75,
       "via": "-",
-      "latency_s": 12.75
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 4.41
     },
     {
       "query": "are the house of representatives and senate apart of the legislative branch",
@@ -275,7 +377,9 @@
       "conf": 0.8,
       "raw_top": 1.0,
       "via": "-",
-      "latency_s": 10.56
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 14.34
     },
     {
       "query": "is java enabled",
@@ -284,7 +388,9 @@
       "conf": 0.769,
       "raw_top": 0.8333,
       "via": "-",
-      "latency_s": 5.48
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 16.79
     },
     {
       "query": "what county is daviston al in?",
@@ -293,16 +399,20 @@
       "conf": 0.727,
       "raw_top": 0.6667,
       "via": "-",
-      "latency_s": 10.95
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 10.24
     },
     {
       "query": "average cost of anesthesia for cataract surgery",
       "kind": "control",
-      "refused": false,
+      "refused": true,
       "conf": 0.8,
       "raw_top": 1.0,
-      "via": "-",
-      "latency_s": 8.62
+      "via": "says_cannot",
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 11.27
     },
     {
       "query": "how much for residential carpet install",
@@ -311,7 +421,9 @@
       "conf": 0.667,
       "raw_top": 0.5,
       "via": "-",
-      "latency_s": 13.87
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 3.64
     },
     {
       "query": "what county lebanon, mo",
@@ -320,7 +432,9 @@
       "conf": 0.75,
       "raw_top": 0.75,
       "via": "-",
-      "latency_s": 6.35
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 10.91
     },
     {
       "query": "what months are each of the seasons in?",
@@ -329,7 +443,9 @@
       "conf": 0.667,
       "raw_top": 0.5,
       "via": "-",
-      "latency_s": 13.9
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 21.18
     },
     {
       "query": "when was lincoln memorial built",
@@ -338,7 +454,9 @@
       "conf": 0.769,
       "raw_top": 0.8333,
       "via": "-",
-      "latency_s": 4.35
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 2.11
     },
     {
       "query": "cost of rewiring a house",
@@ -347,97 +465,9 @@
       "conf": 0.75,
       "raw_top": 0.75,
       "via": "-",
-      "latency_s": 6.49
-    },
-    {
-      "query": "how long does food last in fridge without power",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.75,
-      "raw_top": 0.75,
-      "via": "-",
-      "latency_s": 9.5
-    },
-    {
-      "query": "what county is kenton ohio",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.8,
-      "raw_top": 1.0,
-      "via": "-",
-      "latency_s": 1.98
-    },
-    {
-      "query": "who called the aca obamacare",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.769,
-      "raw_top": 0.8333,
-      "via": "-",
-      "latency_s": 3.64
-    },
-    {
-      "query": "how long should a landlord keep old leases",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.769,
-      "raw_top": 0.8333,
-      "via": "-",
-      "latency_s": 4.24
-    },
-    {
-      "query": "what county is watertown wi in?",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.769,
-      "raw_top": 0.8333,
-      "via": "-",
-      "latency_s": 3.85
-    },
-    {
-      "query": "nakashima phone number",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.8,
-      "raw_top": 1.0,
-      "via": "-",
-      "latency_s": 3.59
-    },
-    {
-      "query": "anathema maranatha means",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.727,
-      "raw_top": 0.6667,
-      "via": "-",
-      "latency_s": 2.79
-    },
-    {
-      "query": "how long are hard boiled eggs good to eat",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.727,
-      "raw_top": 0.6667,
-      "via": "-",
-      "latency_s": 4.08
-    },
-    {
-      "query": "what does 1 km equal in miles",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.769,
-      "raw_top": 0.8333,
-      "via": "-",
-      "latency_s": 1.94
-    },
-    {
-      "query": "when is wonder woman being released on dvd",
-      "kind": "control",
-      "refused": false,
-      "conf": 0.8,
-      "raw_top": 1.0,
-      "via": "-",
-      "latency_s": 1.39
+      "ungrounded": false,
+      "grounding_issues": [],
+      "latency_s": 11.66
     }
   ]
 }

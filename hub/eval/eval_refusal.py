@@ -8,9 +8,14 @@ Two sets:
                refusals and must stay rare (<= 0.10).
 
 Refusal signals (any one counts):
-  * strict-grounding gate: the answer cites nothing that was retrieved;
   * the model itself says it cannot answer (prompt-instructed behaviour);
-  * retrieval confidence below --min-conf (RRF score normalised to 0..1).
+  * retrieval confidence below --min-conf (RRF score normalised to 0..1);
+  * retrieval returned nothing usable.
+
+Grounding is measured SEPARATELY (`ungrounded`): when the strict-grounding gate
+rejects an answer, the API does not refuse it - it returns the answer and flags
+`unsupported=true`. Counting that as a refusal would inflate refusal_rate and
+false_refusal alike, so it is reported as its own metric instead.
 
 Usage:
     python eval/eval_refusal.py
@@ -90,6 +95,7 @@ def main():
     from module_7_generation import (
         format_context, sanitize_context, generate_citations,
         apply_strict_grounding, reorder_lost_in_middle,
+        remap_citation_ids, looks_like_refusal,
     )
     from common import get_chat_llm, describe_llm
 
@@ -106,11 +112,16 @@ def main():
         numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
         context = sanitize_context(format_context(docs, reorder=False))
         answer = generate_citations(q, context, llm)
+        # Тот же порядок, что в API: сначала чиним цитаты по нумерации контекста,
+        # только потом строгий grounding. Иначе смещённый номер = ложный «отказ».
+        answer = remap_citation_ids(answer, numbering)
         gate = apply_strict_grounding(answer, [str(d[0]) for d in docs], numbering=numbering)
         signals = []
-        if gate["refused"]:
-            signals.append("no_valid_citation")
-        if _SAYS_CANNOT.search(answer or ""):
+        if not docs:
+            signals.append("no_docs")
+        if not (answer or "").strip():
+            signals.append("empty_answer")
+        if looks_like_refusal(answer) or _SAYS_CANNOT.search(answer or ""):
             signals.append("says_cannot")
         if conf < args.min_conf:
             signals.append("low_confidence")
@@ -119,6 +130,8 @@ def main():
             "query": q, "kind": kind, "refused": refused,
             "conf": round(conf, 3), "raw_top": round(raw, 4),
             "via": ",".join(signals) or "-",
+            "ungrounded": bool(gate["refused"]),
+            "grounding_issues": gate["issues"],
             "latency_s": round(time.time() - t0, 2),
         }
 
@@ -127,18 +140,22 @@ def main():
     for q in OOD_QUESTIONS:
         r = run_one(q, "ood")
         rows.append(r)
-        print(f"  ref={'Y' if r['refused'] else 'n'} conf={r['conf']:.3f} via={r['via']:24s} {q[:56]}")
+        print(f"  ref={'Y' if r['refused'] else 'n'} conf={r['conf']:.3f} "
+              f"g={'Y' if r['ungrounded'] else 'n'} via={r['via']:24s} {q[:56]}")
 
     print(f"=== CONTROL ({len(control_q)}) ===")
     for q in control_q:
         r = run_one(q, "control")
         rows.append(r)
-        print(f"  ref={'Y' if r['refused'] else 'n'} conf={r['conf']:.3f} via={r['via']:24s} {q[:56]}")
+        print(f"  ref={'Y' if r['refused'] else 'n'} conf={r['conf']:.3f} "
+              f"g={'Y' if r['ungrounded'] else 'n'} via={r['via']:24s} {q[:56]}")
 
     ood = [r for r in rows if r["kind"] == "ood"]
     ctl = [r for r in rows if r["kind"] == "control"]
     refusal_rate = sum(r["refused"] for r in ood) / max(1, len(ood))
     false_rate = sum(r["refused"] for r in ctl) / max(1, len(ctl))
+    ungrounded_ood = sum(r.get("ungrounded", False) for r in ood) / max(1, len(ood))
+    ungrounded_ctl = sum(r.get("ungrounded", False) for r in ctl) / max(1, len(ctl))
     passed = refusal_rate >= args.target and false_rate <= args.max_false_refusal
 
     out = {
@@ -150,6 +167,8 @@ def main():
             "ood_n": len(ood), "control_n": len(ctl),
             "refusal_rate": round(refusal_rate, 3),
             "false_refusal_rate": round(false_rate, 3),
+            "ungrounded_rate_ood": round(ungrounded_ood, 3),
+            "ungrounded_rate_control": round(ungrounded_ctl, 3),
             "passed": passed,
         },
         "rows": rows,
@@ -160,6 +179,8 @@ def main():
     print(f"refusal_rate={refusal_rate:.3f} (target>={args.target})  "
           f"false_refusal={false_rate:.3f} (max {args.max_false_refusal})  "
           f"-> {'PASS' if passed else 'FAIL'}")
+    print(f"ungrounded: ood={ungrounded_ood:.3f} control={ungrounded_ctl:.3f} "
+          f"(answers without valid citations; API returns them with unsupported=true)")
     print("saved ->", RESULTS)
 
 
