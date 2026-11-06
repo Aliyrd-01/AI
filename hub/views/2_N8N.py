@@ -184,9 +184,9 @@ PROVIDERS = [
     ("openrouter.ai", "OpenRouter"),
     ("opencode.ai", "OpenCode Zen"),
     ("generativelanguage.googleapis.com", "Google Gemini"),
-    ("127.0.0.1:8000", "local RAG (FastAPI)"),
-    ("127.0.0.1:9001", "MCP MySQL"),
-    ("127.0.0.1:9002", "MCP Postgres"),
+    ("127.0.0.1:8000", "RAG API (self-hosted)"),
+    ("127.0.0.1:9001", "MCP · MySQL"),
+    ("127.0.0.1:9002", "MCP · PostgreSQL"),
 ]
 
 

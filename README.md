@@ -43,7 +43,7 @@ positions (never decimals/dates). The gate itself is a pure function with unit t
 **Dialog mode (multi-turn RAG)** — sidebar switch `Q&A` / `Chat (memory + follow-ups)`.
 Chat mode keeps the conversation in `st.session_state` and renders it with `st.chat_message`;
 before retrieval an LLM **rewrites the follow-up into a standalone query** using the history
-("and what about dark urine?" → "what causes dark urine"), so retrieval gets a full query instead
+("and what about inflation?" → "what causes inflation"), so retrieval gets a full query instead
 of a fragment. The condensed query is shown under each reply ("Searched for: ..."), together with
 per-turn sources, citations, cost and the refusal/draft state. Q&A mode stays untouched.
 

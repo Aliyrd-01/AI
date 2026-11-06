@@ -53,7 +53,7 @@ AUTH_SNIPPET = """app.post("/mcp", async (req, res) => {
 
 N8N_SNIPPET = """Name:       PostgreSQL MCP
 Transport:  Streamable HTTP
-URL:        http://localhost:9002/mcp
+URL:        POST /mcp
 Headers:    Authorization: Bearer <token>"""
 
 T = {
@@ -101,7 +101,7 @@ T = {
         "demo_h": "Мини-демо (JSON-RPC вызов инструмента `select`):",
         "req": "Запрос:",
         "resp": "Ответ (сокращённо):",
-        "endpoint": "Эндпоинт: `POST http://localhost:9002/mcp` · Auth: `Authorization: Bearer <token>`",
+        "endpoint": "Эндпоинт: `POST /mcp` (адрес задаётся `MCP_URL`) · Auth: `Authorization: Bearer <token>`",
         "paths_h": "Свой MCP-сервер или готовый: три способа запуска",
         "paths_d": "Протокол один — вариантов, как стоять сервер, три. Наш Node.js-сервер работает "
                    "как отдельный процесс: к нему подключается любой агент — в наших воркфлоу "
@@ -170,7 +170,7 @@ T = {
         "demo_h": "Mini-demo (JSON-RPC call of the `select` tool):",
         "req": "Request:",
         "resp": "Response (abridged):",
-        "endpoint": "Endpoint: `POST http://localhost:9002/mcp` · Auth: `Authorization: Bearer <token>`",
+        "endpoint": "Endpoint: `POST /mcp` (set via `MCP_URL`) · Auth: `Authorization: Bearer <token>`",
         "paths_h": "Custom server or off-the-shelf: three ways to run MCP",
         "paths_d": "One protocol, three ways to run a server. Our Node.js server works as a standalone "
                    "process: any agent connects to it — in our workflows (Lead Qualification, Unified Agent) "

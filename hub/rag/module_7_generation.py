@@ -385,7 +385,7 @@ def remap_citation_ids(answer: str, numbering) -> str:
 CONDENSE_PROMPT = ChatPromptTemplate.from_messages([
     ("system", "You rewrite the user's latest message into a STANDALONE search query for a "
                "retrieval system. Resolve pronouns and ellipsis using the conversation "
-               "(e.g. 'and what about dark urine?' -> 'what causes dark urine'). Keep all "
+               "(e.g. 'and what about inflation?' -> 'what causes inflation'). Keep all "
                "entities and the language of the user. Output ONLY the query, no quotes, "
                "no explanation, no punctuation around it."),
     ("user", "Conversation so far:\n{history}\n\nLatest user message: {question}\n\n"

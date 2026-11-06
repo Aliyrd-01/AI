@@ -16,7 +16,9 @@ sys.path.insert(0, os.path.join(HUB, "agents"))
 sys.path.insert(0, HUB)
 
 import streamlit as st
+from compare import agents_vs_unified
 from diagrams import render_mermaid
+from errors import friendly_error
 from i18n import lang_switcher
 
 st.set_page_config(page_title="Unified Agent", page_icon="🧭", layout="wide")
@@ -28,7 +30,9 @@ T = {
     "ru": {
         "title": "🧭 Unified Agent",
         "caption": "Один агент вместо трёх чат-ботов: сам решает — искать в базе знаний "
-                   "или запросить CRM. С защитой от опасных SQL и трейсом каждого шага.",
+                   "или запросить CRM. С защитой от опасных SQL и трейсом каждого шага. "
+                   "В отличие от мультиагентного Agents — здесь один агент и интерактивный "
+                   "диалог на актуальных данных.",
         "badges": ["tool-calling", "RAG · Qdrant", "CRM · PostgreSQL / MCP", "read-only SQL"],
         "offer_h": "**Что вы получаете**",
         "offer": [
@@ -88,7 +92,7 @@ T = {
         "cost": "стоимость",
         "trace": "Трейс инструментов",
         "no_tools": "Инструменты не понадобились — модель ответила сама.",
-        "failed": "Агент упал:",
+        "failed": "Ответ не получен:",
         "download": "Скачать трейс (JSON)",
         "guard_h": "**Guardrails — не «на доверии»**",
         "guard": [
@@ -132,14 +136,15 @@ T = {
             ("views/6_Benchmarks.py", "📊 Замеренные метрики"),
         ],
         "foot": "Демо — реальный сервис, без мокапов. CRM-инструмент ходит в PostgreSQL MCP-сервер "
-                "(`POST /mcp`, localhost:9002); если сервер не запущен, агент поднимет его сам "
-                "(одноразово, фоном). Если поднять не удастся — агент честно сообщит и ответит по базе "
-                "знаний. RAG-инструмент работает всегда (Qdrant Cloud).",
+                "(`POST /mcp`, адрес задаётся `MCP_URL`); если сервер недоступен, агент честно сообщит "
+                "и ответит по базе знаний. RAG-инструмент работает всегда (Qdrant Cloud).",
     },
     "en": {
         "title": "🧭 Unified Agent",
         "caption": "One agent instead of three chatbots: it decides whether to search the knowledge "
-                   "base or query the CRM. Guarded SQL and a trace for every step.",
+                   "base or query the CRM. Guarded SQL and a trace for every step. Unlike the "
+                   "multi-agent Agents section, this is a single agent in an interactive dialog "
+                   "over current data.",
         "badges": ["tool-calling", "RAG · Qdrant", "CRM · PostgreSQL / MCP", "read-only SQL"],
         "offer_h": "**What you get**",
         "offer": [
@@ -199,7 +204,7 @@ T = {
         "cost": "cost",
         "trace": "Tool trace",
         "no_tools": "No tools were needed — the model answered directly.",
-        "failed": "Agent failed:",
+        "failed": "No answer:",
         "download": "Download trace (JSON)",
         "guard_h": "**Guardrails — not on trust**",
         "guard": [
@@ -244,15 +249,15 @@ T = {
             ("views/6_Benchmarks.py", "📊 Measured metrics"),
         ],
         "foot": "The demo is a real service, no mockups. The CRM tool talks to the PostgreSQL MCP server "
-                "(`POST /mcp`, localhost:9002); if it is not running, the agent starts it automatically "
-                "(once, in the background). If it cannot be started, the agent says so and answers from "
-                "the knowledge base. The RAG tool always works (Qdrant Cloud).",
+                "(`POST /mcp`, URL comes from `MCP_URL`); if it is unreachable, the agent says so and "
+                "answers from the knowledge base. The RAG tool always works (Qdrant Cloud).",
     },
 }[lang]
 
 st.title(T["title"])
 st.caption(T["caption"])
 st.markdown(" · ".join(f"`{b}`" for b in T["badges"]))
+agents_vs_unified(lang, "unified")
 
 st.markdown(
     "<style>"
@@ -438,7 +443,8 @@ if to_run:
         })
     except Exception as e:  # noqa: BLE001
         st.session_state.ua_msgs.append({
-            "role": "assistant", "content": f"{T['failed']} `{type(e).__name__}: {e}`",
+            "role": "assistant",
+            "content": f"{T['failed']} {friendly_error(e, lang)}",
             "steps": [], "meta": {},
         })
 
