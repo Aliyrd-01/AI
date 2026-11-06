@@ -47,7 +47,7 @@ def get_client():
             url=os.getenv("QDRANT_URL"),
             api_key=os.getenv("QDRANT_API_KEY"),
             prefer_grpc=False,
-            timeout=90,
+            timeout=int(os.getenv("QDRANT_TIMEOUT", "15")),
             check_compatibility=False,
         )
     return _client
@@ -66,7 +66,7 @@ def _fix_mojibake(text: str) -> str:
 
     The MS MARCO corpus was indexed with a broken encoding, so retrieved payloads
     contain mojibake. Two flavours appear here:
-      * Windows-1252 ("Colorâ€"urine" -> "Color—urine"): bytes 0x80..0x9F became
+      * Windows-1252 ("Colorâ€"theory" -> "Color—theory"): bytes 0x80..0x9F became
         punctuation like €, ", ', …;
       * Latin-1 ("itâ\\x80\\x99s" -> "it’s"): bytes 0x80..0x9F stayed as C1 control
         chars U+0080..U+009F.

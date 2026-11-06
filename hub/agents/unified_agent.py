@@ -189,7 +189,7 @@ def _search_kb(query: str, k: int = 5) -> str:
         import module_5_retrieval as m
         docs = m.search_hybrid(query, k)
     except Exception as e:  # noqa: BLE001
-        return f"[KB error] {type(e).__name__}: {e}"
+        return f"[KB error] {type(e).__name__}"
     if not docs:
         return "(no knowledge-base results)"
     return "\n\n".join(f"[{i}] {d[1][:600]}" for i, d in enumerate(docs, 1))
@@ -204,7 +204,7 @@ def _query_db(sql: str) -> str:
             "Content-Type": "application/json",
             "Accept": "application/json, text/event-stream"})
     except Exception as e:  # noqa: BLE001
-        return f"[DB unavailable] {type(e).__name__}: {e} (MCP server not running?)"
+        return f"[DB unavailable] {type(e).__name__}"
     if r.status_code != 200:
         return f"[DB error] MCP HTTP {r.status_code}: {r.text[:200]}"
     txt = r.text

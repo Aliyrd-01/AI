@@ -15,6 +15,7 @@ sys.path.insert(0, RAG_DIR)
 sys.path.insert(0, EVAL_DIR)
 
 import streamlit as st
+from errors import friendly_error
 from i18n import lang_switcher
 
 st.set_page_config(page_title="RAG — Production Demo", page_icon="🔎", layout="centered")
@@ -42,6 +43,11 @@ T = {
         "q": "Вопрос",
         "ask": "Спросить",
         "retrieving": "Ищу...",
+        "db_down": "Векторная база (Qdrant Cloud) не отвечает. Проверьте статус кластера — "
+                   "на бесплатном тарифе он уходит в паузу после простоя; разбудите его в консоли Qdrant.",
+        "search_failed": "Поиск не выполнен: база данных недоступна. Попробуйте ещё раз через минуту.",
+        "gen_failed": "Не удалось сформулировать ответ: сервис моделей сейчас недоступен "
+                      "(обычно это лимит запросов или закончившаяся квота). Попробуйте позже.",
         "answer": "Ответ",
         "total": "Всего",
         "retr": "Retrieval",
@@ -63,7 +69,7 @@ T = {
         "weak": "**Нет ответа в корпусе** — retrieval слабый или пустой.",
         "fb_log": "Спасибо — записал.",
         "bench_static": "📊 Статичный оффлайн-снимок (не пересчитывается)",
-        "live_sub": "Бенчмарк на eval-наборе (на этой машине)",
+        "live_sub": "Бенчмарк на eval-наборе",
         "live_cap": "Реальный прогон: Hit@K / MRR@10 / NDCG@10 по eval-набору активного корпуса.",
         "live_strats": "Стратегии",
         "live_limit": "Вопросов",
@@ -76,8 +82,8 @@ T = {
         "chat_clear": "Очистить диалог",
         "search_q": "Поиск по запросу",
         "chat_note": "Диалог помнит контекст: follow-up переписывается LLM в самостоятельный "
-                     "запрос перед поиском (вопрос → «а что насчёт тёмной мочи?» → "
-                     "«what causes dark urine»), поэтому в поиск уходит полный запрос, а не обрубок.",
+                     "запрос перед поиском (вопрос → «а что насчёт инфляции?» → "
+                     "«what causes inflation»), поэтому в поиск уходит полный запрос, а не обрубок.",
         "session": "Сессия",
         "s_req": "запросов",
         "s_tok": "токенов",
@@ -118,6 +124,11 @@ T = {
         "q": "Question",
         "ask": "Ask",
         "retrieving": "Retrieving...",
+        "db_down": "The vector database (Qdrant Cloud) is not responding. Check the cluster status — "
+                   "on the free tier it pauses after inactivity; wake it up in the Qdrant console.",
+        "search_failed": "Search failed: the database is unavailable. Please try again in a minute.",
+        "gen_failed": "Could not produce an answer: the model service is unavailable right now "
+                      "(usually a rate limit or an exhausted quota). Please retry later.",
         "answer": "Answer",
         "total": "Total",
         "retr": "Retrieval",
@@ -133,8 +144,8 @@ T = {
         "chat_clear": "Clear chat",
         "search_q": "Searched for",
         "chat_note": "The chat keeps context: a follow-up is rewritten by an LLM into a standalone "
-                     "query before retrieval (question -> 'what about dark urine?' -> "
-                     "'what causes dark urine'), so retrieval gets a full query, not a fragment.",
+                     "query before retrieval (question -> 'what about inflation?' -> "
+                     "'what causes inflation'), so retrieval gets a full query, not a fragment.",
         "session": "Session",
         "s_req": "requests",
         "s_tok": "tokens",
@@ -168,7 +179,7 @@ T = {
         "weak": "**No answer in corpus** — retrieval too weak or empty.",
         "fb_log": "Thanks — logged.",
         "bench_static": "📊 Static offline snapshot (not recomputed here)",
-        "live_sub": "Benchmark on the eval set (this machine)",
+        "live_sub": "Benchmark on the eval set",
         "live_cap": "Real run: Hit@K / MRR@10 / NDCG@10 over the active corpus eval set.",
         "live_strats": "Strategies",
         "live_limit": "Queries",
@@ -202,8 +213,8 @@ CORPORA = {
         "meta_langs": ["en"],
         "meta_sources": ["msmarco"],
         "examples": [
-            "what color is amber urine",
-            "what causes dark amber urine",
+            "what causes inflation",
+            "how do solar panels work",
             "what do elevated liver enzymes mean",
             "how does a bill become law in the united states",
             "is autoimmune hepatitis a bile acid synthesis disorder",
@@ -374,7 +385,7 @@ def _run_retrieval(strategy, question, top_k, rerank_top, langs, sources, collec
         if strategy == "hybrid":
             raise
         docs, hit = cached_retrieve("hybrid", question, top_k, rerank_top, langs, sources, collection)
-        return docs, f"{type(e).__name__}: {e}", hit
+        return docs, f"{type(e).__name__} · {friendly_error(e, 'en')}", hit
 
 
 # Native retrieval scores live on wildly different scales, so comparing them to a
@@ -573,7 +584,7 @@ with st.sidebar:
         if "doesn't exist" in str(e) or "Not found" in str(e):
             st.warning(f"Collection `{coll_name}` is not built yet.")
         else:
-            st.error(f"Qdrant unavailable: {e}")
+            st.error(T["db_down"])
     st.code(coll_name, language=None)
     st.caption(f"{corpus['desc']} · {points:,} docs · dense 768d + sparse BM25 + client IDF")
     if points == 0 and corpus.get("build"):
@@ -652,6 +663,10 @@ if dialog_mode:
         pairs = [(t["role"], t["content"]) for t in history]
         llm = get_llm()
         t0 = time.time()
+        warn = None
+        err = None
+        cache_hit = False
+        gen_failed = False
         with st.spinner(T["retrieving"]):
             try:
                 search_query = condense_query(pairs, prompt, llm) if pairs else prompt
@@ -661,15 +676,21 @@ if dialog_mode:
                 docs, warn, cache_hit = _run_retrieval(strategy, search_query, top_k, rerank_top,
                                             tuple(lang_filter), tuple(source_filter),
                                             corpus["collection"])
+                err = None
             except Exception as e:  # noqa: BLE001
-                docs, warn = None, f"{type(e).__name__}: {e}"
+                docs, warn = None, friendly_error(e, lang)
+                err = e
         t1 = time.time()
 
         answer, draft, refused, cited, top_conf = "", "", False, set(), 0.0
         meta, run_meta = "", ""
+        gen_failed = False
         with st.chat_message("assistant"):
-            if warn and docs:
-                st.warning(f"`{strategy}` failed ({warn}) — fell back to **hybrid**.")
+            if docs is None and err is not None:
+                st.error(T["search_failed"])
+                st.caption(friendly_error(err, lang))
+            elif warn and docs:
+                st.warning(f"`{strategy}` → **hybrid**.")
             if not docs:
                 answer = T["weak"]
                 st.warning(answer)
@@ -699,29 +720,38 @@ if dialog_mode:
                         for _ in _stream():
                             pass
                     except Exception:  # noqa: BLE001
-                        answer = generate_citations(search_query, context, llm,
-                                                    source=corpus["source"])
-                        ph.markdown(answer)
-                    answer = buf[0] or answer
-                    t_gen = time.time() - t_gen0
+                        try:
+                            answer = generate_citations(search_query, context, llm,
+                                                        source=corpus["source"])
+                            ph.markdown(answer)
+                        except Exception as ge:  # noqa: BLE001
+                            ph.empty()
+                            answer = T["gen_failed"]
+                            gen_failed = True
+                            st.caption(friendly_error(ge, lang))
+                    if not gen_failed:
+                        answer = buf[0] or answer
+                        t_gen = time.time() - t_gen0
 
                     retrieved_ids = [str(d[0]) for d in docs]
                     doc_numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
-                    repaired = normalize_citations(answer, retrieved_ids, corpus["source"])
-                    if repaired != answer:
-                        answer = repaired
-                        ph.markdown(answer)
-                    remapped = remap_citation_ids(answer, doc_numbering)
-                    if remapped != answer:
-                        answer = remapped
-                        ph.markdown(answer)
-                    answer, leaked = strip_prompt_leak(answer)
-                    if leaked:
-                        ph.markdown(answer or T["refuse"])
+                    if not gen_failed:
+                        repaired = normalize_citations(answer, retrieved_ids, corpus["source"])
+                        if repaired != answer:
+                            answer = repaired
+                            ph.markdown(answer)
+                        remapped = remap_citation_ids(answer, doc_numbering)
+                        if remapped != answer:
+                            answer = remapped
+                            ph.markdown(answer)
+                        answer, leaked = strip_prompt_leak(answer)
+                        if leaked:
+                            ph.markdown(answer or T["refuse"])
                     cited = {str(did) for _, did in extract_citations(answer)}
                     issues, _c, _h = verify_grounding(answer, retrieved_ids, len(docs),
                                                       numbering=doc_numbering)
-                    if strict_grounding:
+                    refused, draft = False, ""
+                    if strict_grounding and not gen_failed:
                         gate = apply_strict_grounding(answer, retrieved_ids,
                                                       refusal=T["refuse"],
                                                       numbering=doc_numbering)
@@ -840,7 +870,7 @@ def render_result(res, streamed=False):
 
 
 with st.form("qa_form"):
-    question = st.text_input(T["q"], key="q", placeholder="e.g. what color is amber urine")
+    question = st.text_input(T["q"], key="q", placeholder="e.g. what causes inflation")
     submitted = st.form_submit_button(T["ask"], type="primary")
 
 asked = submitted and bool((question or "").strip())
@@ -858,7 +888,8 @@ if asked:
             docs, warn, cache_hit = _run_retrieval(strategy, q, top_k, rerank_top, langs, sources,
                                                    corpus["collection"])
     except Exception as e:  # noqa: BLE001
-        st.error(f"**{type(e).__name__}:** {e}")
+        st.error(T["search_failed"])
+        st.caption(friendly_error(e, lang))
         docs, warn = None, None
     t1 = time.time()
 
@@ -878,7 +909,7 @@ if asked:
             context = sanitize_context(format_context(docs, source=corpus["source"]))
 
             if warn:
-                st.warning(f"`{strategy}` failed ({warn}) — fell back to **hybrid**.")
+                st.warning(f"`{strategy}` → **hybrid**.")
             st.markdown(f"### {T['answer']}")
             t_gen0 = time.time()
             ttft = {"v": None}
@@ -897,46 +928,53 @@ if asked:
                     answer_ph.markdown("".join(buf))
                 answer = "".join(buf)
             except Exception:
-                from module_7_generation import generate_citations
-                answer = generate_citations(q, context, llm, source=corpus["source"])
-                answer_ph.markdown(answer)
-            t2 = time.time()
+                try:
+                    from module_7_generation import generate_citations
+                    answer = generate_citations(q, context, llm, source=corpus["source"])
+                    answer_ph.markdown(answer)
+                except Exception as ge:  # noqa: BLE001
+                    st.session_state.pop("rag_res", None)
+                    st.error(T["gen_failed"])
+                    st.caption(friendly_error(ge, lang))
+                    answer, docs = None, None
+                    t2 = time.time()
+            if docs is not None:
+                t2 = time.time()
+                answer = answer or ""
+                retrieved_ids = [str(d[0]) for d in docs]
+                doc_numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
+                repaired = normalize_citations(answer, retrieved_ids, corpus["source"])
+                if repaired != answer:
+                    answer = repaired
+                    answer_ph.markdown(answer)
+                cited = {str(did) for _, did in extract_citations(answer)}
+                issues, _cited, _has_issues = verify_grounding(
+                    answer, retrieved_ids, len(docs), numbering=doc_numbering)
 
-            answer = answer or ""
-            retrieved_ids = [str(d[0]) for d in docs]
-            doc_numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
-            repaired = normalize_citations(answer, retrieved_ids, corpus["source"])
-            if repaired != answer:
-                answer = repaired
-                answer_ph.markdown(answer)
-            cited = {str(did) for _, did in extract_citations(answer)}
-            issues, _cited, _has_issues = verify_grounding(
-                answer, retrieved_ids, len(docs), numbering=doc_numbering)
+                refused, draft = False, ""
+                if strict_grounding:
+                    gate = apply_strict_grounding(answer, retrieved_ids, refusal=T["refuse"],
+                                                  numbering=doc_numbering)
+                    refused, draft = gate["refused"], gate["draft"]
+                    if refused:
+                        answer = gate["answer"]
+                        answer_ph.empty()
 
-            refused, draft = False, ""
-            if strict_grounding:
-                gate = apply_strict_grounding(answer, retrieved_ids, refusal=T["refuse"],
-                                              numbering=doc_numbering)
-                refused, draft = gate["refused"], gate["draft"]
-                if refused:
-                    answer = gate["answer"]
-                    answer_ph.empty()
+                tok_in = count_tokens(context + q)
+                tok_out = count_tokens(answer)
+                cost = tok_in * (0.004 / 1_000_000) + tok_out * (0.0162 / 1_000_000)
 
-            tok_in = count_tokens(context + q)
-            tok_out = count_tokens(answer)
-            cost = tok_in * (0.004 / 1_000_000) + tok_out * (0.0162 / 1_000_000)
-
-            res = {
-                "q": q, "strategy": strategy, "answer": answer, "docs": docs,
-                "cited": cited, "issues": issues, "warn": warn,
-                "source": corpus["source"], "refused": refused, "draft": draft,
-                "t0": t0, "t1": t1, "t_gen0": t_gen0, "t2": t2,
-                "ttft": ttft["v"], "llm": llm, "top_conf": top_conf,
-                "tok_in": tok_in, "tok_out": tok_out, "cost": cost, "cache_hit": cache_hit,
-            }
-            _track_usage(tok_in, tok_out, cost)
-            st.session_state["rag_res"] = res
-            render_result(res, streamed=True)
+                res = {
+                    "q": q, "strategy": strategy, "answer": answer, "docs": docs,
+                    "cited": cited, "issues": issues, "warn": warn,
+                    "source": corpus["source"], "refused": refused, "draft": draft,
+                    "t0": t0, "t1": t1, "t_gen0": t_gen0, "t2": t2,
+                    "ttft": ttft["v"], "llm": llm, "top_conf": top_conf,
+                    "tok_in": tok_in, "tok_out": tok_out, "cost": cost, "cache_hit": cache_hit,
+                }
+                _track_usage(tok_in, tok_out, cost)
+                st.session_state["rag_res"] = res
+                render_result(res, streamed=True)
 
 # Persisted answer block: keeps the result (and the 👍/👎 buttons) alive on
 # reruns triggered by feedback clicks.
@@ -974,7 +1012,8 @@ if question.strip():
                             st.caption(f"`{d[0]}` · {round(float(d[2]), 3)}")
                             st.text((d[1] or "")[:120])
             except Exception as e:  # noqa: BLE001
-                st.error(f"Trace failed: {e}")
+                st.error(T["search_failed"])
+                st.caption(friendly_error(e, lang))
 
 
 def load_benchmarks() -> dict:
@@ -1133,4 +1172,5 @@ with st.expander(T["live_sub"], expanded=False):
                                                    corpus["collection"], corpus["eval_set"])
                     st.dataframe(live_rows, use_container_width=True, hide_index=True)
                 except Exception as e:  # noqa: BLE001
-                    st.error(f"{type(e).__name__}: {e}")
+                    st.error(T["search_failed"])
+                    st.caption(friendly_error(e, lang))

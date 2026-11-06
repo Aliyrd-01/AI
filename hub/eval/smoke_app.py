@@ -74,7 +74,7 @@ except Exception as e:
     check("benchmarks data readable", False, f"{type(e).__name__}: {e}")
 
 # 6. Чат-вкладка отвечает на вопрос (дефолтная стратегия = hybrid)
-at.text_input(key="q").set_value("what color is amber urine")
+at.text_input(key="q").set_value("what causes inflation")
 at.run()
 ask = [b for b in at.button if "Ask" in (b.label or "")]
 check("Ask button present", len(ask) == 1)

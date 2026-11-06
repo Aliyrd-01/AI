@@ -10,6 +10,7 @@ sys.path.insert(0, HUB)
 
 import pandas as pd
 import streamlit as st
+from compare import agents_vs_unified
 from diagrams import render_mermaid
 from i18n import lang_switcher
 
@@ -22,7 +23,9 @@ lang = lang_switcher()
 T = {
     "ru": {
         "title": "🤖 Agents",
-        "caption": "Автономные агенты: AutoAgent (multi-agent) и 3 практических флоу.",
+        "caption": "Мультиагентный фреймворк AutoAgent: диспетчер раздаёт работу специализированным "
+                   "агентам (файлы, веб, код). Витрина кейсов с готовыми артефактами — интерактивный "
+                   "чат по вашим данным смотрите в Unified Agent.",
         "auto_h": "AutoAgent — маршрутизация задач по под-агентам",
         "auto_d": "Open-source фреймворк **AutoAgent (HKUDS)**: головной **System Triage Agent** "
                   "принимает задачу на естественном языке и делегирует её под-агентам — "
@@ -119,7 +122,9 @@ T = {
     },
     "en": {
         "title": "🤖 Agents",
-        "caption": "Autonomous agents: AutoAgent (multi-agent) and 3 hands-on flows.",
+        "caption": "Multi-agent AutoAgent framework: a dispatcher hands work to specialised agents "
+                   "(files, web, code). A showcase of cases with ready artefacts — for an interactive "
+                   "chat over your data see Unified Agent.",
         "auto_h": "AutoAgent — Autonomous Task Orchestration",
         "auto_d": "Open-source **AutoAgent (HKUDS)** framework: the **System Triage Agent** "
                   "accepts a natural-language task and delegates it to specialized sub-agents — "
@@ -265,6 +270,8 @@ def _excerpt(text: str, limit: int = 1600) -> str:
 
 st.title(T["title"])
 st.caption(T["caption"])
+
+agents_vs_unified(lang, "agents")
 
 st.subheader(T["auto_h"])
 st.write(T["auto_d"])
