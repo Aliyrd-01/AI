@@ -56,3 +56,6 @@ projects/hallucination-benchmark/results/raw/
 projects/hallucination-benchmark/.test-audit*
 # mcp: runtime audit + local cleaning scripts
 projects/mcp-servers/pg-mcp-server/.test-audit*
+
+.tmp_*
+_*
