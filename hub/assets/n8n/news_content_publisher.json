@@ -302,7 +302,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Готовим поисковый запрос для SerpAPI (сам поиск делает нода 'SerpAPI Image Search';\n// кодирование query-параметра делает HTTP-нода, поэтому тут — сырой заголовок).\n// Заголовок берём из Preprocessing: после Qubax Translate поле title потеряно.\nif ($json.imageUrl) {\n  return { ...$json, serpQuery: '' };\n}\nlet title = '';\ntry {\n  title = $('Preprocessing').item.json.title || '';\n} catch (e) {}\nconst q = String(title || '').trim().substring(0, 100);\nreturn { ...$json, serpQuery: q };\n",
+        "jsCode": "// Готовим поисковый запрос для SerpAPI (сам поиск делает нода 'SerpAPI Image Search';\n// кодирование query-параметра делает HTTP-нода, поэтому тут — сырой заголовок).\n// Заголовок берём из Preprocessing: после LLM Translate поле title потеряно.\nif ($json.imageUrl) {\n  return { ...$json, serpQuery: '' };\n}\nlet title = '';\ntry {\n  title = $('Preprocessing').item.json.title || '';\n} catch (e) {}\nconst q = String(title || '').trim().substring(0, 100);\nreturn { ...$json, serpQuery: q };\n",
         "mode": "runOnceForEachItem"
       },
       "id": "f9a7b941-7e93-4105-b81d-b4452f726e03",
@@ -429,7 +429,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.qubax.ai/v1/chat/completions",
+        "url": "https://api.openai.com/v1/chat/completions",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -438,7 +438,7 @@
         "options": {}
       },
       "id": "b7c1f0aa-5c2e-4d3e-9f1a-1a2b3c4d5e6f",
-      "name": "Qubax Translate",
+      "name": "LLM Translate",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
@@ -451,7 +451,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "GGcWGyo9YiJcgCqj",
-          "name": "Qubax AI"
+          "name": "OpenAI API"
         }
       },
       "onError": "continueRegularOutput"
@@ -806,14 +806,14 @@
       "main": [
         [
           {
-            "node": "Qubax Translate",
+            "node": "LLM Translate",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Qubax Translate": {
+    "LLM Translate": {
       "main": [
         [
           {

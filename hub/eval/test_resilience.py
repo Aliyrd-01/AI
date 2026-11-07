@@ -118,6 +118,19 @@ class TestDecouplingAudit(unittest.TestCase):
             content = f.read()
         self.assertIn('showErrorDetails = "none"', content, "showErrorDetails must be 'none'")
 
+    def test_no_vendor_names_in_views(self):
+        views_dir = os.path.join(HUB, "views")
+        forbidden = ["qubax", "opencode zen"]
+        for f in os.listdir(views_dir):
+            if f.endswith(".py"):
+                p = os.path.join(views_dir, f)
+                with open(p, "r", encoding="utf-8") as fp:
+                    for line_idx, line in enumerate(fp, 1):
+                        low = line.lower()
+                        for bad in forbidden:
+                            if bad in low:
+                                self.fail(f"Found vendor leak '{bad}' in {f}:{line_idx} -> {line.strip()}")
+
 
 class TestSimulatedFailureFlows(unittest.TestCase):
     """Simulate runtime failures in RAG and Agent pipelines to confirm zero crashes."""
@@ -134,6 +147,30 @@ class TestSimulatedFailureFlows(unittest.TestCase):
                 self.assertIn("Лимит запросов", msg)
                 self.assertNotIn("Traceback", msg)
                 self.assertNotIn("D:\\", msg)
+
+    def test_unified_agent_tool_resilience(self):
+        """Verify tool calls handle connection loss or DB down without leaking tracebacks."""
+        import unified_agent as ua
+
+        # 1. search_kb failure
+        with patch("unified_agent._search_kb", return_value="[KB error] Knowledge base temporarily unavailable"):
+            out = ua._execute("search_knowledge_base", {"query": "test"})
+            self.assertIn("temporarily unavailable", out)
+            self.assertNotIn("Exception", out)
+            self.assertNotIn("Traceback", out)
+
+        # 2. query_db network failure
+        with patch("httpx.post", side_effect=ConnectionRefusedError("Connection refused")):
+            out = ua._query_db("SELECT 1")
+            self.assertEqual(out, "[DB error] CRM database temporarily unavailable")
+
+        # 3. query_db HTTP 502 / upstream error
+        mock_resp = MagicMock()
+        mock_resp.status_code = 502
+        with patch("httpx.post", return_value=mock_resp):
+            out = ua._query_db("SELECT 1")
+            self.assertIn("HTTP 502", out)
+            self.assertNotIn("Traceback", out)
 
 
 if __name__ == "__main__":
