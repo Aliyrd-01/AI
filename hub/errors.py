@@ -15,8 +15,9 @@ _MSG_RU = {
     "conn": ("Нет связи с сервисом. Попробуйте ещё раз через минуту."),
     "timeout": ("Сервис не успел ответить вовремя. Попробуйте ещё раз."),
     "generic": ("Сервис временно недоступен — попробуйте ещё раз. Технические детали скрыты из "
-                "интерфейса и видны только в логах."),
+                "интерфейса и видны только в серверных логах."),
 }
+
 _MSG_EN = {
     "ratelimit": ("API rate limit hit or the quota is exhausted — the model cannot answer right now. "
                   "Wait a minute or top up the provider balance."),
@@ -31,27 +32,55 @@ _MSG_EN = {
                 "from the UI and only visible in the server logs."),
 }
 
-_PATH_RE = re.compile(r"[A-Za-z]:\\\\?[^\s'\"]+|/(?:home|app|Users|usr|var|tmp|opt)/[^\s'\"]+")
 
-
-def friendly_error(exc: Exception | None, lang: str = "ru") -> str:
+def friendly_error(exc: Exception | str | None, lang: str = "ru") -> str:
+    """Map any exception or error string to a polite, user-facing message with zero technical leakage."""
     msg = _MSG_RU if lang == _RU else _MSG_EN
-    cls = type(exc).__name__ if exc is not None else ""
-    low = f"{cls} {'' if exc is None else str(exc)}".lower()
-    if "ratelimit" in low or "rate limit" in low or "429" in low:
+    if exc is None:
+        return msg["generic"]
+
+    cls = type(exc).__name__ if isinstance(exc, Exception) else ""
+    low = f"{cls} {str(exc)}".lower()
+
+    # 1. Rate limit, quota exhaustion, insufficient funds, 429, code 1300
+    if any(k in low for k in (
+        "ratelimit", "rate limit", "rate_limited", "429", "1300",
+        "quota", "insufficient_quota", "credit", "balance", "billing",
+        "all models failed", "all models failed for stream", "overloaded", "capacity"
+    )):
         return msg["ratelimit"]
-    if any(w in low for w in ("authentication", "invalid api key", "unauthorized", "401")):
+
+    # 2. Authentication, unauthorized, 401
+    if any(k in low for k in ("authentication", "invalid api key", "unauthorized", "401", "permission_denied")):
         return msg["auth"]
-    if "timeout" in low or "timed out" in low or "handshake" in low or "_ssl" in low:
-        if any(w in low for w in ("qdrant", "35.246", "qdrant.io", "handshake", "_ssl")):
-            return msg["db"]
-        return msg["timeout"]
-    if any(w in low for w in ("connectionerror", "connection refused", "connect")):
-        return msg["conn"]
-    if "qdrant" in low or "status code: 5" in low or "unavailable" in low:
+
+    # 3. Vector DB / Qdrant cluster pause / database unreachable
+    if any(k in low for k in ("qdrant", "cluster", "35.246", "qdrant.io", "handshake", "_ssl", "responsehandlingexception")):
         return msg["db"]
+
+    # 4. Timeout
+    if "timeout" in low or "timed out" in low:
+        return msg["timeout"]
+
+    # 5. Connection refused / network failure
+    if any(k in low for k in ("connectionerror", "connection refused", "connect", "unreachable", "name resolution", "econnrefused")):
+        return msg["conn"]
+
+    # 6. Fallback generic
     return msg["generic"]
 
 
 def scrub_paths(text: str) -> str:
-    return _PATH_RE.sub("[path hidden]", str(text))
+    """Completely wipe local filesystem paths, machine usernames, and stack traces from any string."""
+    s = str(text or "")
+    # Windows absolute paths (D:\..., C:\..., D:/...)
+    s = re.sub(r"[A-Za-z]:[/\\][^\s'\"<>\)]+", "[path]", s)
+    # Unix absolute paths (/home/..., /Users/..., /app/...)
+    s = re.sub(r"/(?:home|app|Users|usr|var|tmp|opt|root|workspace)/[^\s'\"<>\)]+", "[path]", s)
+    # Python traceback lines (File "...", line 123)
+    s = re.sub(r'File\s+["\'][^"\']+["\'],\s+line\s+\d+', 'File "[source]", line 0', s)
+    # Machine usernames
+    s = re.sub(r"\b(?:valen|alex|syrotenko)\b", "[user]", s, flags=re.IGNORECASE)
+    # IP addresses
+    s = re.sub(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?\b", "[host]", s)
+    return s
