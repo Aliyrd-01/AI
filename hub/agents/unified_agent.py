@@ -1,5 +1,5 @@
 """Unified Agent — routes a question between the RAG knowledge base and the CRM
-database (PostgreSQL via MCP), using Qubax function-calling.
+database (PostgreSQL via MCP), using LLM function-calling.
 
 Tools:
   - search_knowledge_base(query) : hybrid retrieval over Qdrant (MS MARCO)
@@ -20,10 +20,14 @@ import httpx
 from dotenv import load_dotenv
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_RAG = os.path.abspath(os.path.join(_HERE, "..", "rag"))
-if _RAG not in sys.path:
-    sys.path.insert(0, _RAG)
+_HUB = os.path.abspath(os.path.join(_HERE, ".."))
+_RAG = os.path.abspath(os.path.join(_HUB, "rag"))
+for _p in (_HUB, _RAG):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 load_dotenv(os.path.join(_HERE, "..", "..", ".env"), override=True)
+
+from errors import scrub_paths
 
 _BASE = (os.getenv("QUBAX_API_BASE") or os.getenv("OPENAI_API_BASE") or "https://api.qubax.ai/v1").rstrip("/")
 _KEY = os.getenv("QUBAX_API_KEY") or os.getenv("OPENAI_API_KEY") or ""
@@ -188,8 +192,8 @@ def _search_kb(query: str, k: int = 5) -> str:
     try:
         import module_5_retrieval as m
         docs = m.search_hybrid(query, k)
-    except Exception as e:  # noqa: BLE001
-        return f"[KB error] {type(e).__name__}"
+    except Exception:  # noqa: BLE001
+        return "[KB error] Knowledge base temporarily unavailable"
     if not docs:
         return "(no knowledge-base results)"
     return "\n\n".join(f"[{i}] {d[1][:600]}" for i, d in enumerate(docs, 1))
@@ -203,10 +207,10 @@ def _query_db(sql: str) -> str:
             "Authorization": f"Bearer {MCP_TOKEN}",
             "Content-Type": "application/json",
             "Accept": "application/json, text/event-stream"})
-    except Exception as e:  # noqa: BLE001
-        return f"[DB unavailable] {type(e).__name__}"
+    except Exception:  # noqa: BLE001
+        return "[DB error] CRM database temporarily unavailable"
     if r.status_code != 200:
-        return f"[DB error] MCP HTTP {r.status_code}: {r.text[:200]}"
+        return f"[DB error] CRM database query failed (HTTP {r.status_code})"
     txt = r.text
     if "data:" in txt:
         data_lines = [ln[5:].strip() for ln in txt.splitlines() if ln.startswith("data:")]
@@ -215,7 +219,7 @@ def _query_db(sql: str) -> str:
     try:
         data = json.loads(txt)
     except Exception:  # noqa: BLE001
-        return f"[DB raw] {txt[:300]}"
+        return "[DB error] Unexpected database response format"
     result = data.get("result") or {}
     content = result.get("content") or []
     text = content[0].get("text") if content else json.dumps(result)
@@ -231,7 +235,9 @@ def _execute(name: str, args: dict, redact_pii: bool = False) -> str:
         out = _query_db(sql) if ok else f"[DB blocked] {why}. Use a single read-only SELECT on CRM tables."
     else:
         out = f"Unknown tool: {name}"
-    return mask_pii(out) if redact_pii else out
+    if redact_pii:
+        out = mask_pii(out)
+    return scrub_paths(out)
 
 
 def _chat(messages, tools):

@@ -503,7 +503,7 @@
         }
       },
       "id": "b4cf2b43-886e-4686-98c5-3176b6f093d6",
-      "name": "Qubax Chat Model",
+      "name": "OpenAI Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
@@ -513,7 +513,7 @@
       "credentials": {
         "openAiApi": {
           "id": "N9yCaYEwvs7hQGZA",
-          "name": "Qubax (OpenAI API)"
+          "name": "OpenAI API"
         }
       }
     },
@@ -735,7 +735,7 @@
         ]
       ]
     },
-    "Qubax Chat Model": {
+    "OpenAI Chat Model": {
       "ai_languageModel": [
         [
           {

@@ -56,11 +56,11 @@ def _check_api_keys(need_zen: bool = False):
     global _KEYS_WARNED
     if not ZEN_KEY and not OR_KEY and not MISTRAL_KEY and not QUBAX_KEY:
         raise RuntimeError(
-            "No API keys. Set QUBAX_API_KEY / OPENAI_API_KEY (Zen) "
-            "and/or OPENROUTER_API_KEY, MISTRAL_API_KEY in .env"
+            "No API keys configured. Set API keys in .env"
+            ""
         )
     if need_zen and not ZEN_KEY:
-        raise RuntimeError("OPENAI_API_KEY required for get_judge_llm")
+        raise RuntimeError("LLM API key required for evaluation")
     if not _KEYS_WARNED:
         if not QUBAX_KEY:
             logger.warning("QUBAX_API_KEY not set - Qubax models skipped")
@@ -98,7 +98,7 @@ def _build_pool(temperature: float):
         pool.append(_make(temperature, OR_MODEL, OR_BASE, OR_KEY))
     if not pool:
         raise RuntimeError(
-            "Пул LLM пуст: нет валидных ключей Qubax/Zen/Mistral/OpenRouter"
+            "LLM pool is empty: no valid API keys configured"
         )
     return pool
 
@@ -225,8 +225,8 @@ def get_chat_llm(temperature: float = 0.7):
 
 
 _PROVIDERS = (
-    ("api.qubax.ai", "Qubax"),
-    ("opencode.ai", "OpenCode Zen"),
+    ("api.qubax.ai", "LLM Gateway"),
+    ("opencode.ai", "Cloud LLM"),
     ("api.mistral.ai", "Mistral"),
     ("openrouter.ai", "OpenRouter"),
 )

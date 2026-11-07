@@ -385,7 +385,7 @@ def _run_retrieval(strategy, question, top_k, rerank_top, langs, sources, collec
         if strategy == "hybrid":
             raise
         docs, hit = cached_retrieve("hybrid", question, top_k, rerank_top, langs, sources, collection)
-        return docs, f"{type(e).__name__} · {friendly_error(e, 'en')}", hit
+        return docs, friendly_error(e, "en"), hit
 
 
 # Native retrieval scores live on wildly different scales, so comparing them to a
@@ -1016,7 +1016,7 @@ if question.strip():
                                  "top doc": (ds[0][0] if ds else "—")})
                 except Exception as e:  # noqa: BLE001
                     rows.append({"strategy": name, "docs": 0, "s": round(time.time() - t0, 2),
-                                 "top score": 0.0, "top doc": f"err: {type(e).__name__}"})
+                                 "top score": 0.0, "top doc": "—"})
             st.dataframe(rows, use_container_width=True, hide_index=True)
 
     with st.expander(T["trace"]):

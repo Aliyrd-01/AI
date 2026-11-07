@@ -61,7 +61,7 @@ T = {
         ],
         "llm_h": "**LLM-провайдеры**",
         "llm": [
-            ("Qubax", "Основная модель демо: qwen3-235b-a22b (tool-calling)", "✅ в демо"),
+            ("Primary LLM Gateway", "Основная модель демо: qwen3-235b-a22b (tool-calling)", "✅ в демо"),
             ("8 моделей в бенчмарке", "Grok, Gemini, GLM, Kimi, Qwen, DeepSeek, Mistral, MiniMax", "✅ в демо"),
             ("Любой OpenAI-совместимый API", "Меняется base URL и модель в .env", "✅ поддержано"),
         ],
@@ -132,7 +132,7 @@ T = {
         ],
         "llm_h": "**LLM providers**",
         "llm": [
-            ("Qubax", "Primary demo model: qwen3-235b-a22b (tool-calling)", "✅ in demo"),
+            ("Primary LLM Gateway", "Primary demo model: qwen3-235b-a22b (tool-calling)", "✅ in demo"),
             ("8 models in the benchmark", "Grok, Gemini, GLM, Kimi, Qwen, DeepSeek, Mistral, MiniMax", "✅ in demo"),
             ("Any OpenAI-compatible API", "Switch base URL and model in .env", "✅ supported"),
         ],

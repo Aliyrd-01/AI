@@ -224,24 +224,48 @@ T = {
 
 @st.cache_data(show_spinner=False)
 def _text(rel: str) -> str:
-    with open(os.path.join(ASSETS, rel), "r", encoding="utf-8") as f:
-        return f.read()
+    p = os.path.join(ASSETS, rel)
+    if not os.path.exists(p):
+        return ""
+    try:
+        with open(p, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return ""
 
 
 @st.cache_data(show_spinner=False)
 def _bytes(rel: str) -> bytes:
-    with open(os.path.join(ASSETS, rel), "rb") as f:
-        return f.read()
+    p = os.path.join(ASSETS, rel)
+    if not os.path.exists(p):
+        return b""
+    try:
+        with open(p, "rb") as f:
+            return f.read()
+    except Exception:
+        return b""
 
 
 @st.cache_data(show_spinner=False)
 def _csv(rel: str) -> pd.DataFrame:
-    return pd.read_csv(os.path.join(ASSETS, rel), encoding="utf-8-sig")
+    p = os.path.join(ASSETS, rel)
+    if not os.path.exists(p):
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(p, encoding="utf-8-sig")
+    except Exception:
+        return pd.DataFrame()
 
 
 @st.cache_data(show_spinner=False)
 def _json(rel: str) -> dict:
-    return json.loads(_text(rel))
+    t = _text(rel)
+    if not t:
+        return {}
+    try:
+        return json.loads(t)
+    except Exception:
+        return {}
 
 
 def _exists(rel: str) -> bool:

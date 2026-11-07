@@ -60,13 +60,13 @@ PROJECTS = [
     {
         "title": "AutoAgent (multi-agent)",
         "badge": "🤖 Agent",
-        "tech": "Python · LLM agents · Qubax",
+        "tech": "Python · LLM agents · Multi-model",
         "url": f"{REPO}/tree/main/projects/autoagent",
         "desc": {
             "ru": "Форк HKUDS AutoAgent: Triage → File/Web/Coding, multi-model по фазам "
-                  "(triage/planner/coder/reporter), CLI. Переведён на Qubax.",
+                  "(triage/planner/coder/reporter), CLI. Оптимизирован под OpenAI-совместимые API.",
             "en": "HKUDS AutoAgent fork: Triage → File/Web/Coding, multi-model per phase "
-                  "(triage/planner/coder/reporter), CLI. Switched to Qubax.",
+                  "(triage/planner/coder/reporter), CLI. Optimized for OpenAI-compatible APIs.",
         },
     },
     {

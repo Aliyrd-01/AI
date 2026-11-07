@@ -209,7 +209,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.qubax.ai/v1/chat/completions",
+        "url": "https://api.openai.com/v1/chat/completions",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -220,7 +220,7 @@
         }
       },
       "id": "node-http-a",
-      "name": "Qubax API A",
+      "name": "LLM API A",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
@@ -233,7 +233,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "GGcWGyo9YiJcgCqj",
-          "name": "Qubax AI"
+          "name": "OpenAI API"
         }
       }
     },
@@ -266,7 +266,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.qubax.ai/v1/chat/completions",
+        "url": "https://api.openai.com/v1/chat/completions",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -277,7 +277,7 @@
         }
       },
       "id": "node-http-b",
-      "name": "Qubax API B",
+      "name": "LLM API B",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
@@ -290,7 +290,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "GGcWGyo9YiJcgCqj",
-          "name": "Qubax AI"
+          "name": "OpenAI API"
         }
       }
     },
@@ -618,7 +618,7 @@
       "main": [
         [
           {
-            "node": "Qubax API A",
+            "node": "LLM API A",
             "type": "main",
             "index": 0
           }
@@ -640,7 +640,7 @@
       "main": [
         [
           {
-            "node": "Qubax API B",
+            "node": "LLM API B",
             "type": "main",
             "index": 0
           }
@@ -692,7 +692,7 @@
         ]
       ]
     },
-    "Qubax API A": {
+    "LLM API A": {
       "main": [
         [
           {
@@ -703,7 +703,7 @@
         ]
       ]
     },
-    "Qubax API B": {
+    "LLM API B": {
       "main": [
         [
           {

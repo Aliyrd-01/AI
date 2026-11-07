@@ -95,7 +95,7 @@ FLOWS = [
                   "→ publish to Telegram (photo or text post); the "
                   "LLM step's cost (usage → $) is logged to llm_usage. No human in the loop.",
         },
-        "tech_base": "n8n · 7 × RSS · Code (JS) · Qubax · og:image + SerpAPI fallback · cost tracking · Telegram",
+        "tech_base": "n8n · 7 × RSS · Code (JS) · LLM JSON · og:image + SerpAPI fallback · cost tracking · Telegram",
         "video": {"ru": "news_demo.mp4", "en": "news_demo_en.mp4"},
         "images": [],
         "diagram_h": 170,
@@ -152,7 +152,7 @@ FLOWS = [
                   "→ сообщение и состояние пользователя пишутся в Postgres "
                   "(user_states)\n\n"
                   "→ в режиме оператора диалог сразу пересылается оператору\n\n"
-                  "→ нативный Text Classifier (AI-нода n8n + Qubax Chat Model) решает simple / operator, "
+                  "→ нативный Text Classifier (AI-нода n8n + LLM Chat Model) решает simple / operator, "
                   "с fallback «other»\n\n"
                   "→ простые вопросы закрывает "
                   "локальный RAG-сервис (FastAPI + Qdrant), сложные (оплаты, жалобы, недовольный "
@@ -163,7 +163,7 @@ FLOWS = [
                   "→ the message and the user state are written to Postgres "
                   "(user_states)\n\n"
                   "→ in operator mode the dialog is forwarded straight to the human\n\n"
-                  "→ a native Text Classifier node (n8n AI node + Qubax Chat Model) decides simple / "
+                  "→ a native Text Classifier node (n8n AI node + LLM Chat Model) decides simple / "
                   "operator with an 'other' fallback\n\n"
                   "→ simple questions are answered by a "
                   "local RAG service (FastAPI + Qdrant), complex ones (payments, complaints, angry "
@@ -180,9 +180,9 @@ FLOWS = [
 
 # Провайдеры, которые ищем в JSON воркфлоу: (подстрока в ноде, человекочитаемая метка)
 PROVIDERS = [
-    ("api.qubax.ai", "Qubax"),
+    ("api.openai.com", "OpenAI / Compatible LLM"),
     ("openrouter.ai", "OpenRouter"),
-    ("opencode.ai", "OpenCode Zen"),
+    ("anthropic.com", "Anthropic Claude"),
     ("generativelanguage.googleapis.com", "Google Gemini"),
     ("127.0.0.1:8000", "RAG API (self-hosted)"),
     ("127.0.0.1:9001", "MCP · MySQL"),
