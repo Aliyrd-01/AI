@@ -10,6 +10,14 @@ import streamlit as st
 from errors import friendly_error, scrub_paths
 
 
+def _safe_st_exception(exc):
+    """Intercept st.exception so no technical tracebacks or local filesystem paths leak to the UI."""
+    st.error(f"⚠️ {friendly_error(exc, 'ru')}\n\n{friendly_error(exc, 'en')}")
+
+
+st.exception = _safe_st_exception
+
+
 def _safe_excepthook(exc_type, exc_value, exc_tb):
     """Last line of defense: uncaught errors never reach the UI as tracebacks
     (they would expose local paths and internals)."""
@@ -57,4 +65,9 @@ NAV = {
     ],
 }
 
-st.navigation(NAV, position="sidebar").run()
+try:
+    st.navigation(NAV, position="sidebar").run()
+except Exception as exc:
+    st.error(f"⚠️ {friendly_error(exc, 'ru')}\n\n{friendly_error(exc, 'en')}")
+    sys.stderr.write(scrub_paths("".join(
+        __import__("traceback").format_exception(type(exc), exc, exc.__traceback__))) + "\n")

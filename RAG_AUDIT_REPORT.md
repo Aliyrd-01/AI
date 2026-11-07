@@ -1,6 +1,6 @@
 # 🔍 Технический аудит RAG-системы — Senior Level
 
-**Репозиторий:** `<project-root>`  
+**Репозиторий:** `portfolio`  
 **Дата:** 2026-10-30  
 **Аудиторы:** 2 параллельных AI-аудитора (Pro-уровень) + ручная верификация  
 **Охват:** Полный стек — RAG pipeline, агенты, MCP-серверы, AutoAgent, Benchmark, Docker, безопасность
@@ -209,7 +209,7 @@ flowchart TD
 
 ### ~~CRIT-12: Unauthenticated Public Tunnel~~ ✅ RETIRED / CLOSED
 
-- **Файл:** [serve_public.ps1#L44-L68](file:///<project-root>/tools/serve_public.ps1#L44-L68)
+- **Файл:** [serve_public.ps1#L44-L68](tools/serve_public.ps1#L44-L68)
 - Cloudflare Quick Tunnel без аутентификации давал неконтролируемый доступ к LLM-endpoints.
 
 > [!NOTE]
@@ -344,9 +344,9 @@ flowchart TD
 
 | ID | Файл | Проблема | Статус |
 |---|---|---|---|
-| LOW-01 | [module_7_generation.py#L120](file:///<project-root>/hub/rag/module_7_generation.py#L120) | Token estimation `len//3` ошибается для кириллицы | ✅ FIXED (`tiktoken` cl100k_base) |
-| LOW-02 | [module_7_generation.py#L32](file:///<project-root>/hub/rag/module_7_generation.py#L32) | Hardcoded `rag_v2` vs `.env` `rag_v2_q_test` | ✅ FIXED (`os.getenv("QDRANT_COLLECTION")`) |
-| LOW-03 | [build_corpus.py#L153](file:///<project-root>/hub/eval/build_corpus.py#L153) | Deprecated `client.recreate_collection` в qdrant ≥1.18 | ✅ FIXED (`delete_collection` + `create_collection`) |
+| LOW-01 | [module_7_generation.py#L120](hub/rag/module_7_generation.py#L120) | Token estimation `len//3` ошибается для кириллицы | ✅ FIXED (`tiktoken` cl100k_base) |
+| LOW-02 | [module_7_generation.py#L32](hub/rag/module_7_generation.py#L32) | Hardcoded `rag_v2` vs `.env` `rag_v2_q_test` | ✅ FIXED (`os.getenv("QDRANT_COLLECTION")`) |
+| LOW-03 | [build_corpus.py#L153](hub/eval/build_corpus.py#L153) | Deprecated `client.recreate_collection` в qdrant ≥1.18 | ✅ FIXED (`delete_collection` + `create_collection`) |
 | LOW-04 | `hub/rag/`, `hub/eval/` | Нет `__init__.py` → хрупкий `sys.path.insert()` | ✅ FIXED (созданы `__init__.py` во всех пакетах `hub/`) |
 | LOW-05 | Все модули | `print()` вместо `logging` → нет фильтрации и logs | ✅ FIXED (в `common.py` настроен `logging`) |
 

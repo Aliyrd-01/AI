@@ -661,7 +661,11 @@ if dialog_mode:
             st.markdown(prompt)
 
         pairs = [(t["role"], t["content"]) for t in history]
-        llm = get_llm()
+        try:
+            llm = get_llm()
+        except Exception as le:
+            llm = None
+            err = le
         t0 = time.time()
         warn = None
         err = None
@@ -716,26 +720,34 @@ if dialog_mode:
                             ph.markdown(buf[0])
                             yield chunk
 
-                    try:
-                        for _ in _stream():
-                            pass
-                    except Exception:  # noqa: BLE001
+                    if llm is None:
+                        ph.empty()
+                        answer = T["gen_failed"]
+                        gen_failed = True
+                        st.error(T["gen_failed"])
+                        st.caption(friendly_error(err, lang))
+                        t_gen = 0.0
+                    else:
                         try:
-                            answer = generate_citations(search_query, context, llm,
-                                                        source=corpus["source"])
-                            ph.markdown(answer)
-                        except Exception as ge:  # noqa: BLE001
-                            ph.empty()
-                            answer = T["gen_failed"]
-                            gen_failed = True
-                            st.caption(friendly_error(ge, lang))
-                    if not gen_failed:
-                        answer = buf[0] or answer
+                            for _ in _stream():
+                                pass
+                        except Exception:  # noqa: BLE001
+                            try:
+                                answer = generate_citations(search_query, context, llm,
+                                                            source=corpus["source"])
+                                ph.markdown(answer)
+                            except Exception as ge:  # noqa: BLE001
+                                ph.empty()
+                                answer = T["gen_failed"]
+                                gen_failed = True
+                                st.error(T["gen_failed"])
+                                st.caption(friendly_error(ge, lang))
                         t_gen = time.time() - t_gen0
 
-                    retrieved_ids = [str(d[0]) for d in docs]
-                    doc_numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
                     if not gen_failed:
+                        answer = buf[0] or answer
+                        retrieved_ids = [str(d[0]) for d in docs]
+                        doc_numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
                         repaired = normalize_citations(answer, retrieved_ids, corpus["source"])
                         if repaired != answer:
                             answer = repaired
@@ -747,45 +759,45 @@ if dialog_mode:
                         answer, leaked = strip_prompt_leak(answer)
                         if leaked:
                             ph.markdown(answer or T["refuse"])
-                    cited = {str(did) for _, did in extract_citations(answer)}
-                    issues, _c, _h = verify_grounding(answer, retrieved_ids, len(docs),
-                                                      numbering=doc_numbering)
-                    refused, draft = False, ""
-                    if strict_grounding and not gen_failed:
-                        gate = apply_strict_grounding(answer, retrieved_ids,
-                                                      refusal=T["refuse"],
-                                                      numbering=doc_numbering)
-                        refused, draft = gate["refused"], gate["draft"]
-                        if refused:
-                            answer = gate["answer"]
-                            ph.empty()
-                            st.error(T["refuse"])
-                            with st.expander(T["draft"], expanded=False):
-                                st.markdown(draft)
-                    tok_in = count_tokens(context + search_query)
-                    tok_out = count_tokens(answer)
-                    cost = tok_in * (0.004 / 1_000_000) + tok_out * (0.0162 / 1_000_000)
-                    info = describe_llm(llm)
-                    meta = (f"~{tok_in} in / ~{tok_out} out tokens · est. **${cost:.6f}** · "
-                            f"gen {t_gen:.1f}s · {_cache_note(cache_hit)} · `{info['served']}`")
-                    st.caption(meta)
-                    _track_usage(tok_in, tok_out, cost)
-                    run_meta = (f"{corpus_key} (`{corpus['collection']}`) · strategy `{strategy}` · "
-                                f"LLM {info['provider']} (`{info['served']}`) · gen {t_gen:.1f}s · "
-                                f"~{tok_in} in / ~{tok_out} out tokens · est. ${cost:.6f} · "
-                                f"{_cache_note(cache_hit)}")
-                    report = export_md(prompt, answer, docs or [], cited, corpus["source"],
-                                       meta=run_meta, search_query=search_query,
-                                       refused=refused, draft=draft)
-                    cb1, cb2, _sp = st.columns([1, 1, 3])
-                    with cb1:
-                        copy_button(report, key="chat")
-                    with cb2:
-                        st.download_button(T["download"], data=report.encode("utf-8"),
-                                           file_name=f"rag_answer_{int(time.time())}.md",
-                                           mime="text/markdown", key="dl_chat", width="stretch")
-                    if issues and not refused:
-                        st.caption(f"⚠️ citation issues: {issues}")
+                        cited = {str(did) for _, did in extract_citations(answer)}
+                        issues, _c, _h = verify_grounding(answer, retrieved_ids, len(docs),
+                                                          numbering=doc_numbering)
+                        refused, draft = False, ""
+                        if strict_grounding:
+                            gate = apply_strict_grounding(answer, retrieved_ids,
+                                                          refusal=T["refuse"],
+                                                          numbering=doc_numbering)
+                            refused, draft = gate["refused"], gate["draft"]
+                            if refused:
+                                answer = gate["answer"]
+                                ph.empty()
+                                st.error(T["refuse"])
+                                with st.expander(T["draft"], expanded=False):
+                                    st.markdown(draft)
+                        tok_in = count_tokens(context + search_query)
+                        tok_out = count_tokens(answer)
+                        cost = tok_in * (0.004 / 1_000_000) + tok_out * (0.0162 / 1_000_000)
+                        info = describe_llm(llm)
+                        meta = (f"~{tok_in} in / ~{tok_out} out tokens · est. **${cost:.6f}** · "
+                                f"gen {t_gen:.1f}s · {_cache_note(cache_hit)} · `{info['served']}`")
+                        st.caption(meta)
+                        _track_usage(tok_in, tok_out, cost)
+                        run_meta = (f"{corpus_key} (`{corpus['collection']}`) · strategy `{strategy}` · "
+                                    f"LLM {info['provider']} (`{info['served']}`) · gen {t_gen:.1f}s · "
+                                    f"~{tok_in} in / ~{tok_out} out tokens · est. ${cost:.6f} · "
+                                    f"{_cache_note(cache_hit)}")
+                        report = export_md(prompt, answer, docs or [], cited, corpus["source"],
+                                           meta=run_meta, search_query=search_query,
+                                           refused=refused, draft=draft)
+                        cb1, cb2, _sp = st.columns([1, 1, 3])
+                        with cb1:
+                            copy_button(report, key="chat")
+                        with cb2:
+                            st.download_button(T["download"], data=report.encode("utf-8"),
+                                               file_name=f"rag_answer_{int(time.time())}.md",
+                                               mime="text/markdown", key="dl_chat", width="stretch")
+                        if issues and not refused:
+                            st.caption(f"⚠️ citation issues: {issues}")
 
             if not meta:
                 st.caption(f"top confidence `{top_conf:.2f}`")
@@ -905,8 +917,17 @@ if asked:
                 apply_strict_grounding, normalize_citations,
             )
 
-            llm = get_llm()
-            context = sanitize_context(format_context(docs, source=corpus["source"]))
+            try:
+                llm = get_llm()
+            except Exception as le:
+                st.session_state.pop("rag_res", None)
+                st.error(T["gen_failed"])
+                st.caption(friendly_error(le, lang))
+                llm = None
+                docs = None
+
+            if llm is not None:
+                context = sanitize_context(format_context(docs, source=corpus["source"]))
 
             if warn:
                 st.warning(f"`{strategy}` → **hybrid**.")
