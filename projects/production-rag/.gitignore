@@ -1,0 +1,21 @@
+﻿.env
+scripts/.env
+__pycache__/
+*.pyc
+st_out.txt
+st_err.txt
+smoke*_out.txt
+smoke*_err.txt
+eval/*.log
+eval/collection_doc_ids.txt
+
+st_out.txt
+st_err.txt
+st_pid.txt
+tools/
+eval/feedback.jsonl
+eval/_ab_cache/
+
+# never commit local env backups (may contain live keys)
+.env.*
+!.env.example
