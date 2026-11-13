@@ -24,7 +24,7 @@ Copy-Item .env.example .env      # заполнить ключи Qdrant/LLM
 streamlit run app.py
 
 # 2) публичная ссылка (бесплатно, без аккаунта)
-<workspace>\deploy-rag\tools\start-rag-public.cmd   # печатает trycloudflare.com URL
+tools\start-rag-public.cmd   # prints a trycloudflare.com URL
 
 # 3) Docker
 docker build -t production-rag .
@@ -60,6 +60,7 @@ flowchart LR
 | Генерация | LLM-пул (Qubax → Zen → Mistral → OpenRouter) с промптом на цитаты `[n](msmarco#id)` |
 | Guardrails | санитизация контекста (prompt-injection) + дельмитеры `<<<CONTEXT>>>` |
 | UI | Streamlit (стриминг, trace, A/B, cost, feedback) |
+| Observability | LangSmith (EU) — опционально, при необходимости: `LANGCHAIN_TRACING_V2=true`, endpoint `https://eu.api.smith.langchain.com` |
 
 ## Стратегии retrieval (11)
 
@@ -119,7 +120,7 @@ python eval/smoke_app.py                                                   # UI/
 | Streamlit Community Cloud | ~2.7 GB | бесплатно; билд из `requirements.txt` (`.python-version` = 3.12) |
 | Hugging Face Spaces (Docker SDK) | 16 GB | **нужен PRO** — с 2026 бесплатны только Static Spaces |
 
-Кэш моделей FastEmbed — `FASTEMBED_CACHE_PATH` (по умолчанию `<workspace>\fastembed_cache`),
+Кэш моделей FastEmbed — `FASTEMBED_CACHE_PATH` (по умолчанию `./fastembed_cache` рядом с проектом),
 чтобы не перекачивать ~600 МБ и не хранить на C:.
 
 ## Limitations & Next steps

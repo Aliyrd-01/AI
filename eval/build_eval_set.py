@@ -24,7 +24,7 @@ from module_5_retrieval import get_client, COLLECTION
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-DATA = r"<corpus-root>\data\corpus\msmarco"
+DATA = os.environ.get("MSMARCO_DIR", os.path.join(ROOT, "data", "msmarco"))
 CACHE = os.path.join(HERE, "collection_doc_ids.txt")
 OUT = os.path.join(HERE, "eval_set.json")
 N_TARGET = 100
