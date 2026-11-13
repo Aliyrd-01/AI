@@ -15,3 +15,7 @@ st_pid.txt
 tools/
 eval/feedback.jsonl
 eval/_ab_cache/
+
+# never commit local env backups (may contain live keys)
+.env.*
+!.env.example
