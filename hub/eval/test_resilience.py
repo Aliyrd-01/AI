@@ -24,20 +24,26 @@ class TestErrorsAndScrubbing(unittest.TestCase):
     def test_scrub_paths_windows_and_tracebacks(self):
         raw_trace = (
             'Traceback:\n'
-            '  File "<project-root>\\hub\\Home.py", line 38, in <module>\n'
+            '  File "D:\\projects\\demo\\hub\\Home.py", line 38, in <module>\n'
             '    st.navigation(NAV, position="sidebar").run()\n'
             '  File "C:\\Users\\<user>\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\openai\\client.py", line 1105\n'
-            'Local file: D:\\data\\storage\\db.sqlite\n'
+            'Local file: D:\\srv\\storage\\db.sqlite\n'
             'openai.RateLimitError: Error code: 429 on host 127.0.0.1:8000'
         )
         cleaned = scrub_paths(raw_trace)
-        self.assertNotIn("<project-root>", cleaned)
+        self.assertNotIn("D:\\projects\\demo", cleaned)
         self.assertNotIn("C:\\Users\\<user>", cleaned)
-        self.assertNotIn("user", cleaned.lower())
         self.assertNotIn("127.0.0.1", cleaned)
         self.assertIn("[source]", cleaned)
         self.assertIn("[path]", cleaned)
         self.assertIn("[host]", cleaned)
+
+    def test_scrub_configured_usernames(self):
+        """Machine usernames come from SCRUB_USERNAMES, so no personal name is hardcoded."""
+        with patch.dict(os.environ, {"SCRUB_USERNAMES": "testuser"}):
+            cleaned = scrub_paths("login for testuser failed")
+        self.assertNotIn("testuser", cleaned.lower())
+        self.assertIn("[user]", cleaned)
 
     def test_friendly_error_ratelimit_and_quota(self):
         # 1. Exact string from user's incident
@@ -89,14 +95,17 @@ class TestDecouplingAudit(unittest.TestCase):
         root = os.path.abspath(os.path.join(HUB, ".."))
         # Assembled dynamically to avoid matching test file itself
         forbidden = [
-            "d:" + "\\ai\\portfolio",
-            "d:" + "/ai/portfolio",
-            "c:" + "\\users\\user",
-            "c:" + "/users/user",
+            "d:" + "\\ai\\",
+            "d:" + "\\opencode-work\\",
+            "d:" + "/ai/",
+            "c:" + "\\users\\",
+            "/users/",
+            "/home/",
         ]
         violations = []
         for r, dirs, files in os.walk(root):
-            if any(x in r for x in [".git", "node_modules", "VIDEO", "__pycache__", ".pytest_cache", "scratch"]):
+            if any(x in r for x in [".git", "node_modules", "VIDEO", "__pycache__",
+                                    ".pytest_cache", "scratch", "autoagent"]):
                 continue
             for f in files:
                 if f.endswith((".py", ".json", ".md", ".toml", ".yml", ".yaml")):

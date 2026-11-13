@@ -14,7 +14,8 @@ foreach ($pr in $stale) {
 }
 Start-Sleep -Seconds 1
 
-# 2) take Bearer token: prefer local secret file <workspace>\secrets\mcp.env (never committed); fallback: server script value
+# 2) take Bearer token: prefer a local secret file next to this repo, e.g. %USERPROFILE%\mcp_token.env
+#    (never committed); fallback: server script value
 $tokenFile = Join-Path $env:USERPROFILE "mcp_token.env"
 $token = ""
 if (Test-Path $tokenFile) { foreach ($line in Get-Content $tokenFile) { if ($line -match '^\s*MCP_TOKEN=(.+)$') { $token = $Matches[1].Trim() } } }

@@ -1,5 +1,6 @@
 """Human-readable error messages for the UI: no tracebacks, no local paths, no raw API dumps."""
 
+import os
 import re
 
 _RU = "ru"
@@ -75,12 +76,14 @@ def scrub_paths(text: str) -> str:
     s = str(text or "")
     # Windows absolute paths (D:\..., C:\..., D:/...)
     s = re.sub(r"[A-Za-z]:[/\\][^\s'\"<>\)]+", "[path]", s)
-    # Unix absolute paths (/home/<user>, /Users/<user>, /app/...)
+    # Unix absolute paths (home directories, installed app directories)
     s = re.sub(r"/(?:home|app|Users|usr|var|tmp|opt|root|workspace)/[^\s'\"<>\)]+", "[path]", s)
     # Python traceback lines (File "...", line 123)
     s = re.sub(r'File\s+["\'][^"\']+["\'],\s+line\s+\d+', 'File "[source]", line 0', s)
-    # Machine usernames
-    s = re.sub(r"\b(?:user|alex|user)\b", "[user]", s, flags=re.IGNORECASE)
+    # Machine usernames: supplied by the deployment (SCRUB_USERNAMES=alice,bob), never hardcoded
+    names = [n.strip() for n in os.environ.get("SCRUB_USERNAMES", "").split(",") if n.strip()]
+    if names:
+        s = re.sub(r"\b(?:" + "|".join(map(re.escape, names)) + r")\b", "[user]", s, flags=re.IGNORECASE)
     # IP addresses
     s = re.sub(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?\b", "[host]", s)
     return s
