@@ -15,6 +15,13 @@ A Streamlit multi-page app; the vector index lives in Qdrant Cloud, so the conta
 | `pages/5_Benchmarks.py` | RAG metrics + LLM suite |
 | `pages/6_Unified_Agent.py` | unified agent demo |
 
+## Standalone demos
+
+`projects/production-rag/` — the same retrieval + generation pipeline packaged as a deployable
+demo: `Dockerfile`, `.streamlit/config.toml`, evaluation harness (`eval/`, retrieval/generation
+metrics on MS MARCO) and a CI workflow. Run it on its own with
+`cd projects/production-rag && streamlit run app.py`; the live site itself uses `hub/rag/`.
+
 ## RAG section
 
 **Retrieval** — 11 strategies you can pick from the sidebar, all share one pipeline:
