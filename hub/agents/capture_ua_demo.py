@@ -27,11 +27,35 @@ QUESTIONS = [
 OUT = os.path.join(HERE, "..", "assets", "agents", "ua_demo.json")
 
 
+def get_mock_run(question: str) -> dict:
+    """Return a mock run result when offline or testing without live services."""
+    return {
+        "question": question,
+        "answer": f"[Mock offline demo answer for: {question}]",
+        "steps": [
+            {
+                "tool": "mock_tool",
+                "args": {"query": question[:30]},
+                "result": "Mock execution result (offline mode)",
+                "elapsed": 0.05,
+            }
+        ],
+        "model": "mock-qwen3-235b",
+        "usage": {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150},
+        "elapsed": 0.1,
+    }
+
+
 def main() -> None:
+    use_mock = "--mock" in sys.argv
     runs = []
     for q in QUESTIONS:
         print(f"running: {q[:70]}...")
         t0 = time.time()
+        if use_mock:
+            runs.append(get_mock_run(q))
+            print(f"  mock ok: 1 mock tool call, 0.1s")
+            continue
         try:
             res = ua.run(q)
         except Exception as e:  # noqa: BLE001
@@ -47,7 +71,7 @@ def main() -> None:
         })
         print(f"  ok: {len(res.get('steps', []))} tool calls, {time.time() - t0:.1f}s")
     if not runs:
-        print("nothing recorded")
+        print("nothing recorded (run with --mock to generate offline fixtures)")
         return
     os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as fh:

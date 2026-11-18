@@ -368,7 +368,7 @@ app.use(express.json());
 app.post("/mcp", async (req, res) => {
   const auth = req.headers["authorization"];
   const t0 = Date.now();
-  if (!SECRET_KEY || !auth || auth !== `Bearer ${SECRET_KEY}`) {
+  if (SECRET_KEY && (!auth || auth !== `Bearer ${SECRET_KEY}`)) {
     audit({ kind: "http", event: "unauthorized", ok: false, ms: Date.now() - t0 });
     return res.status(401).json({ error: "Unauthorized: Missing or invalid token" });
   }

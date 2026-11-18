@@ -247,6 +247,10 @@ def _chat(messages, tools):
               "tool_choice": "auto", "temperature": 0})
     r.raise_for_status()
     data = r.json()
+    if not data.get("choices"):
+        err = data.get("error", {})
+        msg = err.get("message") if isinstance(err, dict) else str(err)
+        raise RuntimeError(f"LLM API returned no choices: {msg or 'empty response'}")
     return data["choices"][0]["message"], data.get("usage") or {}
 
 

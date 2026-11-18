@@ -8,6 +8,8 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+HUB = os.path.abspath(os.path.join(HERE, ".."))
+sys.path.insert(0, HUB)
 sys.path.insert(0, HERE)
 
 import streamlit as st
@@ -112,57 +114,68 @@ T = {
 st.title(T["title"])
 st.caption(T["caption"])
 
+
+def _link(page: str, label: str, icon: str | None = None) -> None:
+    try:
+        if icon:
+            st.page_link(page, label=label, icon=icon)
+        else:
+            st.page_link(page, label=label)
+    except Exception:
+        st.markdown(f"[{label}]({page})")
+
+
 st.write("")
 
 row1 = st.columns(3, gap="large")
 with row1[0]:
     st.subheader(T["rag_t"])
     st.write(T["rag_d"])
-    st.page_link("views/1_RAG.py", label=T["rag_l"])
+    _link("views/1_RAG.py", label=T["rag_l"])
 
 with row1[1]:
     st.subheader(T["n8n_t"])
     st.write(T["n8n_d"])
-    st.page_link("views/2_N8N.py", label=T["n8n_l"])
+    _link("views/2_N8N.py", label=T["n8n_l"])
 
 with row1[2]:
     st.subheader(T["agents_t"])
     st.write(T["agents_d"])
-    st.page_link("views/3_Agents.py", label=T["agents_l"])
+    _link("views/3_Agents.py", label=T["agents_l"])
 
 st.write("")
 row1b = st.columns(3, gap="large")
 with row1b[0]:
     st.subheader(T["mcp_t"])
     st.write(T["mcp_d"])
-    st.page_link("views/4_MCP.py", label=T["mcp_l"])
+    _link("views/4_MCP.py", label=T["mcp_l"])
 
 with row1b[1]:
     st.subheader(T["int_t"])
     st.write(T["int_d"])
-    st.page_link("views/90_Integrations.py", label=T["int_l"])
+    _link("views/90_Integrations.py", label=T["int_l"])
 
 with row1b[2]:
     st.subheader(T["sec_t"])
     st.write(T["sec_d"])
-    st.page_link("views/91_Security.py", label=T["sec_l"])
+    _link("views/91_Security.py", label=T["sec_l"])
 
 st.write("")
 row2 = st.columns(3, gap="large")
 with row2[0]:
     st.subheader(T["bench_t"])
     st.write(T["bench_d"])
-    st.page_link("views/6_Benchmarks.py", label=T["bench_l"])
+    _link("views/6_Benchmarks.py", label=T["bench_l"])
 
 with row2[1]:
     st.subheader(T["projects_t"])
     st.write(T["projects_d"])
-    st.page_link("views/8_Projects.py", label=T["projects_l"])
+    _link("views/8_Projects.py", label=T["projects_l"])
 
 with row2[2]:
     st.subheader(T["ua_t"])
     st.write(T["ua_d"])
-    st.page_link("views/7_Unified_Agent.py", label=T["ua_l"])
+    _link("views/7_Unified_Agent.py", label=T["ua_l"])
 
 st.divider()
 st.subheader(T["video_h"])
@@ -185,5 +198,5 @@ with c_en:
 
 st.caption(T["stack"])
 st.write("")
-st.page_link("views/92_Testing.py", label=T["testing_l"], icon="🧪")
-st.page_link("views/93_Contacts.py", label=T["contact_l"], icon="✉️")
+_link("views/92_Testing.py", label=T["testing_l"], icon="🧪")
+_link("views/93_Contacts.py", label=T["contact_l"], icon="✉️")

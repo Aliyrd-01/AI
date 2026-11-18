@@ -588,6 +588,25 @@ def search_hybrid_rerank(query: str, k: int = 10, filters: dict | None = None, r
     return rerank_llm(query, docs, top_n=rerank_top)
 
 
+def search_production(query: str, k: int = 10, filters: dict | None = None):
+    """Production retrieval: hybrid pool (>=20) + CrossEncoder rerank = hybrid_ce.
+
+    Measured on the 100-question golden set: Hit@5 0.86 / Hit@10 0.94,
+    vs plain hybrid 0.74 / 0.87. The pool is wider than k so the reranker has
+    candidates to promote.
+
+    Order comes from the CrossEncoder, but the score at index 2 stays the
+    original hybrid score: the API's min_score gate is calibrated on that
+    scale, and CE logits are not comparable to it.
+    """
+    pool = search_hybrid(query, k=max(k, 20), filters=filters)
+    if not pool:
+        return []
+    ranked = rerank_cross_encoder(query, pool, top_n=k)
+    original = {d[0]: d for d in pool}
+    return [original[d[0]] for d in ranked if d[0] in original]
+
+
 def search_hybrid_hyde_ce(query: str, k: int = 10, filters: dict | None = None,
                           llm=None, rerank_top: int = 5):
     """HyDE-enhanced hybrid, then CrossEncoder rerank (best of both)."""

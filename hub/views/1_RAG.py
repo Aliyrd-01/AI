@@ -615,7 +615,7 @@ if dialog_mode:
         apply_strict_grounding, condense_query, count_tokens, extract_citations,
         format_context, generate_citations, generate_citations_stream,
         normalize_citations, sanitize_context, verify_grounding,
-        remap_citation_ids, strip_prompt_leak,
+        remap_citation_ids, strip_prompt_leak, build_context,
     )
 
     st.caption(T["chat_note"])
@@ -705,7 +705,7 @@ if dialog_mode:
                     st.warning(answer)
                 else:
                     st.caption(f"{T['search_q']}: `{search_query}`")
-                    context = sanitize_context(format_context(docs, source=corpus["source"]))
+                    context = build_context(docs, source=corpus["source"])
                     t_gen0 = time.time()
                     ttft = {"v": None}
                     ph = st.empty()
@@ -927,7 +927,7 @@ if asked:
                 docs = None
 
             if llm is not None:
-                context = sanitize_context(format_context(docs, source=corpus["source"]))
+                context = build_context(docs, source=corpus["source"])
 
             if warn:
                 st.warning(f"`{strategy}` → **hybrid**.")

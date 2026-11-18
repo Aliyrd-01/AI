@@ -95,7 +95,8 @@ def main():
     from module_7_generation import (
         format_context, sanitize_context, generate_citations,
         apply_strict_grounding, reorder_lost_in_middle,
-        remap_citation_ids, looks_like_refusal,
+        remap_citation_ids, looks_like_refusal, build_context,
+        looks_like_live_query,
     )
     from common import get_chat_llm, describe_llm
 
@@ -108,9 +109,17 @@ def main():
         docs = m.search_hybrid(q, args.k)
         raw = max((float(d[2]) for d in docs), default=0.0)
         conf = raw / (raw + _RRF_SAT)
+        # Тот же детерминированный guard, что в API: без ответа и без LLM.
+        if looks_like_live_query(q):
+            return {
+                "query": q, "kind": kind, "refused": True,
+                "conf": round(conf, 3), "raw_top": round(raw, 4),
+                "via": "live_query", "ungrounded": False, "grounding_issues": [],
+                "latency_s": round(time.time() - t0, 2),
+            }
         docs = reorder_lost_in_middle(docs)
         numbering = [(i + 1, str(d[0])) for i, d in enumerate(docs)]
-        context = sanitize_context(format_context(docs, reorder=False))
+        context = build_context(docs)
         answer = generate_citations(q, context, llm)
         # Тот же порядок, что в API: сначала чиним цитаты по нумерации контекста,
         # только потом строгий grounding. Иначе смещённый номер = ложный «отказ».
@@ -181,7 +190,6 @@ def main():
           f"-> {'PASS' if passed else 'FAIL'}")
     print(f"ungrounded: ood={ungrounded_ood:.3f} control={ungrounded_ctl:.3f} "
           f"(answers without valid citations; API returns them with unsupported=true)")
-    print("saved ->", RESULTS)
 
 
 if __name__ == "__main__":

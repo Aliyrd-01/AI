@@ -34,13 +34,11 @@ docker compose up --build
 
 ```
 hub/
-  Home.py              лендинг + карточки
-  pages/1_RAG.py       RAG-демо (гибридный поиск, цитаты, метрики)
-  pages/2_n8n.py       3 воркфлоу: диаграммы из JSON + описания
-  pages/3_Projects.py  прочие проекты
+  Home.py              главная точка входа и навигация st.navigation
+  views/               12 страниц портфолио (Home, RAG, n8n, Agents, MCP, Benchmarks, UA, Projects...)
   rag/                 код RAG (retrieval, generation, common)
   eval/                метрики, eval-скрипты, результаты
-  assets/n8n/          экспорты n8n + ассеты
+  assets/              экспорты n8n, ассеты агентов, видео
 tools/                 публичный запуск (cloudflared)
 ```
 

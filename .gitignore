@@ -1,7 +1,7 @@
 # secrets & local tooling
 .env
 .env.local
-tools/
+/tools/
 
 # runtime artifacts
 hub/eval/feedback.jsonl

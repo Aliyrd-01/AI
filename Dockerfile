@@ -17,8 +17,10 @@ ENV PYTHONUNBUFFERED=1 \
     STREAMLIT_SERVER_HEADLESS=true \
     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 
+WORKDIR /app
+
 RUN useradd -m -u 1000 appuser && \
-    mkdir -p /data/fastembed && \
+    mkdir -p /data/fastembed /app && \
     chown -R appuser:appuser /data /app
 
 COPY requirements.txt .

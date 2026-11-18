@@ -1,4 +1,8 @@
+import os
+import sys
 import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from inventory import add_item, remove_item, stock_report
 from pricing import total_value

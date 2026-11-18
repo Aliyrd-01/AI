@@ -3,5 +3,8 @@
 
 your-domain.example {
     encode gzip
-    reverse_proxy hub:7860
+    # If running Caddy on the VPS host (recommended in DEPLOY.md):
+    reverse_proxy 127.0.0.1:7860
+    # If running Caddy inside the same Docker network as hub:
+    # reverse_proxy hub:7860
 }

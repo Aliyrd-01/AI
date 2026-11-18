@@ -7,13 +7,19 @@ A Streamlit multi-page app; the vector index lives in Qdrant Cloud, so the conta
 
 | Page | Contents |
 |---|---|
-| `Home.py` | landing / overview |
-| `pages/1_RAG.py` | production-style RAG demo (hybrid retrieval, citations, on-machine benchmark) |
-| `pages/2_n8n.py` | 3 n8n workflows (diagrams + video + exported JSON) |
-| `pages/3_Projects.py` | project list |
-| `pages/4_Agents.py` | AutoAgent + MCP |
-| `pages/5_Benchmarks.py` | RAG metrics + LLM suite |
-| `pages/6_Unified_Agent.py` | unified agent demo |
+| `Home.py` | landing / entrypoint with sidebar navigation |
+| `views/0_Home.py` | landing cards and overview |
+| `views/1_RAG.py` | production-style RAG demo (hybrid retrieval, citations, on-machine benchmark) |
+| `views/2_N8N.py` | 3 n8n workflows (diagrams + video + exported JSON) |
+| `views/3_Agents.py` | AutoAgent multi-agent framework + 3 implementation flows |
+| `views/4_MCP.py` | PostgreSQL MCP server (Node.js) + integration paths |
+| `views/6_Benchmarks.py` | RAG retrieval/generation metrics + LLM benchmark suite |
+| `views/7_Unified_Agent.py` | tool-calling agent demo (knowledge base + CRM PostgreSQL) |
+| `views/8_Projects.py` | project portfolio cards |
+| `views/90_Integrations.py` | data sources and targets matrix |
+| `views/91_Security.py` | guardrails, read-only SQL, PII masking |
+| `views/92_Testing.py` | RAG & Agent quality assurance service |
+| `views/93_Contacts.py` | contact and collaboration options |
 
 ## Standalone demos
 

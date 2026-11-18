@@ -4,8 +4,8 @@ import requests
 import os; from dotenv import load_dotenv; _HERE=os.path.dirname(os.path.abspath(__file__)); load_dotenv(os.path.join(_HERE, '..', '..', '.env'))
 
 ZEN_KEY = os.getenv('OPENAI_API_KEY', '')
-GOOGLE_KEY = 'REDACTED_KEY'
-XAI_KEY = 'REDACTED_KEY'
+GOOGLE_KEY = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY', '')
+XAI_KEY = os.getenv('XAI_API_KEY', '')
 MISTRAL_KEY = os.getenv('MISTRAL_API_KEY', '')
 QUESTIONS_COUNT = 20
 DELAY = 1

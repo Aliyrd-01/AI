@@ -6,8 +6,8 @@ import os; from dotenv import load_dotenv; _HERE=os.path.dirname(os.path.abspath
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 ZEN_KEY = os.getenv('OPENAI_API_KEY', '')
-GOOGLE_KEY = 'REDACTED_KEY'
-XAI_KEY = 'REDACTED_KEY'
+GOOGLE_KEY = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY', '')
+XAI_KEY = os.getenv('XAI_API_KEY', '')
 MISTRAL_KEY = os.getenv('MISTRAL_API_KEY', '')
 OPENROUTER_KEY = os.getenv('OPENROUTER_API_KEY', '')
 DELAY = 1

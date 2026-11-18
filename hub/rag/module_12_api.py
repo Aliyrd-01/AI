@@ -32,11 +32,13 @@ import uvicorn
 
 from common import get_chat_llm, get_fastembed_dense, get_embeddings
 from module_5_retrieval import (search_dense, search_sparse, search_hybrid,
-                                search_hybrid_rerank, is_meaningful_chunk)
+                                search_hybrid_rerank, search_production,
+                                is_meaningful_chunk)
 from module_7_generation import (format_context, generate_citations, check_faithfulness,
                                  CITATIONS_PROMPT, context_numbering, apply_strict_grounding,
                                  looks_like_refusal, reorder_lost_in_middle, remap_citation_ids,
-                                 sanitize_context, sanitize_question, strip_prompt_leak)
+                                 sanitize_context, sanitize_question, strip_prompt_leak,
+                                 build_context, looks_like_live_query, LIVE_QUERY_ANSWER)
 
 # ─── Langfuse ─────────────────────────────────────────────────────────────
 _langfuse_handler = None
@@ -376,7 +378,7 @@ def _check_rate(client_ip: str):
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=1000)
     top_k: int = Field(default=5, ge=1, le=20)
-    strategy: str = Field(default="hybrid_rerank", pattern="^(dense_only|sparse_only|hybrid|hybrid_rerank)$")
+    strategy: str = Field(default="hybrid_ce", pattern="^(dense_only|sparse_only|hybrid|hybrid_rerank|hybrid_ce)$")
     filters: dict | None = Field(default=None, description='e.g. {"source": "news", "lang": "en"}')
     min_score: float = Field(default=0.15, ge=0.0, le=1.0, description="Minimum top document confidence (0 = off, default 0.15)")
 
@@ -481,6 +483,18 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
         return QueryResponse(question=_clean_q, answer=msg, sources=[], unsupported=True,
                              latency_ms=round((time.time() - t0) * 1000, 1))
 
+    # Fix-9: live-вопросы (цена сейчас, погода, счёт, «последняя версия»)
+    # отказываем детерминированно, ДО кэша и retrieval. Иначе старый
+    # закэшированный ответ на «цену биткоина» вернётся как актуальный.
+    if looks_like_live_query(req.question):
+        print(f"  [guard] live/time-sensitive question refused: {req.question[:80]}")
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _log_query_mysql,
+                                   _clean_q, LIVE_QUERY_ANSWER, "[]", 0, 0.0, 0, client_ip)
+        return QueryResponse(question=_clean_q, answer=LIVE_QUERY_ANSWER, sources=[],
+                             unsupported=True,
+                             latency_ms=round((time.time() - t0) * 1000, 1))
+
     # Единый root span/trace в Langfuse для всего RAG-запроса
     lf_cm = None
     lf_obj = None
@@ -524,6 +538,7 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
         "sparse_only": search_sparse,
         "hybrid": search_hybrid,
         "hybrid_rerank": search_hybrid_rerank,
+        "hybrid_ce": search_production,
     }[req.strategy]
 
     # Спан retrieval внутри трейса rag_query
@@ -603,7 +618,7 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
     # Единый порядок: контекст в промпте и список sources[] должны совпадать,
     # иначе [n] указывает на другой документ, чем sources[n-1].
     docs = reorder_lost_in_middle(docs)
-    context = sanitize_context(format_context(docs, reorder=False))
+    context = build_context(docs)
 
     def _gen_traced():
         with propagate_attributes(trace_name="rag_query"):
@@ -742,8 +757,15 @@ async def _stream_gen(question: str, top_k: int = 5, min_score: float = 0.15):
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
         return
 
+    # Fix-9: live-вопросы не идут в retrieval даже в стриме.
+    if looks_like_live_query(question):
+        yield f"data: {json.dumps({'type': 'meta', 'n_docs': 0, 'unsupported': True})}\n\n"
+        yield f"data: {json.dumps({'type': 'token', 'text': LIVE_QUERY_ANSWER})}\n\n"
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+        return
+
     docs = await asyncio.get_running_loop().run_in_executor(
-        None, search_hybrid, question, top_k
+        None, search_production, question, top_k
     )
     docs = [d for d in docs if is_meaningful_chunk(d[1])]
     top_raw = max((float(d[2]) for d in docs), default=0.0)
@@ -757,7 +779,7 @@ async def _stream_gen(question: str, top_k: int = 5, min_score: float = 0.15):
         return
 
     docs = reorder_lost_in_middle(docs)
-    context = sanitize_context(format_context(docs, reorder=False))
+    context = build_context(docs)
     prompt = CITATIONS_PROMPT.invoke({"context": context, "question": question, "source": "msmarco"})
 
     yield f"data: {json.dumps({'type': 'meta', 'n_docs': len(docs)})}\n\n"

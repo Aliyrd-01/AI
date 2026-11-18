@@ -48,6 +48,11 @@ CITATIONS_PROMPT = ChatPromptTemplate.from_messages([
      "(like '... 6.') is NOT a citation and is a mistake. "
      "The number n is the document number in the context block. "
      "If the context lacks the information, honestly say you cannot answer - do not guess. "
+     "PARTIAL COVERAGE RULE: if the exact sub-item is not stated but the context gives a "
+     "broader aggregate figure that INCLUDES it (for example a total procedure cost that "
+     "includes anesthesia), answer with that aggregate and say explicitly that it is the "
+     "total, not the separate sub-item price. Never split or estimate the sub-item yourself. "
+     "Refuse only when the context has no related figure at all. "
      "When you refuse, say so WITHOUT any citations - a refusal must contain zero [n](...) links. "
      "HARD RULE: if the question asks for CURRENT/live values (price right now, today's news, "
      "weather, latest version, who holds an office now), ALWAYS refuse - any number in the "
@@ -219,22 +224,20 @@ def sanitize_context(context: str) -> str:
 
 # Instructions aimed at the assistant rather than at the corpus. The question is
 # retrieval DATA, so such clauses are dropped before the prompt is built.
+# Deliberately narrow: only imperative hijack frames, never bare topic words
+# ("system prompt", "act as", "from now on") - those appear in legitimate
+# questions and must not blank the request.
 _INJECTION_QUESTION_PATTERNS = (
     r"ignore (all )?(the )?(previous|above|prior|earlier) (instructions|prompt|rules)",
     r"disregard (all )?(the )?(previous|above|prior|earlier)",
     r"forget (all )?(the )?(previous|above|prior|earlier) (instructions|prompt|rules)",
     r"you are now\b",
-    r"from now on\b",
-    r"act as (a|an|the)\b",
-    r"pretend (to be|you are)\b",
     r"(print|show|reveal|repeat|output|leak) (me )?(your|the) (system )?(prompt|instructions|rules)",
-    r"system prompt",
     r"new instructions\s*:",
-    r"игнорируй(те)? (все )?(предыдущие|выше|прошлые)",
-    r"забудь(те)? (все )?(предыдущие|выше|прошлые)",
+    r"игнорируй(те)? (все )?(предыдущие|выше|прошлые) (инструкции|промпт|правила)",
+    r"забудь(те)? (все )?(предыдущие|выше|прошлые) (инструкции|промпт|правила)",
     r"теперь ты\b",
-    r"(покажи|выведи|повтори|раскрой) (свой |системный )?(промпт|инструкции)",
-    r"системный промпт",
+    r"(покажи|выведи|повтори|раскрой) (мне )?(свой |системный )?(промпт|инструкции|правила)",
     r"новые инструкции\s*:",
 )
 
@@ -260,6 +263,53 @@ def sanitize_question(question: str):
     return clean, removed
 
 
+# ─── Live / time-sensitive questions ─────────────────────────────────────
+# The corpus is a frozen snapshot: it has no answer for "right now", "today",
+# "latest", "2026". The prompt tells the model to refuse, but a prompt rule is
+# not a guarantee - the model answered "price of bitcoin right now today" with
+# historical numbers. This check is deterministic and runs before cache and
+# retrieval, so a stale cached answer cannot leak through either.
+_LIVE_TIME_RE = re.compile(
+    r"\b(right now|at the moment|as of (?:now|today)|nowadays|these days|"
+    r"today|tonight|tomorrow|yesterday|"
+    r"this (?:week|month|year|morning|afternoon|evening)|"
+    r"last (?:week|month|year|night))\b",
+    re.I,
+)
+# Year 2024+ predates the corpus snapshot, so any question anchored there is
+# unanswerable from it regardless of wording.
+_LIVE_YEAR_RE = re.compile(r"\b(20(?:2[4-9]|[3-9]\d)|2100)\b")
+# Facts that are volatile by nature. Deliberately specific: generic words like
+# "cost" stay out, because surgery/house costs are legitimate corpus topics.
+_LIVE_FACT_RE = re.compile(
+    r"\b(latest|newest|most recent(?:ly)?|exchange rate|"
+    r"stock price|share price|market cap|price of (?:bitcoin|btc|ethereum|eth|usdt|crypto)|"
+    r"weather|forecast|air quality|aqi|active users|"
+    r"current (?:president|prime minister|ceo|chairman|price|rate|score|version|model|champion))\b",
+    re.I,
+)
+
+
+def looks_like_live_query(question: str) -> bool:
+    """True when the question asks for a value that changes over time.
+
+    Such questions are outside a static corpus by construction, so the API
+    refuses them deterministically instead of trusting the model to obey the
+    prompt rule.
+    """
+    q = question or ""
+    if _LIVE_TIME_RE.search(q) or _LIVE_YEAR_RE.search(q):
+        return True
+    return bool(_LIVE_FACT_RE.search(q))
+
+
+LIVE_QUERY_ANSWER = (
+    "This question asks for a live, time-sensitive value (current price, weather, "
+    "score, latest release, and so on). The corpus is a static snapshot and cannot "
+    "answer it. Refusing to answer."
+)
+
+
 # Markers of the system prompt itself. If any of them shows up in the answer,
 # the model started reciting its instructions instead of answering.
 _PROMPT_LEAK_RE = re.compile(
@@ -276,6 +326,16 @@ def strip_prompt_leak(answer: str):
     if not m:
         return answer, False
     return answer[: m.start()].rstrip(), True
+
+
+def build_context(docs, source="msmarco"):
+    """Единая сборка контекста для промпта: без перестановки (порядок задаёт
+    вызывающий код, чтобы [n] совпадал с sources[n-1]) и с санитайзом инъекций.
+
+    Одна точка правды для API, хаба и eval-скриптов: если здесь появится
+    защита, она появится везде.
+    """
+    return sanitize_context(format_context(docs, reorder=False, source=source))
 
 
 def generate_structured(query, context, llm):

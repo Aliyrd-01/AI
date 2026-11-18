@@ -14,15 +14,18 @@ from streamlit.testing.v1 import AppTest
 HUB = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HOME = os.path.join(HUB, "Home.py")
 PAGES = [
-    "pages/1_RAG.py",
-    "pages/2_n8n.py",
-    "pages/3_Agents.py",
-    "pages/4_MCP.py",
-    "pages/9_Testing.py",
-    "pages/6_Benchmarks.py",
-    "pages/7_Unified_Agent.py",
-    "pages/8_Projects.py",
-    "pages/10_Contacts.py",
+    "views/0_Home.py",
+    "views/1_RAG.py",
+    "views/2_N8N.py",
+    "views/3_Agents.py",
+    "views/4_MCP.py",
+    "views/6_Benchmarks.py",
+    "views/7_Unified_Agent.py",
+    "views/8_Projects.py",
+    "views/90_Integrations.py",
+    "views/91_Security.py",
+    "views/92_Testing.py",
+    "views/93_Contacts.py",
 ]
 
 fails = []
