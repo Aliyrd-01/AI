@@ -60,10 +60,12 @@ T = {
     "ru": {
         "title": "🔌 Собственный MCP-сервер",
         "caption": "PostgreSQL MCP-сервер собственной разработки: 10 инструментов, Streamable HTTP, "
-                   "Bearer-аутентификация. Работает в прод-сценариях n8n и Unified Agent.",
+                   "Bearer-аутентификация. По умолчанию read-only — запись только при READ_ONLY=0.",
         "mcp_h": "PostgreSQL MCP Server",
         "mcp_d": "Собственная реализация MCP-сервера на Node.js (официальный SDK): 10 инструментов, "
                  "ресурсы и промпты, транспорт Streamable HTTP, проверка Bearer-токена на каждом запросе. "
+                 "В режиме по умолчанию (READ_ONLY=1) доступны только чтение и схема, а запись "
+                 "заблокирована на уровне самой БД (`default_transaction_read_only=on`). "
                  "Агент работает с базой через стандартный протокол — строит SQL из запроса пользователя "
                  "и возвращает результат в чат, без SQL в коде воркфлоу. "
                  "В проде обслуживает создание и обогащение CRM-записей в воркфлоу **Lead Qualification** "
@@ -80,19 +82,22 @@ T = {
         "client": "MCP Client",
         "server": "MCP Server (pg)",
         "db": "PostgreSQL",
-        "tools_h": "**Все 10 инструментов агента:**",
+        "tools_h": "**Все 10 инструментов агента (в read-only доступны 3, остальные — только при READ_ONLY=0):**",
         "tool_rows": [
             {"Инструмент (Tool)": "list_tables", "Описание": "Получение списка всех таблиц в базе данных", "Параметры": "—"},
             {"Инструмент (Tool)": "describe_table", "Описание": "Схема и типы колонок целевой таблицы", "Параметры": "table"},
-            {"Инструмент (Tool)": "select", "Описание": "Выполнение безопасного чтения данных (SELECT)", "Параметры": "sql"},
-            {"Инструмент (Tool)": "insert", "Описание": "Создание новых записей в таблице", "Параметры": "table, data"},
-            {"Инструмент (Tool)": "update", "Описание": "Модификация существующих записей", "Параметры": "table, set, where"},
-            {"Инструмент (Tool)": "delete_rows", "Описание": "Удаление строк по условию", "Параметры": "table, where"},
-            {"Инструмент (Tool)": "create_table", "Описание": "Создание новой реляционной таблицы", "Параметры": "sql"},
-            {"Инструмент (Tool)": "add_column", "Описание": "Миграция схемы: добавление новой колонки", "Параметры": "table, column_def"},
-            {"Инструмент (Tool)": "create_index", "Описание": "Создание индексов для ускорения выборок", "Параметры": "table, columns"},
-            {"Инструмент (Tool)": "run_sql", "Описание": "Комплексные SQL-транзакции", "Параметры": "sql"},
+            {"Инструмент (Tool)": "select", "Описание": "Чтение данных (SELECT/WITH); запись и data-modifying CTE запрещены", "Параметры": "sql"},
+            {"Инструмент (Tool)": "insert", "Описание": "Создание записей — только при READ_ONLY=0", "Параметры": "table, data"},
+            {"Инструмент (Tool)": "update", "Описание": "Модификация записей — только при READ_ONLY=0", "Параметры": "table, set, where"},
+            {"Инструмент (Tool)": "delete_rows", "Описание": "Удаление строк — только при READ_ONLY=0", "Параметры": "table, where"},
+            {"Инструмент (Tool)": "create_table", "Описание": "DDL: создание таблицы — только при READ_ONLY=0", "Параметры": "sql"},
+            {"Инструмент (Tool)": "add_column", "Описание": "DDL: добавление колонки — только при READ_ONLY=0", "Параметры": "table, column_def"},
+            {"Инструмент (Tool)": "create_index", "Описание": "DDL: индекс — только при READ_ONLY=0", "Параметры": "table, columns"},
+            {"Инструмент (Tool)": "run_sql", "Описание": "Любой SQL — только при READ_ONLY=0", "Параметры": "sql"},
         ],
+        "mode_note": "Режим выбирается переменной `READ_ONLY`: по умолчанию `READ_ONLY=1` — агент видит только "
+                     "`list_tables`, `describe_table`, `select`; write-инструменты возвращают ошибку READ_ONLY. "
+                     "При `READ_ONLY=0` доступны все 10, ответственность за SQL — на вызывающей стороне.",
         "tool": "Tool",
         "desc_col": "Описание",
         "params": "Параметры",
@@ -149,19 +154,22 @@ T = {
         "client": "MCP Client",
         "server": "MCP Server (pg)",
         "db": "PostgreSQL",
-        "tools_h": "**All 10 agent tools:**",
+        "tools_h": "**All 10 agent tools (3 available in read-only, the rest only with READ_ONLY=0):**",
         "tool_rows": [
             {"Tool": "list_tables", "Description": "List all tables in the database", "Parameters": "—"},
             {"Tool": "describe_table", "Description": "Show schema and column types of a table", "Parameters": "table"},
-            {"Tool": "select", "Description": "Execute safe read-only SQL SELECT queries", "Parameters": "sql"},
-            {"Tool": "insert", "Description": "Insert new rows into a table", "Parameters": "table, data"},
-            {"Tool": "update", "Description": "Update existing rows by condition", "Parameters": "table, set, where"},
-            {"Tool": "delete_rows", "Description": "Delete rows by condition", "Parameters": "table, where"},
-            {"Tool": "create_table", "Description": "Create a new database table", "Parameters": "sql"},
-            {"Tool": "add_column", "Description": "Schema migration: add a new column", "Parameters": "table, column_def"},
-            {"Tool": "create_index", "Description": "Create database index for fast lookups", "Parameters": "table, columns"},
-            {"Tool": "run_sql", "Description": "Execute complex SQL transactions", "Parameters": "sql"},
+            {"Tool": "select", "Description": "Read data (SELECT/WITH); writes and data-modifying CTEs are rejected", "Parameters": "sql"},
+            {"Tool": "insert", "Description": "Insert rows — only with READ_ONLY=0", "Parameters": "table, data"},
+            {"Tool": "update", "Description": "Update rows — only with READ_ONLY=0", "Parameters": "table, set, where"},
+            {"Tool": "delete_rows", "Description": "Delete rows — only with READ_ONLY=0", "Parameters": "table, where"},
+            {"Tool": "create_table", "Description": "DDL: create table — only with READ_ONLY=0", "Parameters": "sql"},
+            {"Tool": "add_column", "Description": "DDL: add column — only with READ_ONLY=0", "Parameters": "table, column_def"},
+            {"Tool": "create_index", "Description": "DDL: create index — only with READ_ONLY=0", "Parameters": "table, columns"},
+            {"Tool": "run_sql", "Description": "Any SQL — only with READ_ONLY=0", "Parameters": "sql"},
         ],
+        "mode_note": "The mode comes from `READ_ONLY`: by default `READ_ONLY=1`, so the agent sees only "
+                     "`list_tables`, `describe_table` and `select`; write tools return a READ_ONLY error. "
+                     "With `READ_ONLY=0` all 10 are available and SQL safety is the caller's responsibility.",
         "tool": "Tool",
         "desc_col": "Description",
         "params": "Parameters",
@@ -225,6 +233,7 @@ st.code(AUTH_SNIPPET, language="javascript")
 
 st.markdown(T["tools_h"])
 st.dataframe(T["tool_rows"], use_container_width=True, hide_index=True)
+st.caption(T["mode_note"])
 st.caption(T["res_prompts"])
 
 st.markdown(f"**{T['demo_h']}**")

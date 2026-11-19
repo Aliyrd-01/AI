@@ -75,10 +75,12 @@ PROJECTS = [
         "tech": "MCP · Node.js · PostgreSQL",
         "url": f"{REPO}/tree/main/projects/mcp-servers",
         "desc": {
-            "ru": "MCP-сервер с 10 инструментами SQL (list_tables, select, run_sql, …), "
-                  "ресурсы и промпты; используется в Lead Qualification для CRM.",
-            "en": "MCP server with 10 SQL tools (list_tables, select, run_sql, …), resources and "
-                  "prompts; used by Lead Qualification for the CRM.",
+            "ru": "MCP-сервер с 10 инструментами SQL (list_tables, describe_table, select, …). "
+                  "По умолчанию read-only: запись заблокирована на уровне PostgreSQL. "
+                  "Ресурсы и промпты; используется в Lead Qualification для CRM.",
+            "en": "MCP server with 10 SQL tools (list_tables, describe_table, select, …). "
+                  "Read-only by default: writes are blocked at the PostgreSQL level. "
+                  "Resources and prompts; used by Lead Qualification for the CRM.",
         },
     },
     {
