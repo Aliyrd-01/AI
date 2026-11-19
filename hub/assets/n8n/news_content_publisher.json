@@ -1,6 +1,6 @@
 {
   "name": "AI & Crypto News Analytics (Advanced) v2",
-  "active": true,
+  "active": false,
   "nodes": [
     {
       "parameters": {
@@ -140,13 +140,7 @@
       "webhookId": "18eda5b1-5bcb-483f-9762-79cc1aa6a80c",
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      }
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -171,12 +165,6 @@
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -448,12 +436,6 @@
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "GGcWGyo9YiJcgCqj",
-          "name": "OpenAI API"
-        }
-      },
       "onError": "continueRegularOutput"
     },
     {
@@ -521,12 +503,6 @@
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "httpQueryAuth": {
-          "id": "xzrYdOCMHGLLNiuU",
-          "name": "SerpAPI (Query Auth)"
-        }
-      },
       "onError": "continueRegularOutput"
     },
     {
@@ -562,12 +538,6 @@
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "postgres": {
-          "id": "KxmwIIM9tjVU936P",
-          "name": "Postgres account 2"
-        }
-      },
       "onError": "continueRegularOutput"
     },
     {
@@ -584,12 +554,6 @@
         "additionalFields": {
           "appendAttribution": false,
           "parse_mode": "HTML"
-        }
-      },
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
         }
       },
       "retryOnFail": true,
@@ -884,11 +848,9 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "errorWorkflow": "UPFhcOFdKize38h9"
+    "binaryMode": "separate"
   },
   "pinData": {},
-  "meta": null,
-  "id": "YAyuG9GA2jUeICG2",
+  "meta": {},
   "tags": []
 }

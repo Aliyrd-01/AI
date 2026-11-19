@@ -72,6 +72,15 @@ check("cite repair: decimal/date untouched",
 check("cite repair: grounds the answer",
       not apply_strict_grounding(normalize_citations("Honey crystallises when cooled 1.", ids), ids)["refused"])
 
+# --- duplicate doc ids in top-k must not shift citation positions -----------
+dup_ids = ["x1", "x1", "x2", "x3"]
+num = [(i + 1, d) for i, d in enumerate(dup_ids)]
+g = apply_strict_grounding("Amber is dark yellow [4](msmarco#x3).", dup_ids, numbering=num)
+check("strict: duplicate ids keep block positions valid",
+      (not g["refused"]) and g["cited"] == {"x3"})
+g = apply_strict_grounding("Amber is dark yellow [5](msmarco#x3).", dup_ids, numbering=num)
+check("strict: position beyond context still refused", g["refused"])
+
 # --- judge score parser ------------------------------------------------------
 from module_7_generation import parse_score  # noqa: E402
 

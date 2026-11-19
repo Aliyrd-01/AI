@@ -15,19 +15,33 @@ import path from "path";
 import pkg from "pg";
 const { Pool } = pkg;
 
-const pool = new Pool({
+const APP_PORT = parseInt(process.env.PORT || "9002");
+const SECRET_KEY = process.env.REMOTE_SECRET_KEY || "";
+const READ_ONLY = (process.env.READ_ONLY || "1").toLowerCase() !== "0";
+const ALLOW_NO_AUTH = (process.env.ALLOW_NO_AUTH || "").toLowerCase() === "1";
+const ROW_LIMIT = parseInt(process.env.ROW_LIMIT || "100");
+const AUDIT_FILE = process.env.AUDIT_FILE || "";
+
+// Fail fast: открытый /mcp в интернет — недопустимый дефолт. Пустой токен
+// разрешён только при явном ALLOW_NO_AUTH=1 (локальные эксперименты).
+if (!SECRET_KEY && !ALLOW_NO_AUTH) {
+  console.error("FATAL: REMOTE_SECRET_KEY is empty - refusing to start an unauthenticated MCP server.");
+  console.error("Set REMOTE_SECRET_KEY=<token>, or ALLOW_NO_AUTH=1 for local-only use.");
+  process.exit(1);
+}
+
+const poolConfig = {
   host: process.env.PG_HOST || "localhost",
   port: parseInt(process.env.PG_PORT || "5432"),
   user: process.env.PG_USER || "postgres",
   password: process.env.PG_PASSWORD,
   database: process.env.PG_DATABASE || "testPost2",
-});
+};
+// READ_ONLY гарантируется самой БД, а не только проверками в инструментах:
+// data-modifying CTE (WITH x AS (DELETE ...) SELECT ...) иначе проходит.
+if (READ_ONLY) poolConfig.options = "-c default_transaction_read_only=on";
 
-const APP_PORT = parseInt(process.env.PORT || "9002");
-const SECRET_KEY = process.env.REMOTE_SECRET_KEY || "";
-const READ_ONLY = (process.env.READ_ONLY || "1").toLowerCase() !== "0";
-const ROW_LIMIT = parseInt(process.env.ROW_LIMIT || "100");
-const AUDIT_FILE = process.env.AUDIT_FILE || "";
+const pool = new Pool(poolConfig);
 
 async function runSql(sql, params = []) {
   const r = await pool.query(sql, params);
@@ -104,6 +118,10 @@ async function handleToolCall(name, args) {
         if (typeof args.sql !== "string") throw new Error("Missing argument: sql");
         if (!/^\s*select\b|^\s*with\b/i.test(args.sql)) throw new Error("select tool accepts SELECT or WITH queries only");
         if (/;/.test(args.sql.trim().replace(/\s*;?\s*$/, ""))) throw new Error("Multiple SQL statements separated by ';' are forbidden");
+        // data-modifying CTE: WITH x AS (DELETE ...) SELECT ... — в read-only запрещено
+        if (READ_ONLY && /\bwith\b[\s\S]*\bas\s*\(\s*(insert|update|delete|merge)\b/i.test(args.sql)) {
+          throw new Error(`Server is in READ_ONLY mode: data-modifying CTE is not available`);
+        }
         rows = await runSql(limitSelect(args.sql));
         break;
       }
@@ -389,6 +407,10 @@ app.post("/mcp", async (req, res) => {
   }
 });
 
+app.get("/health", (_req, res) => {
+  res.json({ ok: true, read_only: READ_ONLY, auth_required: Boolean(SECRET_KEY) });
+});
+
 app.get("/mcp", (_req, res) => {
   res.status(405).json({ jsonrpc: "2.0", error: { code: -32000, message: "Server does not stream by GET in stateless mode" }, id: null });
 });
@@ -400,7 +422,8 @@ app.delete("/mcp", (_req, res) => {
 app.listen(APP_PORT, () => {
   console.log(`PostgreSQL MCP Server v2 on port ${APP_PORT}`);
   console.log(`http://localhost:${APP_PORT}/mcp`);
-  if (READ_ONLY) console.log("READ_ONLY mode is ON");
-  if (!SECRET_KEY) console.log("WARNING: REMOTE_SECRET_KEY is empty - auth is disabled");
+  console.log(`Health: http://localhost:${APP_PORT}/health`);
+  if (READ_ONLY) console.log("READ_ONLY mode is ON (enforced by PostgreSQL: default_transaction_read_only=on)");
+  if (!SECRET_KEY) console.log("WARNING: auth disabled by ALLOW_NO_AUTH=1 - do not expose this port publicly");
   else console.log("Auth: Bearer token required");
 });

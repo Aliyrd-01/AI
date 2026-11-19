@@ -12,7 +12,7 @@ Module 12 — Production RAG API (FastAPI).
   POST /ingest              — добавить документ (заглушка)
 """
 
-import os, sys, time, json, asyncio, uuid, threading, queue
+import os, sys, time, json, asyncio, uuid, threading, queue, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dotenv import load_dotenv
@@ -37,6 +37,7 @@ from module_5_retrieval import (search_dense, search_sparse, search_hybrid,
 from module_7_generation import (format_context, generate_citations, check_faithfulness,
                                  CITATIONS_PROMPT, context_numbering, apply_strict_grounding,
                                  looks_like_refusal, reorder_lost_in_middle, remap_citation_ids,
+                                 normalize_citations,
                                  sanitize_context, sanitize_question, strip_prompt_leak,
                                  build_context, looks_like_live_query, LIVE_QUERY_ANSWER)
 
@@ -241,6 +242,35 @@ MYSQL_CONFIG = {
 }
 MYSQL_LOG_ENABLED = bool(pymysql and MYSQL_CONFIG["password"])
 
+# PII: в лог не должны попадать email/телефон/номер карты, IP хранится с
+# замаскированным последним октетом.
+_PII_EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+_PII_SEQ_RE = re.compile(r"(?<!\d)\+?[\d(][\d\s\-()]{6,}\d(?!\d)")
+
+
+def _redact_pii(text):
+    """Вырезает email, телефон и номер карты из текста перед записью в лог."""
+    if not text:
+        return text
+    out = _PII_EMAIL_RE.sub("[email]", text)
+
+    def _seq(m):
+        digits = sum(ch.isdigit() for ch in m.group(0))
+        if digits >= 13:
+            return "[card]"
+        if digits >= 10:
+            return "[phone]"
+        return m.group(0)
+
+    return _PII_SEQ_RE.sub(_seq, out)
+
+
+def _mask_ip(ip):
+    """127.0.0.1 -> 127.0.0.0; всё остальное отдаём как есть."""
+    if ip and re.fullmatch(r"\d+\.\d+\.\d+\.\d+", ip):
+        return ip.rsplit(".", 1)[0] + ".0"
+    return ip
+
 
 class _MySQLPool:
     """Thread-safe connection pool for MySQL query logging."""
@@ -312,7 +342,8 @@ def _log_query_mysql(question, answer, sources_json, latency_ms, faithfulness, c
                 "INSERT INTO rag_query_logs "
                 "(question, answer, sources, latency_ms, faithfulness, cache_hit, client_ip) "
                 "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (question, answer, sources_json, int(latency_ms), faithfulness, int(cache_hit), client_ip),
+                (_redact_pii(question), _redact_pii(answer), sources_json,
+                 int(latency_ms), faithfulness, int(cache_hit), _mask_ip(client_ip)),
             )
         conn.commit()
     except Exception as e:
@@ -405,8 +436,8 @@ class QueryResponse(BaseModel):
 
 
 class IngestRequest(BaseModel):
-    text: str = Field(..., min_length=10)
-    source: str = Field(default="api")
+    text: str = Field(..., min_length=10, max_length=20000)
+    source: str = Field(default="api", max_length=120)
 
 
 class IngestResponse(BaseModel):
@@ -634,6 +665,9 @@ async def query(req: QueryRequest, request: Request, background_tasks: Backgroun
     # ИЛИ текст ответа — явный отказ модели (даже если она приплела формальные ссылки).
     _ids = [str(d[0]) for d in docs]
     _numbering = context_numbering(docs, reorder=False)
+    # Fix-10: модель иногда пишет голый номер ("... amber 3.") вместо [3](source#id);
+    # без этой починки strict grounding видит "нет цитат" и отдаёт отказ при живых источниках.
+    answer = normalize_citations(answer, _ids)
     # Fix-6: если модель написала номер позиции вместо doc_id ([3](#3)) — подменить на реальный id
     answer = remap_citation_ids(answer, _numbering)
     # Fix-8: если модель начала пересказывать системный промпт — обрезаем утёкший хвост.
@@ -829,7 +863,11 @@ def _chunk_text(text: str, chunk_size=512, overlap=50):
 
 
 @app.post("/ingest", response_model=IngestResponse)
-async def ingest(req: IngestRequest):
+async def ingest(req: IngestRequest, request: Request):
+    # запись в боевую коллекцию — та же защита, что у /query
+    _check_auth(request)
+    client_ip = request.client.host if request.client else "unknown"
+    _check_rate(client_ip)
     from module_5_retrieval import get_sparse, get_client, COLLECTION
     loop = asyncio.get_running_loop()
     chunks = await loop.run_in_executor(None, _chunk_text, req.text)

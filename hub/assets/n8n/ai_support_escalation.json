@@ -1,6 +1,6 @@
 {
   "name": "AI Support & Escalation",
-  "active": true,
+  "active": false,
   "nodes": [
     {
       "parameters": {
@@ -17,13 +17,7 @@
         -1152,
         960
       ],
-      "webhookId": "bf6ab598-ad2f-42ae-91f1-471e6e6b28de",
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      }
+      "webhookId": "bf6ab598-ad2f-42ae-91f1-471e6e6b28de"
     },
     {
       "parameters": {
@@ -38,7 +32,7 @@
             {
               "id": "cf759dde-1b0e-46df-b5b7-8da5bc5361ac",
               "leftValue": "={{ String($json.message.chat.id) }}",
-              "rightValue": "YOUR_OPERATOR_CHAT_ID",
+              "rightValue": "={{ $env.TELEGRAM_OPERATOR_CHAT_ID }}",
               "operator": {
                 "type": "string",
                 "operation": "equals",
@@ -156,12 +150,6 @@
         256,
         656
       ],
-      "credentials": {
-        "postgres": {
-          "id": "KxmwIIM9tjVU936P",
-          "name": "Postgres account 2"
-        }
-      },
       "alwaysOutputData": true
     },
     {
@@ -179,12 +167,6 @@
         656
       ],
       "webhookId": "4e6ddda3-4fd7-4be2-b085-e543f4685d6c",
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      },
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
@@ -204,12 +186,6 @@
         864
       ],
       "webhookId": "82ebb9bc-73a1-456a-a86d-391567bf3cfc",
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      },
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
@@ -250,7 +226,7 @@
     },
     {
       "parameters": {
-        "chatId": "=YOUR_OPERATOR_CHAT_ID",
+        "chatId": "={{ $env.TELEGRAM_OPERATOR_CHAT_ID }}",
         "text": "=Сообщение от @{{ $('Telegram Trigger').item.json.message.from.username }} (ID: {{ $('Telegram Trigger').item.json.message.chat.id }})\n\n{{ $('Telegram Trigger').item.json.message.text }}",
         "additionalFields": {}
       },
@@ -263,12 +239,6 @@
         1056
       ],
       "webhookId": "cd19d868-e8d1-4233-b696-05799658fd18",
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      },
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
@@ -320,12 +290,6 @@
         544,
         1168
       ],
-      "credentials": {
-        "postgres": {
-          "id": "KxmwIIM9tjVU936P",
-          "name": "Postgres account 2"
-        }
-      },
       "alwaysOutputData": true
     },
     {
@@ -343,19 +307,13 @@
         1168
       ],
       "webhookId": "7f3d511f-735d-48eb-acc6-02f3f4fac02b",
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      },
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
     },
     {
       "parameters": {
-        "chatId": "=YOUR_OPERATOR_CHAT_ID",
+        "chatId": "={{ $env.TELEGRAM_OPERATOR_CHAT_ID }}",
         "text": "=Новый запрос!\nОт: @{{ $('Telegram Trigger').item.json.message.from.username }} (ID: {{ $('Telegram Trigger').item.json.message.chat.id }})\n\n{{ $('Telegram Trigger').item.json.message.text }}",
         "additionalFields": {}
       },
@@ -368,12 +326,6 @@
         1168
       ],
       "webhookId": "4dcebc2e-e040-4f68-b8f8-e8d7931cb347",
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      },
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
@@ -381,7 +333,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://127.0.0.1:8000/query",
+        "url": "={{ ($env.RAG_API_URL || 'http://localhost:8000') + '/query' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -424,12 +376,6 @@
         1360
       ],
       "webhookId": "7477cb7a-2002-49ff-9a64-db517757c86c",
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      },
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
@@ -449,13 +395,7 @@
         1056
       ],
       "id": "090001f1-a5aa-441a-a38b-daef5ca8cc78",
-      "name": "Register User",
-      "credentials": {
-        "postgres": {
-          "id": "KxmwIIM9tjVU936P",
-          "name": "Postgres account 2"
-        }
-      }
+      "name": "Register User"
     },
     {
       "id": "a3b2dd59-4069-4379-bd1d-b867767e760c",
@@ -509,17 +449,11 @@
       "position": [
         -32,
         1464
-      ],
-      "credentials": {
-        "openAiApi": {
-          "id": "N9yCaYEwvs7hQGZA",
-          "name": "OpenAI API"
-        }
-      }
+      ]
     },
     {
       "parameters": {
-        "chatId": "=YOUR_OPERATOR_CHAT_ID",
+        "chatId": "={{ $env.TELEGRAM_OPERATOR_CHAT_ID }}",
         "text": "=⚠️ Сообщение не отправлено клиенту.\n\nКак ответить клиенту:\n1. Найдите выше сообщение «Новый запрос!» — в нём ID клиента\n2. Ответьте на него: свайп вправо (телефон) или правый клик → «Ответить» (ПК)\n3. Напишите текст и отправьте — клиент его получит\n\nЗакрыть диалог: Ответ на «Новый запрос!» текстом /close\n\nЕсли «Новый запрос!» в чате ещё нет — попросите клиента задать вопрос боту.",
         "additionalFields": {}
       },
@@ -531,12 +465,6 @@
         -304,
         958
       ],
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      },
       "retryOnFail": true,
       "maxTries": 2,
       "webhookId": "00fa5413-322a-4f47-86d1-ad143f877256"
@@ -751,7 +679,6 @@
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false,
-    "errorWorkflow": "UPFhcOFdKize38h9",
     "timeSavedMode": "fixed",
     "callerPolicy": "workflowsFromSameOwner"
   },
@@ -784,6 +711,5 @@
   "meta": {
     "templateCredsSetupCompleted": true
   },
-  "id": "r7MQeVmaInZXmyYK",
   "tags": []
 }

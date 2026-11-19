@@ -486,8 +486,11 @@ def apply_strict_grounding(answer, retrieved_ids, refusal=None, numbering=None):
     """
     answer = answer or ""
     retrieved = {str(i) for i in retrieved_ids}
+    # Номера цитат — это позиции блоков контекста, а не уникальных документов:
+    # один документ может занимать несколько блоков (несколько чанков в top-k).
+    num_blocks = len(numbering) if numbering else len(retrieved)
     issues, cited, _has_issues = verify_grounding(answer, sorted(retrieved),
-                                                  len(retrieved), numbering=numbering)
+                                                  num_blocks, numbering=numbering)
     valid = {str(d) for d in cited if str(d) in retrieved}
     refused = not valid or bool(issues)
     return {

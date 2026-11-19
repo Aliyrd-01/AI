@@ -1,6 +1,6 @@
 {
   "name": "Lead Qualification Flow",
-  "active": true,
+  "active": false,
   "nodes": [
     {
       "parameters": {},
@@ -133,7 +133,7 @@
     },
     {
       "parameters": {
-        "chatId": "YOUR_OPERATOR_CHAT_ID",
+        "chatId": "={{ $env.TELEGRAM_OPERATOR_CHAT_ID }}",
         "text": "=INVALID LEAD\nName: {{ $json.name }}\nEmail: {{ $json.email }}",
         "additionalFields": {
           "appendAttribution": false,
@@ -151,13 +151,7 @@
       "webhookId": "09f822f8-2760-4742-8c2e-326e39a3dfdf",
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      }
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -229,13 +223,7 @@
       ],
       "retryOnFail": true,
       "maxTries": 3,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "GGcWGyo9YiJcgCqj",
-          "name": "OpenAI API"
-        }
-      }
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -286,13 +274,7 @@
       ],
       "retryOnFail": true,
       "maxTries": 3,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "GGcWGyo9YiJcgCqj",
-          "name": "OpenAI API"
-        }
-      }
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -356,7 +338,7 @@
     },
     {
       "parameters": {
-        "chatId": "YOUR_OPERATOR_CHAT_ID",
+        "chatId": "={{ $env.TELEGRAM_OPERATOR_CHAT_ID }}",
         "text": "=HOT LEAD\nName: {{ $json.name }}\nEmail: {{ $json.email }}\nCompany: {{ $json.enrichedCompany || $json.company }}\nRole: {{ $json.position || $json.enrichedRole || ($json.companyFound ? 'Executive' : 'UNKNOWN EXECUTIVE') }}\nScore: {{ $json.leadScore }}/100",
         "additionalFields": {
           "appendAttribution": false,
@@ -374,13 +356,7 @@
       "webhookId": "9c4fdee0-c26d-4f54-855f-ffc6d586d7d1",
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "telegramApi": {
-          "id": "7PplDwm237hUK507",
-          "name": "Telegram account"
-        }
-      }
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -424,13 +400,7 @@
         0,
         400
       ],
-      "webhookId": "lead-received",
-      "credentials": {
-        "httpBasicAuth": {
-          "id": "5gdOYfOIZfyw0OUC",
-          "name": "Lead Webhook (Basic)"
-        }
-      }
+      "webhookId": "lead-received"
     },
     {
       "parameters": {
@@ -447,13 +417,7 @@
       "position": [
         1104,
         -96
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "KxmwIIM9tjVU936P",
-          "name": "Postgres account 2"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -470,13 +434,7 @@
       "position": [
         3744,
         320
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "KxmwIIM9tjVU936P",
-          "name": "Postgres account 2"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -497,12 +455,6 @@
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "postgres": {
-          "id": "KxmwIIM9tjVU936P",
-          "name": "Postgres account 2"
-        }
-      },
       "onError": "continueRegularOutput"
     },
     {
@@ -524,12 +476,6 @@
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000,
-      "credentials": {
-        "postgres": {
-          "id": "KxmwIIM9tjVU936P",
-          "name": "Postgres account 2"
-        }
-      },
       "onError": "continueRegularOutput"
     }
   ],
@@ -772,13 +718,11 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "errorWorkflow": "UPFhcOFdKize38h9"
+    "binaryMode": "separate"
   },
   "pinData": {},
   "meta": {
     "templateCredsSetupCompleted": true
   },
-  "id": "R6TUfWY5jcGwZupm",
   "tags": []
 }
