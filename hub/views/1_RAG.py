@@ -94,8 +94,8 @@ T = {
         "download": "Скачать .md",
         "cache_hit": "из кэша (без пересчёта)",
         "cache_miss": "поиск заново",
-        "obs": "🔭 Observability: LangSmith (EU) — подключается опционально "
-               "(`LANGCHAIN_TRACING_V2`, eu.api.smith.langchain.com)",
+        "obs": "🔭 Observability: LangSmith — distributed tracing "
+               "(`LANGCHAIN_TRACING_V2`)",
         "ragas_h": "🧪 Качество проверяется, а не обещается — RAGAS",
         "ragas_b": "На этой странице работает система, которая прошла автоматическую оценку качества: "
                    "**faithfulness** (ответ опирается на найденные документы, а не на фантазии модели) и "
@@ -156,8 +156,8 @@ T = {
         "download": "Download .md",
         "cache_hit": "cache hit (no recompute)",
         "cache_miss": "fresh retrieval",
-        "obs": "🔭 Observability: LangSmith (EU) — optional "
-               "(`LANGCHAIN_TRACING_V2`, eu.api.smith.langchain.com)",
+        "obs": "🔭 Observability: LangSmith — distributed tracing "
+               "(`LANGCHAIN_TRACING_V2`)",
         "ragas_h": "🧪 Quality is verified, not promised — RAGAS",
         "ragas_b": "This page runs a system that went through automated quality evaluation: "
                    "**faithfulness** (the answer is grounded in the retrieved documents, not in model "
@@ -915,6 +915,7 @@ if asked:
                 format_context, generate_citations_stream, sanitize_context,
                 extract_citations, verify_grounding, count_tokens,
                 apply_strict_grounding, normalize_citations,
+                remap_citation_ids, strip_prompt_leak,
             )
 
             try:
@@ -968,6 +969,13 @@ if asked:
                 if repaired != answer:
                     answer = repaired
                     answer_ph.markdown(answer)
+                remapped = remap_citation_ids(answer, doc_numbering)
+                if remapped != answer:
+                    answer = remapped
+                    answer_ph.markdown(answer)
+                answer, leaked = strip_prompt_leak(answer)
+                if leaked:
+                    answer_ph.markdown(answer or T["refuse"])
                 cited = {str(did) for _, did in extract_citations(answer)}
                 issues, _cited, _has_issues = verify_grounding(
                     answer, retrieved_ids, len(docs), numbering=doc_numbering)

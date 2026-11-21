@@ -11,10 +11,12 @@ process.env.READ_ONLY = "1";
 process.env.PORT = PORT;
 process.env.REMOTE_SECRET_KEY = process.env.REMOTE_SECRET_KEY || "testtoken123";
 
+let serverErr = "";
 const server = spawn(process.execPath, [path.join(__dirname, "server.js")], {
   env: process.env,
-  stdio: "ignore",
+  stdio: ["ignore", "pipe", "pipe"],
 });
+server.stderr.on("data", (d) => { serverErr += d.toString(); });
 
 // Ждём реальную готовность: фиксированная пауза давала ECONNREFUSED
 // на медленном старте (node + pg pool).
@@ -36,6 +38,7 @@ const ready = await waitForHealth(`http://localhost:${PORT}/health`);
 if (!ready) {
   server.kill();
   console.log("FAIL  server did not become ready within 20s");
+  if (serverErr) console.error("      server stderr:", serverErr.trim());
   process.exit(1);
 }
 

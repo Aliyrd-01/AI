@@ -21,7 +21,6 @@
       "typeVersion": 2.6,
       "credentials": {
         "postgres": {
-          "id": "Yak6RLpeEJfeq6hb",
           "name": "Postgres account"
         }
       }
@@ -44,7 +43,6 @@
       "typeVersion": 2.6,
       "credentials": {
         "postgres": {
-          "id": "Yak6RLpeEJfeq6hb",
           "name": "Postgres account"
         }
       }
@@ -171,7 +169,6 @@
       "alwaysOutputData": true,
       "credentials": {
         "postgres": {
-          "id": "Yak6RLpeEJfeq6hb",
           "name": "Postgres account"
         }
       }
@@ -285,7 +282,6 @@
       "typeVersion": 2.6,
       "credentials": {
         "postgres": {
-          "id": "Yak6RLpeEJfeq6hb",
           "name": "Postgres account"
         }
       }
@@ -381,7 +377,6 @@
       "typeVersion": 2.6,
       "credentials": {
         "postgres": {
-          "id": "Yak6RLpeEJfeq6hb",
           "name": "Postgres account"
         }
       }
@@ -644,9 +639,7 @@
   "versionId": "8534df92-f7eb-4ab6-940c-35f7a45caab4",
   "meta": {
     "templateId": "3631",
-    "templateCredsSetupCompleted": true,
-    "instanceId": "fd9a85cb5fad5f7e754e8f04be7f2ed4c198062572fab2e912fefc2d50bd00a3"
+    "templateCredsSetupCompleted": true
   },
-  "id": "PbdktOoU4P9cKtOa",
   "tags": []
 }

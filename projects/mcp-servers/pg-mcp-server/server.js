@@ -118,9 +118,12 @@ async function handleToolCall(name, args) {
         if (typeof args.sql !== "string") throw new Error("Missing argument: sql");
         if (!/^\s*select\b|^\s*with\b/i.test(args.sql)) throw new Error("select tool accepts SELECT or WITH queries only");
         if (/;/.test(args.sql.trim().replace(/\s*;?\s*$/, ""))) throw new Error("Multiple SQL statements separated by ';' are forbidden");
-        // data-modifying CTE: WITH x AS (DELETE ...) SELECT ... — в read-only запрещено
-        if (READ_ONLY && /\bwith\b[\s\S]*\bas\s*\(\s*(insert|update|delete|merge)\b/i.test(args.sql)) {
-          throw new Error(`Server is in READ_ONLY mode: data-modifying CTE is not available`);
+        // data-modifying queries or CTEs: WITH x AS (DELETE ...) or WITH x AS (SELECT 1) DELETE ...
+        if (READ_ONLY && /\b(insert|update|delete|merge|drop|alter|truncate)\b/i.test(args.sql)) {
+          throw new Error(`Server is in READ_ONLY mode: data-modifying operations are not available`);
+        }
+        if (/\b(insert\s+into|update\s+\w|delete\s+from|drop\s+table|alter\s+table|truncate\s+table|merge\s+into)\b/i.test(args.sql)) {
+          throw new Error("select tool accepts read-only queries only: data modifications are forbidden");
         }
         rows = await runSql(limitSelect(args.sql));
         break;
