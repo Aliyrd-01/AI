@@ -21,7 +21,8 @@ function ok(name, cond, extra = "") {
 }
 async function raw(url, method, headers, body) {
   const res = await fetch(url, { method, headers, body });
-  return { status: res.status, text: await res.text() ? await res.text() : "" };
+  const text = await res.text();
+  return { status: res.status, text };
 }
 
 process.env.REMOTE_SECRET_KEY = TOKEN;
@@ -67,9 +68,22 @@ const expected = "add_column,create_index,create_table,delete_rows,describe_tabl
 ok("exact tool set", names === expected, names);
 
 const tables = await client.callTool({ name: "list_tables", arguments: {} });
-const tableCount = tables.content?.[0]?.text ? JSON.parse(tables.content[0].text).length : 0;
-ok("list_tables returns array", Array.isArray(tables.content) && tableCount >= 0);
-const anyTable = tableCount > 0 ? JSON.parse(tables.content[0].text)[0].table_name : null;
+const tablesText = tables.content?.[0]?.text ?? "";
+let tablesJson = null;
+try { tablesJson = JSON.parse(tablesText); } catch { /* сервер вернул текст ошибки БД, а не JSON */ }
+const dbOk = Array.isArray(tablesJson);
+if (!dbOk) {
+  // Без доступа к БД половина проверок невозможна. Это окружение, а не дефект
+  // сервера: сообщаем причину (её текст вернул сам сервер) и выходим с кодом 2,
+  // чтобы CI отличал «не настроено» от «сломано».
+  console.log(`\nFAIL  PostgreSQL is not reachable — set PG_PASSWORD before running.`);
+  console.log(`      server said: ${tablesText.slice(0, 200)}`);
+  server.kill();
+  process.exit(2);
+}
+const tableCount = tablesJson.length;
+ok("list_tables returns array", true);
+const anyTable = tableCount > 0 ? tablesJson[0].table_name : null;
 
 if (anyTable) {
   const desc = await client.callTool({ name: "describe_table", arguments: { table: anyTable } });
