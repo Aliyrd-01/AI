@@ -37,8 +37,9 @@ const server = spawn(process.execPath, [path.join(__dirname, "server.js")], {
 });
 // wait for listen
 let up = false;
+let serverErr = "";
 server.stdout.on("data", () => { up = true; });
-server.stderr.on("data", (d) => { up = true; });
+server.stderr.on("data", (d) => { up = true; serverErr += d.toString(); });
 for (let i = 0; i < 40 && !up; i++) {
   try { const r = await fetch(URL_); if (r.status === 405) { up = true; break; } } catch { }
   await new Promise((r) => setTimeout(r, 250));
@@ -78,6 +79,7 @@ if (!dbOk) {
   // чтобы CI отличал «не настроено» от «сломано».
   console.log(`\nFAIL  PostgreSQL is not reachable — set PG_PASSWORD before running.`);
   console.log(`      server said: ${tablesText.slice(0, 200)}`);
+  if (serverErr.trim()) console.log(`      server stderr: ${serverErr.trim().slice(0, 400)}`);
   server.kill();
   process.exit(2);
 }
