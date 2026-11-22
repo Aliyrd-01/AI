@@ -82,6 +82,17 @@ function limitSelect(sql) {
   return sql.trim().replace(/\s*;?\s*$/, "") + ` LIMIT ${ROW_LIMIT}`;
 }
 
+function requireArg(args, name) {
+  const v = args ? args[name] : undefined;
+  if (v === undefined || v === null || (typeof v === "string" && !v.trim())) {
+    throw new Error(`Missing argument: ${name}`);
+  }
+  if (typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length) {
+    throw new Error(`Missing argument: ${name}`);
+  }
+  return v;
+}
+
 function assertWritable(name) {
   if (READ_ONLY) throw new Error(`Server is in READ_ONLY mode: "${name}" is not available`);
 }
@@ -107,7 +118,7 @@ async function handleToolCall(name, args) {
         break;
       }
       case "describe_table": {
-        const table = safeIdent(args.table, "table name");
+        const table = safeIdent(requireArg(args, "table"), "table name");
         rows = await runSql(
           "SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema='public' AND table_name=$1 ORDER BY ordinal_position",
           [table]
@@ -130,9 +141,10 @@ async function handleToolCall(name, args) {
       }
       case "insert": {
         assertWritable(name);
-        const table = safeIdent(args.table, "table name");
-        const cols = Object.keys(args.data).map((c) => safeIdent(c, "column"));
-        const vals = Object.values(args.data);
+        const table = safeIdent(requireArg(args, "table"), "table name");
+        const data = requireArg(args, "data");
+        const cols = Object.keys(data).map((c) => safeIdent(c, "column"));
+        const vals = Object.values(data);
         const ph = vals.map((_, i) => `$${i + 1}`).join(",");
         const sql = `INSERT INTO ${table} (${cols.join(",")}) VALUES (${ph}) RETURNING *`;
         rows = await runSql(sql, vals);
@@ -140,41 +152,43 @@ async function handleToolCall(name, args) {
       }
       case "update": {
         assertWritable(name);
-        const table = safeIdent(args.table, "table name");
-        const setCols = Object.keys(args.set).map((c) => safeIdent(c, "column"));
-        const vals = Object.values(args.set);
+        const table = safeIdent(requireArg(args, "table"), "table name");
+        const setObj = requireArg(args, "set");
+        const setCols = Object.keys(setObj).map((c) => safeIdent(c, "column"));
+        const vals = Object.values(setObj);
         const setClause = setCols.map((c, i) => `${c} = $${i + 1}`).join(", ");
-        const whereClause = validateSafeClause(args.where, "WHERE condition");
+        const whereClause = validateSafeClause(requireArg(args, "where"), "WHERE condition");
         rows = await runSql(`UPDATE ${table} SET ${setClause} WHERE ${whereClause} RETURNING *`, vals);
         break;
       }
       case "delete_rows": {
         assertWritable(name);
-        const table = safeIdent(args.table, "table name");
-        const whereClause = validateSafeClause(args.where, "WHERE condition");
+        const table = safeIdent(requireArg(args, "table"), "table name");
+        const whereClause = validateSafeClause(requireArg(args, "where"), "WHERE condition");
         rows = await runSql(`DELETE FROM ${table} WHERE ${whereClause} RETURNING *`);
         break;
       }
       case "create_table": {
         assertWritable(name);
-        await runSqlRaw(args.sql);
+        await runSqlRaw(requireArg(args, "sql"));
         rows = [];
         break;
       }
       case "add_column": {
         assertWritable(name);
-        const table = safeIdent(args.table, "table name");
-        if (typeof args.column_def !== "string" || !args.column_def.trim() || /;/.test(args.column_def)) {
+        const table = safeIdent(requireArg(args, "table"), "table name");
+        const columnDef = requireArg(args, "column_def");
+        if (typeof columnDef !== "string" || /;/.test(columnDef)) {
           throw new Error("add_column requires a column def like \"name TYPE [constraint]\" and must not contain ';' ");
         }
-        await runSqlRaw(`ALTER TABLE ${table} ADD COLUMN ${args.column_def}`);
+        await runSqlRaw(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
         rows = [];
         break;
       }
       case "create_index": {
         assertWritable(name);
-        const table = safeIdent(args.table, "table name");
-        const columns = String(args.columns)
+        const table = safeIdent(requireArg(args, "table"), "table name");
+        const columns = String(requireArg(args, "columns"))
           .split(",")
           .map((c) => safeIdent(c.trim(), "column"))
           .join(",");
