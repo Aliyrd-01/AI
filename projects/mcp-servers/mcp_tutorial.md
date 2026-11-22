@@ -54,13 +54,19 @@ cd <repo>\projects\mcp-servers
 ```powershell
 npx @modelcontextprotocol/inspector@latest --transport http --server-url http://localhost:9002/mcp --header "Authorization: Bearer <токен из скрипта сервера>"
 ```
-(токен взять из `start-pg-mcp-server.ps1`, строка REMOTE_SECRET_KEY)
+(токен — значение `MCP_TOKEN` из `%USERPROFILE%\mcp_token.env`; стартовый скрипт
+читает его и передаёт серверу как `REMOTE_SECRET_KEY`)
 
 После установки зависимостей сервера (один раз):
 ```powershell
 cd <repo>\projects\mcp-servers\pg-mcp-server
 npm install
 ```
+
+Корневого `package.json` в `projects\mcp-servers` намеренно нет: MCP-серверы
+MySQL/Postman запускаются через `npx -y <пакет>` и не тянут зависимости в
+репозиторий. Свой манифест есть только у `pg-mcp-server`, поэтому `npm audit`
+в корне папки нечего проверять.
 
 ---
 

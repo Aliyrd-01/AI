@@ -170,8 +170,9 @@ with tab_rag:
         c2.metric("Answer relevancy", f"{s.get('answer_relevancy', 0):.3f}")
         c3.metric("Citations valid", f"{s.get('citation_valid_rate', 0):.3f}")
         c4.metric("avg eval, s", f"{s.get('avg_latency_s', 0):.1f}s")
-        st.caption(f"{T['judge']}: `{judge.get('served', '?')}` · {T['answerer']}: "
-                   f"`{ans.get('served', '?')}` · n={gen.get('n')}")
+        jm = "отдельная модель" if lang == "ru" else "separate model"
+        am = "демо-модель" if lang == "ru" else "demo model"
+        st.caption(f"{T['judge']}: `{jm}` · {T['answerer']}: `{am}` · n={gen.get('n')}")
         st.dataframe(gen.get("rows", []), use_container_width=True, hide_index=True)
 
     st.subheader(T["ref_sub"])

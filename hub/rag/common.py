@@ -254,6 +254,18 @@ def describe_llm(llm) -> dict:
     }
 
 
+PUBLIC_LLM_LABEL = {"provider": "Managed LLM gateway", "served": "dynamic (auto-failover)"}
+
+
+def describe_llm_public(llm) -> dict:
+    """describe_llm for the public demo page: hides the upstream provider and
+    the exact served model id. Full details stay in describe_llm (logs/debug)."""
+    info = dict(describe_llm(llm))
+    info.update(PUBLIC_LLM_LABEL)
+    info["pool"] = []
+    return info
+
+
 JUDGE_MODEL = os.getenv("JUDGE_MODEL", "qwen3-32b")
 _JUDGE_FALLBACKS = ["qwen3-32b", "glm-4.5-air", "minimax-m2.5"]
 

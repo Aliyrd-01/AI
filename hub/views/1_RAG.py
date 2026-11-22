@@ -610,7 +610,7 @@ with st.container(border=True):
     st.write(T["ragas_b"])
 
 if dialog_mode:
-    from common import describe_llm
+    from common import describe_llm_public
     from module_7_generation import (
         apply_strict_grounding, condense_query, count_tokens, extract_citations,
         format_context, generate_citations, generate_citations_stream,
@@ -777,7 +777,7 @@ if dialog_mode:
                         tok_in = count_tokens(context + search_query)
                         tok_out = count_tokens(answer)
                         cost = tok_in * (0.004 / 1_000_000) + tok_out * (0.0162 / 1_000_000)
-                        info = describe_llm(llm)
+                        info = describe_llm_public(llm)
                         meta = (f"~{tok_in} in / ~{tok_out} out tokens · est. **${cost:.6f}** · "
                                 f"gen {t_gen:.1f}s · {_cache_note(cache_hit)} · `{info['served']}`")
                         st.caption(meta)
@@ -831,8 +831,8 @@ def render_result(res, streamed=False):
     m3.metric(T["gen"], f"{(res['t2'] - res['t_gen0']):.1f}s")
     m4.metric("TTFT", f"{res['ttft']:.1f}s" if res["ttft"] else "—")
 
-    from common import describe_llm
-    info = describe_llm(res["llm"])
+    from common import describe_llm_public
+    info = describe_llm_public(res["llm"])
     st.caption(f"**{T['llm']}:** `{info['provider']}` · served `{info['served']}` · "
                f"{_cache_note(res.get('cache_hit'))}")
 
@@ -1182,7 +1182,9 @@ with st.expander(T["bench_static"], expanded=False):
         c2.metric("Answer relevancy", f"{s.get('answer_relevancy', 0):.3f}")
         c3.metric("Citations valid", f"{s.get('citation_valid_rate', 0):.3f}")
         c4.metric("avg", f"{s.get('avg_latency_s', 0):.1f}s")
-        st.caption(f"judge `{judge.get('served', '?')}` · answerer `{ans.get('served', '?')}` · n={gen.get('n')}")
+        jm = "судья: отдельная модель" if lang == "ru" else "judge: separate model"
+        am = "отвечающая модель: демо" if lang == "ru" else "answerer: demo model"
+        st.caption(f"{jm} · {am} · n={gen.get('n')}")
         st.dataframe(gen.get("rows", []), use_container_width=True, hide_index=True)
 
 with st.expander(T["live_sub"], expanded=False):

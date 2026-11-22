@@ -140,9 +140,9 @@
 * **Файл:** `projects/mcp-servers/build_pg_mcp_server.json`.
 * **Описание:**
   Файл представляет собой экспорт воркфлоу n8n, но в отличие от файлов в `hub/assets/n8n/`, не был обезличен:
-  - Строка 24: `"credentials": { "postgres": { "id": "Yak6RLpeEJfeq6hb", "name": "Postgres account" } }`
-  - Строка 648: `"instanceId": "fd9a85cb5fad5f7e754e8f04be7f2ed4c198062572fab2e912fefc2d50bd00a3"`
-  - Строка 650: `"id": "PbdktOoU4P9cKtOa"`
+  - `"credentials": { "postgres": { "id": "<credential-id>", "name": "Postgres account" } }`
+  - `"instanceId": "<instance-id>"`
+  - `"id": "<workflow-id>"`
   При импорте в чистую установку n8n эти ноды будут привязаны к несуществующему идентификатору подключения.
 * **Рекомендация:**
   Удалить внутренние идентификаторы `id` и `instanceId`, оставив понятную заглушку.
@@ -198,3 +198,22 @@
 1. Исправление пропуска `remap_citation_ids` в `1_RAG.py` для исключения ложных отказов.
 2. Усиление regex-санитизатора в `server.js` против инвертированных CTE.
 3. Очистка устаревшего `package-lock.json` в корневой папке `projects/mcp-servers/`.
+
+---
+
+## 6. Статус исправлений (22 ноября 2026)
+
+| ID | Что сделано | Проверка |
+|:---|:---|:---|
+| SEC-01 | Корневые `package.json`/`package-lock.json` удалены: серверы MySQL/Postman запускаются через `npx -y`, манифест был мёртвым. `npm audit` в `pg-mcp-server` — 0 уязвимостей. | `npm audit` (корень: манифеста нет; сервер: 0) |
+| SEC-02 | `select` отклоняет DML/DDL в теле запроса независимо от `READ_ONLY` (`insert into`, `update <t>`, `delete from`, `drop table`, `alter table`, `truncate table`, `merge into`), плюс прежний запрет в read-only. | 3 PoC-варианта (в т.ч. `LIMIT` во вложенном подзапросе и `--`) блокируются |
+| BUG-01 | В QA-ветке `1_RAG.py` добавлены `remap_citation_ids` и `strip_prompt_leak` перед `verify_grounding`. | `test_units.py` 56/56 |
+| SEC-03 | `LocalEnv.run_command`: пути экранируются `shlex.quote`, запуск через `["/bin/bash", "-c", ...]` без `shell=True`. | компиляция + отсутствие `shell=True` |
+| BUG-02 | Из `build_pg_mcp_server.json` удалены `credentials.id`, `instanceId`, `versionId`. | `grep` по файлу |
+| BUG-03 | `test_readonly.mjs` читает `stderr` сервера и печатает его при неудачном старте. | 4/4 PASS |
+| UI-01 | Провайдер и id модели скрыты за нейтральной подписью, хост LangSmith убран из UI и из экспорта ответа. | `describe_llm_public` + компиляция |
+| UI-02 | Страница MCP и карточка проекта прямо указывают режим read-only (3 из 10 инструментов). | визуальная проверка |
+
+Регресс после правок: `test_units` 56/56, `test_resilience` 10/10,
+`smoke_hub` 12/12, `test_readonly.mjs` 4/4, `npm audit` (сервер) 0.
+

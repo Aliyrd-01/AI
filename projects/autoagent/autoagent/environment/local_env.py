@@ -1,6 +1,7 @@
 import subprocess
 import json
 import os
+import shlex
 from pathlib import Path
 import platform
 import os.path as osp
@@ -72,9 +73,20 @@ class LocalEnv:
         # 3. If all fails, return None and handle in run_command
         return None
     def run_command(self, command, stream_callback=None):
+        """Выполнить shell-команду в conda-окружении auto.
+
+        `command` исполняется через bash намеренно (агент запускает скрипты),
+        но пути подставляются только через `shlex.quote`: иначе путь с
+        одинарной кавычкой выходит за пределы строки и становится инъекцией.
+        """
         assert self.conda_sh is not None, "Conda.sh not found"
-        modified_command = f"/bin/bash -c 'source {self.conda_sh} && conda activate auto && cd {self.docker_workplace} && {command}'"
-        process = subprocess.Popen(modified_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        conda_sh = shlex.quote(str(self.conda_sh))
+        workplace = shlex.quote(str(self.docker_workplace or "."))
+        inner = (f"source {conda_sh} && conda activate auto && "
+                 f"cd {workplace} && {command}")
+        process = subprocess.Popen(["/bin/bash", "-c", inner],
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   text=True)
         output = ''
         while True:
             line = process.stdout.readline()
