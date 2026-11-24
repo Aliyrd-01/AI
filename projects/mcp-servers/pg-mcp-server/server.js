@@ -22,6 +22,20 @@ const ALLOW_NO_AUTH = (process.env.ALLOW_NO_AUTH || "").toLowerCase() === "1";
 const ROW_LIMIT = parseInt(process.env.ROW_LIMIT || "100");
 const AUDIT_FILE = process.env.AUDIT_FILE || "";
 
+// Второй эшелон защиты для `select`: функции, которые читают файлы хоста,
+// хэши паролей или управляют другими сессиями. Первый эшелон — роль БД без
+// SUPERUSER (db/roles/01_create_mcp_ro.sql): под ней эти вызовы и так падают,
+// но фильтр нужен и на случай, если сервер снова запустят суперпользователем.
+const FORBIDDEN_FUNCTIONS = [
+  "pg_read_file", "pg_read_binary_file", "pg_ls_dir", "pg_ls_waldir",
+  "pg_ls_logdir", "pg_ls_tmpdir", "pg_stat_file", "pg_logdir_ls",
+  "lo_import", "lo_export", "lo_get",
+  "dblink", "dblink_connect", "dblink_exec",
+  "pg_terminate_backend", "pg_cancel_backend", "pg_reload_conf",
+  "pg_sleep", "set_config", "pg_write_file",
+];
+const FORBIDDEN_RE = new RegExp(`\\b(${FORBIDDEN_FUNCTIONS.join("|")})\\b`, "i");
+
 // Fail fast: открытый /mcp в интернет — недопустимый дефолт. Пустой токен
 // разрешён только при явном ALLOW_NO_AUTH=1 (локальные эксперименты).
 if (!SECRET_KEY && !ALLOW_NO_AUTH) {
@@ -129,6 +143,10 @@ async function handleToolCall(name, args) {
         if (typeof args.sql !== "string") throw new Error("Missing argument: sql");
         if (!/^\s*select\b|^\s*with\b/i.test(args.sql)) throw new Error("select tool accepts SELECT or WITH queries only");
         if (/;/.test(args.sql.trim().replace(/\s*;?\s*$/, ""))) throw new Error("Multiple SQL statements separated by ';' are forbidden");
+        const forbidden = args.sql.match(FORBIDDEN_RE);
+        if (forbidden) {
+          throw new Error(`select tool: function "${forbidden[1]}" is not allowed (reads files or session state on the DB host)`);
+        }
         // data-modifying queries or CTEs: WITH x AS (DELETE ...) or WITH x AS (SELECT 1) DELETE ...
         if (READ_ONLY && /\b(insert|update|delete|merge|drop|alter|truncate)\b/i.test(args.sql)) {
           throw new Error(`Server is in READ_ONLY mode: data-modifying operations are not available`);
@@ -440,7 +458,17 @@ app.listen(APP_PORT, () => {
   console.log(`PostgreSQL MCP Server v2 on port ${APP_PORT}`);
   console.log(`http://localhost:${APP_PORT}/mcp`);
   console.log(`Health: http://localhost:${APP_PORT}/health`);
+  const dbUser = process.env.PG_USER || "postgres";
+  const dbHost = process.env.PG_HOST || "localhost";
+  const dbPort = process.env.PG_PORT || "5432";
+  const dbName = process.env.PG_DATABASE || "testPost2";
+  console.log(`DB role: ${dbUser}@${dbHost}:${dbPort}/${dbName}`);
   if (READ_ONLY) console.log("READ_ONLY mode is ON (enforced by PostgreSQL: default_transaction_read_only=on)");
+  // Read-only не мешает чтению: под суперпользователем остаются доступны
+  // pg_shadow и pg_read_file, поэтому в read-only режиме роль postgres — ошибка.
+  if (READ_ONLY && dbUser === "postgres") {
+    console.log("WARNING: read-only mode under the 'postgres' superuser role - use 'mcp_ro' (db/roles/01_create_mcp_ro.sql)");
+  }
   if (!SECRET_KEY) console.log("WARNING: auth disabled by ALLOW_NO_AUTH=1 - do not expose this port publicly");
   else console.log("Auth: Bearer token required");
 });

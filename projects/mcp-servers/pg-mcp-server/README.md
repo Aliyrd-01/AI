@@ -19,6 +19,7 @@ node server.js
 - Health: `GET http://localhost:9002/health` → `{ok, read_only, auth_required}`
 - Авторизация: `Authorization: Bearer <token>`, токен = `REMOTE_SECRET_KEY` сервера.
   Локально он хранится в `%USERPROFILE%\mcp_token.env` (строка `MCP_TOKEN=...`, вне git).
+- Пароль БД роли `mcp_ro` — в `%USERPROFILE%\mcp_db.env` (строка `PG_PASSWORD=...`, вне git).
 
 Сервер **не стартует** с пустым `REMOTE_SECRET_KEY` (exit 1). Для локальных
 экспериментов без токена есть единственный обход — `ALLOW_NO_AUTH=1`.
@@ -34,7 +35,28 @@ node server.js
 | `ROW_LIMIT` | `100` | Автоматический `LIMIT` для `select` |
 | `AUDIT_FILE` | — | Путь к JSONL-аудиту вызовов |
 | `PG_HOST` / `PG_PORT` | `localhost` / `5432` | Подключение к PostgreSQL |
-| `PG_USER` / `PG_PASSWORD` / `PG_DATABASE` | `postgres` / — / `testPost2` | Подключение к PostgreSQL |
+| `PG_USER` / `PG_PASSWORD` / `PG_DATABASE` | `mcp_ro` (в скрипте запуска) / — / `testPost2` | Подключение к PostgreSQL |
+
+## Роль БД: только чтение, без SUPERUSER
+
+Read-only транзакция запрещает запись, но **не чтение**. Пока сервер ходил под
+`postgres` (SUPERUSER), через `select` были доступны `pg_read_file` (любой файл
+на хосте БД) и `pg_shadow` (хэши паролей ролей). Это закрыто двумя слоями:
+
+1. **Роль `mcp_ro`** — `NOSUPERUSER`, `CONNECT` + `USAGE` на `public` + `SELECT`
+   на существующие и будущие таблицы. Скрипты:
+   `db/roles/01_create_mcp_ro.sql` (создать/выровнять права),
+   `db/roles/02_check_mcp_ro.sql` (доказать, что запись, `pg_shadow` и
+   `pg_read_file` закрыты).
+2. **Фильтр в `select`** — функции, читающие файлы хоста или состояние сессии,
+   отклоняются с `function "<имя>" is not allowed`: `pg_read_file`,
+   `pg_read_binary_file`, `pg_ls_dir`, `pg_ls_waldir`, `pg_ls_logdir`,
+   `pg_ls_tmpdir`, `pg_stat_file`, `lo_import`, `lo_export`, `lo_get`,
+   `dblink*`, `pg_terminate_backend`, `pg_cancel_backend`, `pg_reload_conf`,
+   `set_config`, `pg_sleep`.
+
+Первый слой — настоящая граница (её держит PostgreSQL), второй — страховка на
+случай, если сервер снова запустят суперпользователем.
 
 ## Режим только для чтения
 
@@ -78,15 +100,27 @@ Write-инструменты включаются только явным `READ_
 ## Проверки
 
 ```powershell
-node test_server.mjs     # tools/list + успешный select
-node test_readonly.mjs   # 4/4: health, read-инструменты, отказ write, запрет CTE
+node test_server.mjs     # инструменты, ресурсы, промпты + запись на одноразовой таблице
+node test_readonly.mjs   # 5/5: дефолт read-only, health, отказ write, запрет CTE
 ```
 
-Сервер, который поднимает `test_readonly.mjs`, работает на порту `9993` и сам
-себя останавливает; `stderr` дочернего процесса печатается при неудачном старте.
+`test_server.mjs` поднимает свой инстанс с `READ_ONLY=0` (ему нужен пользователь
+с правами на запись — по умолчанию `postgres`), `test_readonly.mjs` — без
+переменной `READ_ONLY`, чтобы проверять именно безопасный дефолт. Оба работают
+на отдельных портах (`9992`, `9993`) и сами себя останавливают.
+
+Проверка роли БД отдельно:
+
+```powershell
+psql -U postgres -d testPost2 -f db\roles\01_create_mcp_ro.sql
+psql -U mcp_ro  -d testPost2 -f db\roles\02_check_mcp_ro.sql   # ждём 6 x OK
+```
 
 ## Ограничения
 
 - Один общий пул на процесс, без пулера запросов.
 - Аудит (`AUDIT_FILE`) пишется синхронно в JSONL: `ts`, `kind`, `event`, `ok`, `ms`.
-- `select` ограничен `ROW_LIMIT` строками (по умолчанию 100).
+- `select` без `LIMIT` автоматически ограничивается `ROW_LIMIT` строками
+  (по умолчанию 100). Явный `LIMIT` в запросе клиента не переопределяется —
+  это осознанное поведение «дефолт, а не потолок»: жёсткий предел на стороне
+  сервера не реализован.

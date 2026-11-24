@@ -27,6 +27,11 @@ async function raw(url, method, headers, body) {
 
 process.env.REMOTE_SECRET_KEY = TOKEN;
 process.env.PORT = PORT;
+// Этот набор проверяет инструменты записи на временной таблице, поэтому сервер
+// поднимается в режиме записи. Сервер по умолчанию READ_ONLY=1, и без явного "0"
+// write-инструменты (и проверка идентификаторов внутри них) до кода не доходят.
+// Поведение read-only проверяет отдельный test_readonly.mjs.
+process.env.READ_ONLY = "0";
 process.env.ROW_LIMIT = "5";
 process.env.AUDIT_FILE = AUDIT;
 if (fs.existsSync(AUDIT)) fs.unlinkSync(AUDIT);
@@ -131,7 +136,8 @@ if (anyTable) {
   ok("prompt explain_table", p.messages[0].content.text.includes("Sample rows"));
 }
 
-// read-only ops blocked only when READ_ONLY=1 (not set here -> writable allowed try on temp table)
+// Сервер поднят с READ_ONLY=0 (см. env выше), поэтому write-инструменты доступны.
+// Проверяем их на одноразовой таблице _mcp_test_t, которую удаляем в конце.
 const created = await client.callTool({ name: "create_table", arguments: { sql: "CREATE TABLE IF NOT EXISTS _mcp_test_t (id serial PRIMARY KEY, v text)" } });
 ok("create_table allowed in rw", created.isError !== true, JSON.stringify(created).slice(0, 150));
 const ins = await client.callTool({ name: "insert", arguments: { table: "_mcp_test_t", data: { v: "hello" } } });

@@ -1,4 +1,6 @@
-// READ_ONLY mode smoke-test: spawn server with READ_ONLY=1
+// READ_ONLY mode smoke-test: поднимаем сервер БЕЗ READ_ONLY в окружении —
+// проверяем, что режим read-only включён по умолчанию (защита от регресса:
+// если кто-то поменяет дефолт на запись, этот тест покраснеет).
 import { spawn } from "child_process";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -7,7 +9,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = "9993";
-process.env.READ_ONLY = "1";
+delete process.env.READ_ONLY;
 process.env.PORT = PORT;
 process.env.REMOTE_SECRET_KEY = process.env.REMOTE_SECRET_KEY || "testtoken123";
 
@@ -48,6 +50,10 @@ await c.connect(new StreamableHTTPClientTransport(new URL(URL_), { requestInit: 
 
 let pass = 0, fail = 0;
 const chk = (n, x) => { x ? (pass++, console.log("PASS  " + n)) : (fail++, console.log("FAIL  " + n)); };
+
+// READ_ONLY не задан в окружении — сервер обязан сам объявить read-only.
+const health = await (await fetch(`http://localhost:${PORT}/health`)).json();
+chk("default mode is read-only", health.read_only === true);
 
 const sel = await c.callTool({ name: "select", arguments: { sql: "SELECT 1" } });
 // Без живых учётных данных БД SELECT упадёт на подключении — это не нарушение
