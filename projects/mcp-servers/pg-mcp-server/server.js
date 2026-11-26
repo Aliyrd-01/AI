@@ -308,17 +308,37 @@ function createMcpServer() {
         contents: [{ uri, mimeType: "application/json", text: JSON.stringify(tables.map((r) => r.table_name), null, 2) }],
       };
     }
-    const tableMatch = uri.match(/^postgres:\/\/table\/(.+)$/);
+    // Два шаблона: postgres://table/{name} и postgres://table/{name}/schema.
+    // Второй должен отдавать только колонки, поэтому отделяем суффикс ДО проверки имени.
+    const tableMatch = uri.match(/^postgres:\/\/table\/([^/]+)(\/schema)?$/);
     if (tableMatch) {
-      const table = tableMatch[1];
-      const columns = await getTableColumns(table);
-      const count = await getTableCount(table);
-      const sample = await getTableSampleRows(table);
+      // URI приходит percent-encoded (клиент вправе прислать %20 и т.п.).
+      // Декодируем ДО валидации, иначе в ошибке показывается сырой %20,
+      // а имена с пробелами (quoted identifiers) становятся недоступны.
+      let tableName = tableMatch[1];
+      try {
+        tableName = decodeURIComponent(tableName);
+      } catch {
+        throw new Error(`Invalid table name: ${tableName}`);
+      }
+      const schemaOnly = Boolean(tableMatch[2]);
+      const columns = await getTableColumns(tableName);
+      if (schemaOnly) {
+        return {
+          contents: [{
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify({ table: tableName, columns }, null, 2),
+          }],
+        };
+      }
+      const count = await getTableCount(tableName);
+      const sample = await getTableSampleRows(tableName);
       return {
         contents: [{
           uri,
           mimeType: "application/json",
-          text: JSON.stringify({ table, columns, row_count: count, sample_rows: sample }, null, 2),
+          text: JSON.stringify({ table: tableName, columns, row_count: count, sample_rows: sample }, null, 2),
         }],
       };
     }
